@@ -1,29 +1,26 @@
-# Correção — Nginx | Overview
+# Correções finais — Nginx | Overview
 
 **Data:** 2026-11-12
 **Grafana:** 12.3.1.
-**Dados consultados:** tráfego sintético local das apps app-a, app-b e app-c.
+**Dados:** somente tráfego sintético local de app-a, app-b e app-c.
 
-## Causa
+## Rótulos de aplicação
 
-Os bar charts retornavam Prometheus instant vectors. A API `/api/ds/query` do Grafana entregava cada série como campos `Time` e `Value`, mantendo `app` nos metadados do campo `Value.labels`. Sem transformação, o bar chart selecionava o único campo categórico disponível (`Time`) como eixo; por isso as barras apareciam agrupadas pelo ano/data de 2026 em vez do nome da aplicação.
+Os instant vectors Prometheus contêm `Time` e `Value`; o label `app` chega como metadado do campo `Value`. A primeira correção usou `Labels to fields`, mas a inspeção visual relatou que somente `app-b` aparecia no eixo, embora as três labels estivessem na API. Esse teste anterior provava os dados de entrada, não o resultado final do gráfico.
 
-## Correções
+A configuração final usa a transformação Grafana **Series to rows**, o `legendFormat` `{{app}}` e `options.xField = "Metric"`. A transformação cria uma linha por série com `Metric` e `Value`; assim o eixo categórico usa o nome da aplicação derivado da série e não o timestamp. O teste consulta a API de datasource do Grafana, verifica o nome de série individual para cada app e confirma que o filtro selecionado reduz o resultado à aplicação escolhida. Esta solução segue o formato documentado de [Series to rows](https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/query-transform-data/transform-data/).
 
-- Os dois bar charts agora aplicam a transformação nativa **Labels to fields** em modo `columns`, que materializa os labels Prometheus em campos categóricos.
-- `options.xField` seleciona explicitamente `app` nos gráficos **Requests by application** e **Applications with the most errors**.
-- Os painéis distinguem contagens do período (PromQL `increase`) de taxas (PromQL `rate`, unidade req/s). As séries temporais de status, P95 por app e erros ao longo do tempo foram preservadas.
-- O ranking de erros usa o total do intervalo selecionado, ordenado com `topk`, e inclui zero para aplicações sem erros. A série temporal separada continua mostrando taxa de erros.
-- A faixa de indicadores passou a mostrar taxa atual e total do período para requisições, 4xx e 5xx, além do P95; o indicador 429, sempre zerado neste laboratório sem rate-limit, foi removido do Overview. As taxas/contagens sem amostra usam zero explícito.
-- O Overview fica com 12 painéis; os dois gráficos comparativos passaram a ter `app` como eixo categórico e labels expandidos em campos.
+## Totais HTTP
 
-## Consultas principais
+Os totais usam `increase()` sobre counters do exporter, raspados a cada cinco segundos. `increase()` extrapola as amostras disponíveis até os limites do intervalo selecionado; essa estimativa pode ser fracionária mesmo quando o counter incrementa por evento. A semântica Prometheus é mantida, sem arredondar as consultas e sem substituir a fonte pela leitura de logs, que teria custo e defasagem de ingestão diferentes. Veja a documentação de [`increase()`](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase).
+
+A apresentação dos quatro totais (requisições, 4xx, 5xx e erros por app) usa zero casas decimais, com descrição explícita de que o valor é estimado e arredondado para exibição. Os painéis temporais continuam usando `rate()` em req/s. O ranking de erro ocupa cinco unidades de altura, ante sete; painéis temporais e navegação não foram alterados.
 
 ```promql
 sum by (app) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))
 ```
 
-Total de requisições no período selecionado por aplicação.
+Total estimado de requisições no período selecionado, por aplicação.
 
 ```promql
 topk(3,
@@ -32,26 +29,19 @@ topk(3,
 )
 ```
 
-Aplicações com mais respostas 4xx/5xx no período, mantendo categorias com zero.
-
-```promql
-sum by (app) (rate(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__rate_interval]))
-```
-
-Taxa temporal atual de respostas de erro por app, em requisições por segundo.
+Total estimado de respostas de erro no período; a expressão mantém as apps com zero erro. Quando o intervalo não tem tráfego, os testes verificam zero para cada aplicação.
 
 ## Validação
 
-- `python scripts/build_dashboards.py` gerou os quatro JSONs e o Grafana foi reiniciado para reprovisionar.
-- `python tests/verify_pipeline.py` passou, incluindo consultas PromQL/LogQL reais, datasources e os quatro dashboards.
-- O teste agora verifica nos JSONs do painel `xField=app`, transformação `labelsToFields`/`columns` e agrupamento `by (app)`.
-- Os dois PromQL dos bar charts foram consultados pela API datasource do Grafana. Os frames retornaram labels `app-a`, `app-b` e `app-c`; com filtro `app-b`, só esse label foi retornado.
-- Resultado do teste: 31 consultas PromQL e 7 LogQL aceitas; 4 verificações de categoria/filtro passaram; Overview com 12 painéis.
-- A consulta de exportação de imagem do Grafana respondeu com o aviso **No image renderer available/installed**; nenhuma imagem placeholder foi mantida como captura. O host de navegador automatizado também estava indisponível. Portanto, a configuração e os dados foram validados contra o Grafana em execução, mas a captura visual de pixels do dashboard ficou pendente.
+- `python tests/verify_pipeline.py --verify-scenarios --verify-persistence` passou: 31 PromQL, 7 LogQL, quatro verificações de categoria/filtro, persistência e cenários de tráfego.
+- Os frames de datasource do Grafana apresentam `app-a`, `app-b` e `app-c` como nomes de série distintos; o filtro por `app-b` retorna somente essa série.
+- Depois de parar o gerador, três verificações por app confirmaram `increase(...[10s]) = 0` para requisições e erros.
+- O JSON dos quatro dashboards foi validado; Compose e `git diff --check` passaram. Os outros três dashboards continuam provisionados com 12, 2 e 12 painéis.
+- A confirmação visual por pixels continua indisponível nesta sessão: o host do navegador automatizado não iniciou e o endpoint de render do Grafana informa que não há Image Renderer instalado. A API não foi tratada como prova visual.
 
-## Arquivos alterados
+## Arquivos alterados neste ajuste
 
-- `scripts/build_dashboards.py` — configuração do eixo, transformação, layout, títulos e consultas.
-- `config/grafana/dashboards/nginx-overview.json` — JSON provisionado gerado.
-- `tests/verify_pipeline.py` — regressão para labels, filtros por app e transformação.
-- `README.md` e este documento — descrição e evidência atualizadas.
+- `scripts/build_dashboards.py` — transformação, eixo categórico, precisão de exibição e altura do ranking.
+- `config/grafana/dashboards/nginx-overview.json` — JSON provisionado atualizado.
+- `tests/verify_pipeline.py` — nomes de série, filtro por app, semântica de aumento e intervalo ocioso.
+- `README.md` e este documento — semântica das contagens e evidências.

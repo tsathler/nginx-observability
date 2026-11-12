@@ -31,7 +31,7 @@ Quatro dashboards são provisionados automaticamente: **Nginx | Overview**, **Ng
 
 ### Dashboards
 
-- **Overview:** taxa atual de requisições/erros em req/s e contagens no intervalo selecionado, P95, tráfego temporal por status, volume total e P95 por app e ranking de erros no período. Categorias dos gráficos usam os labels de aplicação.
+- **Overview:** taxas atuais em req/s separadas das contagens estimadas no intervalo, P95, tráfego temporal por status, totais e P95 por app e ranking de erros no período. Totais são exibidos sem casas decimais e identificados como estimativas Prometheus; gráficos comparativos usam uma categoria por aplicação.
 - **Application Detail:** seletor de aplicação (inclui All), filtros de método/status/path, total e RPS, P50/P95/P99, status, métodos, rotas mais acessadas, requisições lentas e eventos recentes.
 - **Live Logs:** filtro por app/método/status/path/IP e até 500 eventos; atualização do dashboard em 2s. Para streaming WebSocket genuíno, use o link **Open Loki Explore Live tail** e ative **Live** no Explore. Refresh de painel não é Live tail.
 - **Security:** tendências de 403/404/429/5xx, métodos, caminhos com padrão de sondagem, concentrações por IP de origem e erros por app. Os IPs/caminhos vêm de parsing em consulta, não são labels indexados. São sinais sintéticos para triagem; um 404 isolado não é classificado como ataque.
@@ -81,6 +81,8 @@ topk(10, sum by (remote_addr) (count_over_time({job="nginx", app="app-a"} | json
 ```
 
 P95 é calculado a partir do histograma configurado no exporter, que usa `$request_time` do Nginx. A resolução depende dos buckets definidos; não é uma medição exata para cada observação.
+
+Os totais do Overview usam `increase()` em counters raspados a cada cinco segundos. Prometheus extrapola as amostras até o intervalo consultado, portanto o valor pode ser fracionário e é uma estimativa; o Grafana exibe o valor arredondado para a unidade de requisição, sem arredondar a consulta. Em janelas sem tráfego, os painéis mostram zero.
 
 ### Evidência da execução local
 

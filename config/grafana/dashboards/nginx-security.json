@@ -654,7 +654,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (app,path) (count_over_time({job=\"nginx\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" [5m]))",
+      "expr": "sum by (app,path) (count_over_time({job=\"nginx\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" | remote_addr=~\"${source_ip:raw}\" [$__range]))",
           "queryType": "instant",
           "refId": "A",
           "legendFormat": "{{app}} {{path}}"
@@ -684,7 +684,7 @@
           "sort": "desc"
         }
       },
-      "description": "Observed matching paths are synthetic scanner-like patterns, not proof of an attack. No data means no matching events in the lookback; query errors are reported separately by Grafana."
+    "description": "Counts matching synthetic scanner-like paths over the selected dashboard interval; these patterns are not proof of an attack. No data means no matching events in that interval; query errors are reported separately by Grafana."
     },
     {
       "id": 10,
@@ -707,7 +707,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (app,remote_addr) (count_over_time({job=\"nginx\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~\"${source_ip:raw}\" [5m])) >= 2)",
+      "expr": "topk(10, sum by (app,remote_addr) (count_over_time({job=\"nginx\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~\"${source_ip:raw}\" [$__range])) >= 2)",
           "queryType": "instant",
           "refId": "A",
           "legendFormat": "{{app}} / {{remote_addr}}"
@@ -737,7 +737,7 @@
           "sort": "desc"
         }
       },
-      "description": "Top application/source pairs with at least two 4xx/5xx events in five minutes. IP is structured event metadata and only an ephemeral query result dimension, never a stored Loki or Prometheus label."
+    "description": "Top application/source pairs with at least two 4xx/5xx events over the selected dashboard interval. IP is structured event metadata and only an ephemeral query result dimension, never a stored Loki or Prometheus label."
     },
     {
       "id": 11,
@@ -964,7 +964,14 @@
               "tsNs": true,
               "labelTypes": true,
               "id": true,
-              "request_time": true,
+            "request_time": true,
+            "time": true,
+            "remote_user": true,
+            "time_local": true,
+            "request": true,
+            "body_bytes_sent": true,
+            "http_referer": true,
+            "http_user_agent": true,
               "Line": true
             },
             "indexByName": {

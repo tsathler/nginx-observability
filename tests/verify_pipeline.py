@@ -82,8 +82,10 @@ def grafana_loki_frames(expression, query_type="range", legend_format=None, max_
     return result["results"]["A"]["frames"]
 
 
-def loki_instant(expression):
+def loki_instant(expression, eval_time_ns=None):
     params = {"query": expression, "limit": "100"}
+    if eval_time_ns is not None:
+        params["time"] = str(eval_time_ns / 1_000_000_000)
     result = get_json(f"{loki}/loki/api/v1/query?{urllib.parse.urlencode(params)}")
     assert result.get("status") == "success", (expression, result)
     return result["data"]["result"]
@@ -95,13 +97,13 @@ def prom_scalar(expression):
     return float(result[0]["value"][1])
 
 
-def loki_query(expression, start_ns=None, end_ns=None):
+def loki_query(expression, start_ns=None, end_ns=None, limit=200):
     end_ns = end_ns or time.time_ns()
     params = {
         "query": expression,
         "start": str(start_ns or end_ns - 600_000_000_000),
         "end": str(end_ns),
-        "limit": "200",
+        "limit": str(limit),
     }
     return get_json(f"{loki}/loki/api/v1/query_range?{urllib.parse.urlencode(params)}")["data"]["result"]
 
@@ -345,12 +347,15 @@ def verify_security_dashboard(dashboard):
 
     scanner = panels["Observed scanner-like paths"]
     scanner_expr = scanner["targets"][0]["expr"]
+    assert "$__range" in scanner_expr, "Scanner paths must use the dashboard-selected time range"
+    assert 'remote_addr=~"${source_ip:raw}"' in scanner_expr, "Scanner paths must honor the Source IP filter"
     assert scanner["targets"][0].get("queryType") == "instant"
     assert all(path in scanner_expr for path in (".env", ".git", "wp-admin", "wp-login", "phpmyadmin", "/etc/passwd"))
     assert "not proof of an attack" in scanner["description"] and "query errors are reported separately" in scanner["description"]
 
     origins = panels["Origins with repeated 4xx / 5xx (by app)"]
     origin_expr = origins["targets"][0]["expr"]
+    assert "$__range" in origin_expr, "Repeated origins must use the dashboard-selected time range"
     assert "topk(10," in origin_expr and "status=~\"4..|5..\"" in origin_expr
     assert "remote_addr=~\"${source_ip:raw}\"" in origin_expr and "sum by (app,remote_addr)" in origin_expr
     assert " >= 2)" in origin_expr, "Origins panel does not require repeated errors"
@@ -365,7 +370,9 @@ def verify_security_dashboard(dashboard):
     organize = recent["transformations"][-1]["options"]
     columns = {"Time", "app", "status", "method", "path", "remote_addr", "Duration (ms)"}
     assert set(organize["indexByName"]) == columns
-    assert organize["excludeByName"].get("Line") is True
+    hidden_fields = {"Line", "labels", "tsNs", "labelTypes", "id", "time", "request_time", "remote_user",
+                     "time_local", "request", "body_bytes_sent", "http_referer", "http_user_agent"}
+    assert hidden_fields <= {name for name, excluded in organize["excludeByName"].items() if excluded is True}
     assert "${source_ip:raw}" in recent["targets"][0]["expr"] and '$app' in recent["targets"][0]["expr"]
     assert "403|404|5.." in recent["targets"][0]["expr"]
 
@@ -384,48 +391,109 @@ def verify_security_scenario(dashboard, scan_start_ns):
     scan_query = grafana_query_expression(scanner["targets"][0]["expr"])
     path_pattern = re.search(r'path=~"([^"]+)"', scan_query).group(1)
     scan_log_query = '{job="nginx",app=~".*"} | path=~"' + path_pattern + '"'
-    scan_results = loki_query(scan_log_query, start_ns=scan_start_ns)
+    eval_end_ns = time.time_ns()
+    selected_start_ns = eval_end_ns - 900_000_000_000
+    scan_results = loki_query(scan_log_query, start_ns=scan_start_ns, end_ns=eval_end_ns, limit=500)
     scan_events = [json.loads(line) for stream in scan_results for _, line in stream.get("values", [])]
     expected_paths = (".env", ".git/config", "/wp-admin", "/wp-login.php", "/phpmyadmin", "/etc/passwd")
     assert scan_events, "Scan scenario ran, but no matching scanner-like paths were returned"
     assert all(any(event.get("path", "").endswith(path) for path in expected_paths) for event in scan_events), scan_events[:5]
     assert {event.get("app") for event in scan_events} <= {"app-a", "app-b", "app-c"}
     assert all(str(event.get("status", "")).startswith(("4", "5")) for event in scan_events), "Synthetic probe produced no corresponding error responses"
-    metric_paths = loki_instant(scan_query)
-    assert metric_paths and all(item["metric"].get("app") in {"app-a", "app-b", "app-c"} and
-                                item["metric"].get("path") for item in metric_paths), metric_paths
+    metric_paths = loki_instant(scan_query, eval_time_ns=eval_end_ns)
+    metric_path_counts = {(item["metric"].get("app"), item["metric"].get("path")): float(item["value"][1])
+                          for item in metric_paths}
+    expected_scan_counts = {}
+    for event in scan_events:
+        key = (event["app"], event["path"])
+        expected_scan_counts[key] = expected_scan_counts.get(key, 0) + 1
+    assert metric_paths and all(metric_path_counts.get(key, 0) >= count
+                                for key, count in expected_scan_counts.items()), (expected_scan_counts, metric_path_counts)
+    app_a_scan = loki_instant(grafana_query_expression(resolve_security_expression(
+        scanner["targets"][0]["expr"], app="app-a")), eval_time_ns=eval_end_ns)
+    assert app_a_scan and all(item["metric"].get("app") == "app-a" for item in app_a_scan), app_a_scan
 
     origins_panel = panels["Origins with repeated 4xx / 5xx (by app)"]
     origin_expr = grafana_query_expression(origins_panel["targets"][0]["expr"])
-    all_origins = loki_instant(origin_expr)
+    all_origins = loki_instant(origin_expr, eval_time_ns=eval_end_ns)
     assert all_origins and all(float(result["value"][1]) >= 2 for result in all_origins), all_origins
     scan_ips = {event["remote_addr"] for event in scan_events}
+    expected_origin_counts = {}
+    for event in scan_events:
+        if str(event["status"]).startswith(("4", "5")):
+            key = (event["app"], event["remote_addr"])
+            expected_origin_counts[key] = expected_origin_counts.get(key, 0) + 1
+    actual_origin_counts = {(item["metric"].get("app"), item["metric"].get("remote_addr")): float(item["value"][1])
+                            for item in all_origins}
+    repeated_expected = {key: count for key, count in expected_origin_counts.items() if count >= 2}
+    assert any(key in actual_origin_counts for key in repeated_expected), (repeated_expected, actual_origin_counts)
+    assert all(actual_origin_counts[key] >= count for key, count in repeated_expected.items() if key in actual_origin_counts), \
+        (repeated_expected, actual_origin_counts)
     matching_origins = [result for result in all_origins if result["metric"].get("remote_addr") in scan_ips]
     assert matching_origins, f"No repeated-error origin correlated with scanner source {scan_ips}: {all_origins}"
-    app_a_origins = loki_instant(resolve_security_expression(origins_panel["targets"][0]["expr"], app="app-a"))
+    app_a_origins = loki_instant(grafana_query_expression(
+        resolve_security_expression(origins_panel["targets"][0]["expr"], app="app-a")),
+                                 eval_time_ns=eval_end_ns)
     assert app_a_origins and all(item["metric"].get("app") == "app-a" for item in app_a_origins), app_a_origins
     source_ip_regex = next(iter(scan_ips)).replace(".", "[.]")
-    ip_only_origins = loki_instant(resolve_security_expression(
-        origins_panel["targets"][0]["expr"], source_ip=source_ip_regex))
+    selected_source_ip = next(iter(scan_ips))
+    ip_only_scan = loki_instant(grafana_query_expression(resolve_security_expression(
+        scanner["targets"][0]["expr"], source_ip=source_ip_regex)), eval_time_ns=eval_end_ns)
+    expected_ip_counts = {}
+    for event in scan_events:
+        if re.fullmatch(source_ip_regex, event["remote_addr"]):
+            key = (event["app"], event["path"])
+            expected_ip_counts[key] = expected_ip_counts.get(key, 0) + 1
+    ip_metric_counts = {(item["metric"].get("app"), item["metric"].get("path")): float(item["value"][1])
+                        for item in ip_only_scan}
+    assert ip_only_scan and all(ip_metric_counts.get(key, 0) >= count for key, count in expected_ip_counts.items()), \
+        (expected_ip_counts, ip_metric_counts)
+    combined_scan = loki_instant(grafana_query_expression(resolve_security_expression(
+        scanner["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex)), eval_time_ns=eval_end_ns)
+    assert combined_scan and all(item["metric"].get("app") == "app-a" for item in combined_scan), combined_scan
+    ip_only_origins = loki_instant(grafana_query_expression(resolve_security_expression(
+        origins_panel["targets"][0]["expr"], source_ip=source_ip_regex)), eval_time_ns=eval_end_ns)
     assert ip_only_origins and all(item["metric"].get("remote_addr") in scan_ips for item in ip_only_origins), ip_only_origins
-    combined_origins = loki_instant(resolve_security_expression(
-        origins_panel["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex))
+    combined_origins = loki_instant(grafana_query_expression(resolve_security_expression(
+        origins_panel["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex)), eval_time_ns=eval_end_ns)
     assert combined_origins and all(item["metric"].get("app") == "app-a" and
-                                    item["metric"].get("remote_addr") in scan_ips and
+                                    item["metric"].get("remote_addr") == selected_source_ip and
                                     float(item["value"][1]) >= 2 for item in combined_origins), combined_origins
 
     recent_panel = panels["Recent security events"]
+    recent_all_expr = resolve_security_expression(recent_panel["targets"][0]["expr"])
+    recent_all_streams = loki_query(recent_all_expr, start_ns=selected_start_ns, end_ns=eval_end_ns, limit=500)
+    recent_all_events = [json.loads(line) for stream in recent_all_streams for _, line in stream.get("values", [])]
+    assert recent_all_events and len(recent_all_events) <= 500
+    assert all(event.get("app") in {"app-a", "app-b", "app-c"} and
+               str(event.get("status", "")).startswith(("4", "5")) for event in recent_all_events)
+    assert {event["path"] for event in scan_events} <= {event["path"] for event in recent_all_events}
+    recent_app_expr = resolve_security_expression(recent_panel["targets"][0]["expr"], app="app-a")
+    recent_app_streams = loki_query(recent_app_expr, start_ns=selected_start_ns, end_ns=eval_end_ns, limit=500)
+    recent_app_events = [json.loads(line) for stream in recent_app_streams for _, line in stream.get("values", [])]
+    assert recent_app_events and all(event.get("app") == "app-a" for event in recent_app_events)
+    recent_ip_expr = resolve_security_expression(recent_panel["targets"][0]["expr"], source_ip=source_ip_regex)
+    recent_ip_streams = loki_query(recent_ip_expr, start_ns=selected_start_ns, end_ns=eval_end_ns, limit=500)
+    recent_ip_events = [json.loads(line) for stream in recent_ip_streams for _, line in stream.get("values", [])]
+    assert recent_ip_events and all(event.get("remote_addr") in scan_ips for event in recent_ip_events)
     recent_expr = resolve_security_expression(recent_panel["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex)
-    recent_streams = loki_query(recent_expr, start_ns=scan_start_ns)
+    recent_streams = loki_query(recent_expr, start_ns=selected_start_ns, end_ns=eval_end_ns, limit=500)
     recent_events = [json.loads(line) for stream in recent_streams for _, line in stream.get("values", [])]
-    assert recent_events and all(event.get("app") == "app-a" and event.get("remote_addr") in scan_ips and
+    assert recent_events and len(recent_events) <= 500 and all(event.get("app") == "app-a" and
+                                 event.get("remote_addr") in scan_ips and
                                  str(event.get("status", "")).startswith(("4", "5")) for event in recent_events), recent_events[:5]
+    recent_scan_paths = {event["path"] for event in recent_events}
+    app_a_scan_paths = {event["path"] for event in scan_events if event["app"] == "app-a"}
+    assert app_a_scan_paths <= recent_scan_paths, (app_a_scan_paths, recent_scan_paths)
     frames = grafana_loki_frames(recent_expr, max_lines=500)
     fields = {field["name"] for frame in frames for field in frame["schema"]["fields"]}
     assert {"Line", "Time"} <= fields, f"Recent security events lost the original JSON: {fields}"
     return {"scan_events": len(scan_events), "scan_apps": sorted({event["app"] for event in scan_events}),
             "origins": len(all_origins), "correlated_ips": sorted(scan_ips), "ip_filter_origins": len(ip_only_origins),
-            "app_ip_combined_origins": len(combined_origins), "recent_app_a_events": len(recent_events)}
+            "app_ip_combined_origins": len(combined_origins), "scanner_app_filter_series": len(app_a_scan),
+            "scanner_ip_filter_series": len(ip_only_scan), "scanner_combined_series": len(combined_scan),
+            "recent_all_events": len(recent_all_events), "recent_app_filter_events": len(recent_app_events),
+            "recent_ip_filter_events": len(recent_ip_events), "recent_app_a_events": len(recent_events)}
 
 
 def verify_dashboard_queries(dashboards):

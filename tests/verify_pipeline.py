@@ -1,8 +1,11 @@
 """Verify request routing, metrics, logs, Grafana provisioning, and optional persistence."""
 import argparse
+import base64
+import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import time
 import urllib.error
@@ -62,9 +65,9 @@ def grafana_prom_frames(expression, legend_format="{{app}}"):
     return result["results"]["A"]["frames"]
 
 
-def grafana_loki_frames(expression, query_type="range", legend_format=None):
+def grafana_loki_frames(expression, query_type="range", legend_format=None, max_lines=20):
     target = {"refId": "A", "datasource": {"type": "loki", "uid": "loki"},
-              "expr": expression, "queryType": query_type, "maxLines": 20}
+              "expr": expression, "queryType": query_type, "maxLines": max_lines}
     if legend_format:
         target["legendFormat"] = legend_format
     body = {
@@ -160,8 +163,8 @@ def verify_dashboard_and_datasources():
         if uid == "nginx-application-detail":
             assert any(panel.get("type") == "table" for panel in panels), f"{uid} has no structured request table"
         if uid == "nginx-live-logs":
-            assert any(panel.get("type") == "logs" for panel in panels), f"{uid} has no logs visualization"
-        if uid == "nginx-live-logs":
+            live_panel = next(panel for panel in panels if panel["title"] == "HTTP access events")
+            assert live_panel.get("type") == "table", f"{uid} access events are not a table"
             assert any("/explore?panes=" in link.get("url", "") for link in dashboard.get("links", [])), "Live Logs has no Explore link"
         dashboards[uid] = dashboard
         counts[uid] = len(panels)
@@ -177,6 +180,127 @@ def grafana_query_expression(expr):
     for token, value in replacements.items():
         expr = expr.replace(token, value)
     return expr
+
+
+def resolve_live_logs_expression(expression, app=".*", method=".*", status=".*", path=".*", source_ip=".*"):
+    replacements = {"$app": app, "${method:regex}": method, "${status:raw}": status,
+                    "${path:regex}": re.escape(path) if path != ".*" else ".*",
+                    "${source_ip:raw}": source_ip}
+    for token, value in replacements.items():
+        expression = expression.replace(token, value)
+    return expression
+
+
+def verify_live_logs(dashboard):
+    panels = {panel["title"]: panel for panel in dashboard["panels"]}
+    panel = panels["HTTP access events"]
+    target = panel["targets"][0]
+    expression = target["expr"]
+    assert panel["type"] == "table"
+    assert target["queryType"] == "range" and target.get("maxLines") == 500
+    expected_columns = {"Time", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
+    transformations = panel.get("transformations", [])
+    assert [item["id"] for item in transformations] == ["extractFields", "convertFieldType", "calculateField", "organize"]
+    organize = transformations[-1]["options"]
+    assert set(organize["indexByName"]) == expected_columns
+    assert organize["excludeByName"].get("Line") is True
+    assert transformations[0]["options"] == {"source": "Line", "format": "json", "replace": False}
+    assert panel["options"]["sortBy"] == [{"displayName": "Time", "desc": True}]
+    assert panel["options"]["footer"]["enablePagination"] is True
+    status_override = next(item for item in panel["fieldConfig"]["overrides"] if item["matcher"]["options"] == "Status")
+    status_properties = {item["id"]: item["value"] for item in status_override["properties"]}
+    assert status_properties["thresholds"]["steps"][-2:] == [
+        {"color": "orange", "value": 400}, {"color": "red", "value": 500}]
+    assert status_properties["custom.cellOptions"]["type"] == "color-background"
+    assert panel["gridPos"]["h"] <= 22 and dashboard["panels"][0]["gridPos"]["h"] <= 2
+
+    variables = {item["name"]: item for item in dashboard["templating"]["list"]}
+    assert set(variables) >= {"app", "method", "status", "path", "source_ip"}
+    assert "only to the access events query" in variables["path"]["description"]
+    assert "regular expression" in variables["source_ip"]["description"]
+    for name in ("app", "method", "status", "path", "source_ip"):
+        assert f"${name}" in expression or f"${{{name}:" in expression, f"Live Logs query omits ${name}"
+
+    links = [item for item in dashboard["links"] if "/explore?panes=" in item.get("url", "")]
+    assert len(links) == 1
+    link = links[0]
+    query_string = urllib.parse.urlsplit(link["url"]).query
+    encoded_panes = urllib.parse.parse_qs(query_string)["panes"][0]
+    pane = json.loads(encoded_panes)["0"]
+    explore_expr = pane["queries"][0]["expr"]
+    for token in ('$app', '${method:regex}', '${status:raw}', '${path:regex}', '${source_ip:raw}'):
+        assert token in explore_expr, f"Explore link omits current filter {token}"
+    assert pane["range"] == {"from": "$__from", "to": "$__to"}
+    assert "Open Explore with current application" in link.get("tooltip", "")
+
+    # Produce a deterministic local event to exercise each filter and their combination.
+    status_code = request_status(f"{base}/app-a/forbidden")
+    assert status_code == 403, f"Expected controlled 403 event, got {status_code}"
+    wait_for(lambda: bool(loki_query('{job="nginx",app="app-a"} | method="GET" | status="403" | path=~".*forbidden.*"')),
+             "Synthetic 403 request was not ingested by Loki")
+    raw_streams = loki_query('{job="nginx",app="app-a"} | method="GET" | status="403" | path=~".*forbidden.*"')
+    controlled = [json.loads(line) for stream in raw_streams for _, line in stream["values"]]
+    event = next(item for item in controlled if item.get("path", "").endswith("/forbidden"))
+    # RE2 character classes avoid LogQL's Go-string escape rules for literal dots.
+    source_ip_regex = event["remote_addr"].replace(".", "[.]")
+
+    filters = {
+        "Application": (resolve_live_logs_expression(expression, app="app-a"), lambda e: e["app"] == "app-a"),
+        "Method": (resolve_live_logs_expression(expression, method="GET"), lambda e: e["method"] == "GET"),
+        "Status": (resolve_live_logs_expression(expression, status="4.."), lambda e: str(e["status"]).startswith("4")),
+        "Path": (resolve_live_logs_expression(expression, path="forbidden"), lambda e: "forbidden" in e["path"]),
+        "Source IP": (resolve_live_logs_expression(expression, source_ip=source_ip_regex), lambda e: re.fullmatch(source_ip_regex, e["remote_addr"]) is not None),
+        "Combined": (resolve_live_logs_expression(expression, app="app-a", method="GET", status="403",
+                                                    path="forbidden", source_ip=source_ip_regex),
+                     lambda e: e["app"] == "app-a" and e["method"] == "GET" and e["status"] == 403
+                     and e["path"].endswith("/forbidden") and e["remote_addr"] == event["remote_addr"]),
+    }
+    filter_counts = {}
+    for label, (query, predicate) in filters.items():
+        streams = loki_query(query)
+        events = [json.loads(line) for stream in streams for _, line in stream["values"]]
+        assert events and all(predicate(item) for item in events), f"{label} filter returned empty or mismatched events: {events[:3]}"
+        filter_counts[label] = len(events)
+    app_b_streams = loki_query(resolve_live_logs_expression(expression, app="app-b"))
+    app_b_events = [json.loads(line) for stream in app_b_streams for _, line in stream["values"]]
+    assert app_b_events and all(item["app"] == "app-b" for item in app_b_events), "Application selector leaked across apps"
+
+    # Grafana's data source API confirms the raw line is still present for row details/Explore.
+    grafana_frames = grafana_loki_frames(resolve_live_logs_expression(expression, app="app-a"), max_lines=500)
+    assert grafana_frames, "Grafana Loki range query returned no recent events"
+    fields = {field["name"] for frame in grafana_frames for field in frame["schema"]["fields"]}
+    assert {"Line", "Time"} <= fields, f"Grafana frames lost the original event line: {fields}"
+    visible_events = [len(frame.get("data", {}).get("values", [[]])[0]) for frame in grafana_frames]
+    assert sum(visible_events) <= 500, f"Grafana query exceeded configured 500 row limit: {visible_events}"
+
+    return {"filters": filter_counts, "grafana_frames": len(grafana_frames), "events": sum(visible_events),
+            "max_lines": target["maxLines"], "explore_filters": 5}
+
+
+def verify_grafana_live_websocket():
+    endpoint = urllib.parse.urlsplit(grafana)
+    port = endpoint.port or (443 if endpoint.scheme == "https" else 80)
+    key = base64.b64encode(os.urandom(16)).decode()
+    origin = f"{endpoint.scheme}://{endpoint.netloc}"
+    request = (f"GET /api/live/ws HTTP/1.1\r\nHost: {endpoint.netloc}\r\n"
+               f"Upgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\n"
+               f"Sec-WebSocket-Version: 13\r\nOrigin: {origin}\r\n\r\n").encode()
+    with socket.create_connection((endpoint.hostname, port), timeout=5) as connection:
+        connection.settimeout(5)
+        connection.sendall(request)
+        response = b""
+        while b"\r\n\r\n" not in response and len(response) < 16384:
+            chunk = connection.recv(4096)
+            if not chunk:
+                break
+            response += chunk
+    headers = response.decode("latin-1", errors="replace")
+    status_line = headers.split("\r\n", 1)[0]
+    assert " 101 " in status_line, f"Grafana Live websocket upgrade failed: {status_line}"
+    expected_accept = base64.b64encode(hashlib.sha1(
+        (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
+    assert f"Sec-WebSocket-Accept: {expected_accept}" in headers, "Grafana returned an invalid WebSocket accept key"
+    return status_line
 
 
 def verify_dashboard_queries(dashboards):
@@ -547,6 +671,8 @@ def main():
     query_counts = verify_dashboard_queries(dashboards)
     category_checks = verify_overview_bar_categories(dashboards["nginx-overview"])
     application_detail_checks = verify_application_detail(dashboards["nginx-application-detail"])
+    live_logs_checks = verify_live_logs(dashboards["nginx-live-logs"])
+    live_websocket = verify_grafana_live_websocket()
     scenario_result = verify_scenarios() if args.verify_scenarios else None
     if args.verify_persistence:
         verify_persistence()
@@ -554,10 +680,11 @@ def main():
         sources, panel_counts, dashboards = verify_dashboard_and_datasources()
         query_counts = verify_dashboard_queries(dashboards)
         application_detail_checks = verify_application_detail(dashboards["nginx-application-detail"])
+        live_logs_checks = verify_live_logs(dashboards["nginx-live-logs"])
     for app, result in report.items():
         print(f"{app}: status={','.join(result['statuses'])}; methods={','.join(result['methods'])}; p95={result['p95_seconds']}s; Loki entries={result['log_entries']}")
     suffix = "; persistence survived Prometheus/Loki restart" if args.verify_persistence else ""
-    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}{suffix}")
+    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}{suffix}")
     if scenario_result:
         print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}; no-traffic zero checks={scenario_result['idle_apps']}")
 

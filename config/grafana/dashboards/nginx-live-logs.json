@@ -59,9 +59,9 @@
     {
       "title": "Open Loki Explore Live tail",
       "type": "link",
-      "url": "/explore?panes=%7B%220%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22expr%22%3A%22%7Bjob%3D%5C%22nginx%5C%22%2C%20app%3D~%5C%22$app%5C%22%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22$__from%22%2C%22to%22%3A%22$__to%22%7D%7D%7D&schemaVersion=1&orgId=1",
+      "url": "/explore?panes=%7B%220%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22expr%22%3A%22%7Bjob%3D%5C%22nginx%5C%22%2C%20app%3D~%5C%22$app%5C%22%7D%20%7C%20method%3D~%5C%22${method:regex}%5C%22%20%7C%20status%3D~%5C%22${status:raw}%5C%22%20%7C%20path%3D~%5C%22.*${path:regex}.*%5C%22%20%7C%20remote_addr%3D~%5C%22${source_ip:raw}%5C%22%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22$__from%22%2C%22to%22%3A%22$__to%22%7D%7D%7D&schemaVersion=1&orgId=1",
       "icon": "external link",
-      "tooltip": "Open the matching app and time range in Explore, then click Live.",
+      "tooltip": "Open Explore with current application, method, status, path, source IP, and time range filters; click Live to start websocket tailing.",
       "includeVars": false,
       "keepTime": false,
       "targetBlank": false
@@ -73,6 +73,7 @@
         "name": "app",
         "label": "Application",
         "type": "query",
+        "description": "Scopes access events to one application or all applications.",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
@@ -95,6 +96,7 @@
         "name": "method",
         "label": "Method",
         "type": "custom",
+        "description": "Filters access events by HTTP method.",
         "query": "GET,POST",
         "includeAll": true,
         "allValue": ".*",
@@ -121,6 +123,7 @@
         "name": "status",
         "label": "Status class / code",
         "type": "custom",
+        "description": "Filter by response class (2xx-5xx) or exact status code.",
         "query": "2xx : 2..,3xx : 3..,4xx : 4..,5xx : 5..,403,404,429,500",
         "includeAll": true,
         "allValue": ".*",
@@ -177,6 +180,7 @@
         "name": "path",
         "label": "Path contains",
         "type": "textbox",
+        "description": "Substring matched against the request path in Loki. Applies only to the access events query.",
         "query": "",
         "current": {
           "selected": true,
@@ -188,6 +192,7 @@
         "name": "source_ip",
         "label": "Source IP regex",
         "type": "textbox",
+        "description": "RE2 regular expression matched against the source IP in Loki. IP remains in the event, not as a metric label.",
         "query": ".*",
         "current": {
           "selected": true,
@@ -200,13 +205,13 @@
   "panels": [
     {
       "id": 1,
-      "title": "Live tail",
+      "title": "Refresh and Live tail",
       "type": "text",
       "gridPos": {
         "x": 0,
         "y": 0,
         "w": 24,
-        "h": 4
+        "h": 2
       },
       "datasource": {
         "type": "prometheus",
@@ -235,19 +240,19 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Dashboard refresh:** up to 2s after ingestion. **Live tail:** use the Explore link in this dashboard, then click **Live** in Grafana Explore. Explore provides the native Loki websocket stream."
+        "content": "Dashboard refreshes every 2s after ingestion. For Loki WebSocket Live tail, open Explore above and click **Live**."
       },
-      "description": "Dashboard logs refresh every 2 seconds; this is not streaming. Open the Explore link above and click Live for Loki websocket tail."
+      "description": "Periodic dashboard refresh is not streaming. Grafana Explore Live uses the native Loki WebSocket tail."
     },
     {
       "id": 2,
       "title": "HTTP access events",
-      "type": "logs",
+      "type": "table",
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 2,
         "w": 24,
-        "h": 20
+        "h": 22
       },
       "datasource": {
         "type": "loki",
@@ -260,9 +265,10 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"nginx\",app=~\"$app\"} | json | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | remote_addr=~\"${source_ip:raw}\"",
+          "expr": "{job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | remote_addr=~\"${source_ip:raw}\"",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxLines": 500
         }
       ],
       "fieldConfig": {
@@ -272,19 +278,35 @@
           },
           "mappings": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Status"},
+            "properties": [
+              {"id": "unit", "value": "short"},
+              {"id": "decimals", "value": 0},
+              {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 400}, {"color": "red", "value": 500}]}},
+              {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "basic"}}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Duration (ms)"},
+            "properties": [{"id": "unit", "value": "ms"}, {"id": "decimals", "value": 1}]
+          }
+        ]
       },
       "options": {
-        "showTime": true,
-        "showLabels": true,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "maxLines": 500
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {"show": true, "enablePagination": true},
+        "sortBy": [{"displayName": "Time", "desc": true}]
       },
-      "description": "The line remains the original JSON event; expand a row for parsed fields. IP is an event field, not an indexed label."
+      "description": "Newest events first, capped at 500 rows per query. The original JSON remains available in Loki/Explore. Source IP is event content, not an indexed label.",
+      "transformations": [
+        {"id": "extractFields", "options": {"source": "Line", "format": "json", "replace": false}},
+        {"id": "convertFieldType", "options": {"conversions": [{"targetField": "request_time", "destinationType": "number"}], "fields": {}}},
+        {"id": "calculateField", "options": {"mode": "binary", "binary": {"left": {"matcher": {"id": "byName", "options": "request_time"}}, "operator": "*", "right": {"fixed": "1000"}}, "alias": "Duration (ms)", "replaceFields": false}},
+        {"id": "organize", "options": {"excludeByName": {"labels": true, "tsNs": true, "labelTypes": true, "id": true, "request_time": true, "Line": true}, "indexByName": {"Time": 0, "app": 1, "method": 2, "status": 3, "path": 4, "Duration (ms)": 5, "remote_addr": 6}, "renameByName": {"app": "App", "method": "Method", "status": "Status", "path": "Path", "remote_addr": "Source IP"}}}
+      ]
     }
   ],
   "annotations": {

@@ -1,0 +1,309 @@
+{
+  "id": null,
+  "uid": "nginx-live-logs",
+  "title": "Nginx | Live Logs",
+  "description": "Filter recent HTTP access events; use Grafana Explore Live for websocket tailing.",
+  "tags": [
+    "nginx",
+    "observability"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "2s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "Overview",
+      "type": "link",
+      "url": "/d/nginx-overview/overview",
+      "icon": "external link",
+      "tooltip": "Open Overview with the current app and time range",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Application Detail",
+      "type": "link",
+      "url": "/d/nginx-application-detail/application-detail",
+      "icon": "external link",
+      "tooltip": "Open Application Detail with the current app and time range",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Live Logs",
+      "type": "link",
+      "url": "/d/nginx-live-logs/live-logs",
+      "icon": "external link",
+      "tooltip": "Open Live Logs with the current app and time range",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Security",
+      "type": "link",
+      "url": "/d/nginx-security/security",
+      "icon": "external link",
+      "tooltip": "Open Security with the current app and time range",
+      "includeVars": true,
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Open Loki Explore Live tail",
+      "type": "link",
+      "url": "/explore?panes=%7B%220%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22expr%22%3A%22%7Bjob%3D%5C%22nginx%5C%22%2C%20app%3D~%5C%22$app%5C%22%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22$__from%22%2C%22to%22%3A%22$__to%22%7D%7D%7D&schemaVersion=1&orgId=1",
+      "icon": "external link",
+      "tooltip": "Open the matching app and time range in Explore, then click Live.",
+      "includeVars": false,
+      "keepTime": false,
+      "targetBlank": false
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "app",
+        "label": "Application",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nginx_http_response_count_total, app)",
+          "refId": "Prometheus-app"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "method",
+        "label": "Method",
+        "type": "custom",
+        "query": "GET,POST",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "GET",
+            "value": "GET"
+          },
+          {
+            "selected": false,
+            "text": "POST",
+            "value": "POST"
+          }
+        ]
+      },
+      {
+        "name": "status",
+        "label": "Status class / code",
+        "type": "custom",
+        "query": "2xx : 2..,3xx : 3..,4xx : 4..,5xx : 5..,403,404,429,500",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "2xx",
+            "value": "2.."
+          },
+          {
+            "selected": false,
+            "text": "3xx",
+            "value": "3.."
+          },
+          {
+            "selected": false,
+            "text": "4xx",
+            "value": "4.."
+          },
+          {
+            "selected": false,
+            "text": "5xx",
+            "value": "5.."
+          },
+          {
+            "selected": false,
+            "text": "403",
+            "value": "403"
+          },
+          {
+            "selected": false,
+            "text": "404",
+            "value": "404"
+          },
+          {
+            "selected": false,
+            "text": "429",
+            "value": "429"
+          },
+          {
+            "selected": false,
+            "text": "500",
+            "value": "500"
+          }
+        ]
+      },
+      {
+        "name": "path",
+        "label": "Path contains",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        }
+      },
+      {
+        "name": "source_ip",
+        "label": "Source IP regex",
+        "type": "textbox",
+        "query": ".*",
+        "current": {
+          "selected": true,
+          "text": ".*",
+          "value": ".*"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Live tail",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "vector(1)",
+          "refId": "A",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Dashboard refresh:** up to 2s after ingestion. **Live tail:** use the Explore link in this dashboard, then click **Live** in Grafana Explore. Explore provides the native Loki websocket stream."
+      },
+      "description": "Dashboard logs refresh every 2 seconds; this is not streaming. Open the Explore link above and click Live for Loki websocket tail."
+    },
+    {
+      "id": 2,
+      "title": "HTTP access events",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 20
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{job=\"nginx\",app=~\"$app\"} | json | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | remote_addr=~\"${source_ip:raw}\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "maxLines": 500
+      },
+      "description": "The line remains the original JSON event; expand a row for parsed fields. IP is an event field, not an indexed label."
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false
+}

@@ -238,24 +238,37 @@ def verify_overview_bar_categories(dashboard):
 
 def verify_application_detail(dashboard):
     panels = {panel["title"]: panel for panel in dashboard["panels"]}
-    methods = panels["Methods"]
+    methods = panels["Methods (estimated period total)"]
     assert methods.get("type") == "barchart"
+    method_target = methods["targets"][0]
+    assert "increase(" in method_target["expr"] and "round(" not in method_target["expr"]
+    assert methods["fieldConfig"]["defaults"].get("decimals") == 0
+    assert "extrapolates" in methods.get("description", "") and "not an exact" in methods.get("description", "")
     assert methods.get("options", {}).get("xField") == "Metric", "Methods category must be the method series name"
     assert any(item.get("id") == "seriesToRows" for item in methods.get("transformations", [])), "Methods must expose GET/POST as category rows"
-    assert methods["targets"][0].get("legendFormat") == "{{method}}"
-    method_frames = grafana_prom_frames(grafana_query_expression(methods["targets"][0]["expr"]), methods["targets"][0]["legendFormat"])
+    assert method_target.get("legendFormat") == "{{method}}"
+    method_frames = grafana_prom_frames(grafana_query_expression(method_target["expr"]), method_target["legendFormat"])
     method_labels = {field.get("labels", {}).get("method") for frame in method_frames
                      for field in frame["schema"]["fields"] if field["name"] == "Value"}
     assert method_labels >= {"GET", "POST"}, f"Methods query lost its HTTP method categories: {method_labels}"
 
-    paths = panels["Most requested paths"]
+    paths = panels["Most requested paths (event count)"]
     assert "sum by (path)" in paths["targets"][0]["expr"], "Path bars must aggregate by readable path without repeating app labels"
+    assert "topk(10," in paths["targets"][0]["expr"]
+    assert paths["fieldConfig"]["defaults"].get("decimals") == 0
+    assert "Exact Loki event count" in paths.get("description", "")
     assert paths.get("options", {}).get("xField") == "Metric", "Path category must use the path series name"
-    assert any(item.get("id") == "seriesToRows" for item in paths.get("transformations", [])), "Path bars need explicit category rows"
+    path_transform_ids = [item.get("id") for item in paths.get("transformations", [])]
+    assert path_transform_ids == ["seriesToRows", "sortBy"], f"Path bars must sort the transformed values: {path_transform_ids}"
+    sort_options = paths["transformations"][1]["options"]["sort"][0]
+    assert sort_options == {"field": "Value", "desc": True}, sort_options
     assert paths["targets"][0].get("legendFormat") == "{{path}}"
     path_expr = grafana_query_expression(paths["targets"][0]["expr"])
     path_results = loki_instant(path_expr)
-    assert path_results and all(item["metric"].get("path") for item in path_results), "Loki path query returned no readable path labels"
+    path_values = [float(item["value"][1]) for item in path_results]
+    assert path_results and len(path_results) <= 10 and all(item["metric"].get("path") for item in path_results), "Loki path query returned no readable path labels"
+    path_sort = paths["transformations"][1]["options"]["sort"][0]
+    assert path_sort == {"field": "Value", "desc": True}, "Grafana must sort the top paths by volume descending"
     app_a_paths = loki_instant(path_expr.replace('app=~".*"', 'app=~"app-a"'))
     assert app_a_paths and all(item["metric"].get("path", "").startswith("/app-a/") for item in app_a_paths), app_a_paths
     path_frames = grafana_loki_frames(path_expr, query_type="instant", legend_format=paths["targets"][0]["legendFormat"])
@@ -270,6 +283,7 @@ def verify_application_detail(dashboard):
         assert target.get("legendFormat") == "{{app}}", f"{title} must label values by app"
         assert target.get("instant") is True, f"{title} must show one current value per app"
         assert percentile["options"].get("textMode") == "value_and_name", f"{title} should show each app name beside the value"
+        assert percentile["options"].get("orientation") == "horizontal", f"{title} should align the single-app name and value horizontally"
         frames = grafana_prom_frames(grafana_query_expression(target["expr"]), target["legendFormat"])
         app_labels = {field.get("labels", {}).get("app") for frame in frames
                       for field in frame["schema"]["fields"] if field["name"] == "Value"}
@@ -282,20 +296,25 @@ def verify_application_detail(dashboard):
                 'status=~".*"', 'status=~"2.."'), target["legendFormat"])
         selected_apps = {field.get("labels", {}).get("app") for frame in selected
                          for field in frame["schema"]["fields"] if field["name"] == "Value"}
-        assert selected_apps == {"app-a"}, f"{title} app/method/status filters leaked: {selected_apps}"
+        assert selected_apps == {"app-a"} and len(selected) == 1, f"{title} single-app selection leaked or returned multiple series: {selected_apps}"
 
-    selected_method = grafana_prom_frames(grafana_query_expression(methods["targets"][0]["expr"]).replace(
+    selected_method = grafana_prom_frames(grafana_query_expression(method_target["expr"]).replace(
         'app=~".*"', 'app=~"app-a"').replace('method=~".*"', 'method=~"GET"').replace(
-            'status=~".*"', 'status=~"2.."'), methods["targets"][0]["legendFormat"])
+            'status=~".*"', 'status=~"2.."'), method_target["legendFormat"])
     selected_method_labels = {field.get("labels", {}).get("method") for frame in selected_method
                               for field in frame["schema"]["fields"] if field["name"] == "Value"}
     assert selected_method_labels == {"GET"}, f"Prometheus method/status filters did not constrain Methods: {selected_method_labels}"
 
-    slow = panels["Slowest observed requests"]
+    slow = panels["Slowest by app/method/status/path"]
     slow_expr = grafana_query_expression(slow["targets"][0]["expr"])
     assert slow["targets"][0].get("queryType") == "instant"
+    assert "topk(10," in slow["targets"][0]["expr"] and "1000 *" in slow["targets"][0]["expr"]
+    assert slow["fieldConfig"]["defaults"].get("unit") == "ms" and slow["fieldConfig"]["defaults"].get("decimals") == 0
+    assert "top 10" in slow.get("description", "") and "descending" in slow.get("description", "")
     slow_transform_ids = [item.get("id") for item in slow.get("transformations", [])]
-    assert slow_transform_ids[:2] == ["labelsToFields", "organize"], "Slow request table must expose structured label columns"
+    assert slow_transform_ids == ["seriesToRows", "sortBy", "organize"], slow_transform_ids
+    assert slow["transformations"][1]["options"]["sort"] == [{"field": "Value", "desc": True}]
+    assert slow["transformations"][2]["options"]["renameByName"].get("Value") == "Max duration (ms)"
     assert "$__range" in slow["targets"][0]["expr"], "Slow request lookup should use the selected dashboard range"
     try:
         with urllib.request.urlopen(f"{base}/app-a/slower", timeout=4) as response:
@@ -317,12 +336,18 @@ def verify_application_detail(dashboard):
 
     wait_for(slow_event_arrived, "Controlled /slower request was not ingested by Loki")
     slow_results = loki_instant(slow_expr)
+    slow_values = [float(item["value"][1]) for item in slow_results]
+    assert len(slow_results) <= 10 and slow["transformations"][1]["options"]["sort"] == [{"field": "Value", "desc": True}], slow_values
     slow_app_a = [item for item in slow_results if item["metric"].get("app") == "app-a"]
-    assert slow_app_a and max(float(item["value"][1]) for item in slow_app_a) >= 0.7, slow_results
-    slow_frames = grafana_loki_frames(slow_expr, query_type="instant")
+    assert slow_app_a and max(float(item["value"][1]) for item in slow_app_a) >= 700, slow_results
+    slow_frames = grafana_loki_frames(slow_expr, query_type="instant", legend_format=slow["targets"][0]["legendFormat"])
     slow_frame_labels = {label for frame in slow_frames for field in frame["schema"]["fields"]
                          for label in field.get("labels", {})}
     assert {"app", "method", "status", "path"} <= slow_frame_labels, f"Slow request query lacks structured identifiers: {slow_frame_labels}"
+    assert "remote_addr" not in slow_frame_labels, f"Slow request grouping should not split by source IP: {slow_frame_labels}"
+    slow_names = {field.get("config", {}).get("displayNameFromDS", "") for frame in slow_frames
+                  for field in frame["schema"]["fields"] if field["name"] == "Value"}
+    assert any(all(part in name for part in ("app-a", "GET", "/app-a/slower")) for name in slow_names), slow_names
     filtered_slow_expr = (slow_expr.replace('app=~".*"', 'app=~"app-a"')
                           .replace('method=~".*"', 'method=~"GET"').replace('status=~".*"', 'status=~"2.."')
                           .replace('path=~".*.*.*"', 'path=~".*slower.*"'))
@@ -331,17 +356,29 @@ def verify_application_detail(dashboard):
                                  item["metric"].get("method") == "GET" and
                                  item["metric"].get("status", "").startswith("2") and
                                  item["metric"].get("path", "").endswith("/slower") and
-                                 float(item["value"][1]) >= 0.7 for item in filtered_slow), filtered_slow
+                                 float(item["value"][1]) >= 700 for item in filtered_slow), filtered_slow
     slow_app_b = loki_instant(slow_expr.replace('app=~".*"', 'app=~"app-b"'))
     assert all(item["metric"].get("app") == "app-b" for item in slow_app_b), slow_app_b
 
     recent = panels["Recent requests for selected app"]
     assert recent.get("type") == "table", "Recent requests should be a structured table"
     assert recent["targets"][0].get("queryType") == "range"
+    transform_ids = [item.get("id") for item in recent.get("transformations", [])]
+    assert transform_ids == ["extractFields", "convertFieldType", "calculateField", "organize"], transform_ids
     extract = next((item for item in recent.get("transformations", []) if item.get("id") == "extractFields"), None)
     assert extract and extract.get("options", {}).get("source") == "Line", "Recent request table must parse fields from the raw event line"
+    conversion = recent["transformations"][1]["options"]["conversions"]
+    assert conversion == [{"targetField": "request_time", "destinationType": "number"}], conversion
+    calculation = recent["transformations"][2]["options"]
+    assert calculation["mode"] == "binary" and calculation["binary"]["operator"] == "*"
+    assert calculation["binary"]["right"] == {"fixed": "1000"} and calculation["alias"] == "Duration (ms)"
     organize = next((item for item in recent.get("transformations", []) if item.get("id") == "organize"), None)
-    assert organize, "Recent request table must organize readable columns while keeping the raw event"
+    assert organize, "Recent request table must organize the seven requested columns"
+    expected_columns = {"Time", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
+    assert set(organize["options"]["indexByName"]) == expected_columns
+    assert organize["options"]["excludeByName"].get("Line") is True, "Raw JSON should not be a visible table column"
+    duration_override = next(item for item in recent["fieldConfig"]["overrides"] if item["matcher"]["options"] == "Duration (ms)")
+    assert {item["id"]: item["value"] for item in duration_override["properties"]} == {"unit": "ms", "decimals": 0}
     expr = recent["targets"][0]["expr"]
     for selector in ('$app', '${method:regex}', '${status:raw}', '${path:regex}'):
         assert selector in expr, f"Recent requests filter omits {selector}"
@@ -351,8 +388,6 @@ def verify_application_detail(dashboard):
     raw_index = next(index for index, field in enumerate(frames[0]["schema"]["fields"]) if field["name"] == "Line")
     raw_rows = frames[0]["data"]["values"][raw_index]
     assert raw_rows and {"time", "app", "method", "path", "status", "request_time"} <= set(json.loads(raw_rows[0])), "Raw event column does not preserve the full JSON event"
-    organize = next(item for item in recent["transformations"] if item["id"] == "organize")
-    assert organize["options"].get("renameByName", {}).get("Line") == "Raw event", "Original event must remain visible as Raw event"
     # Exercise all four variables together against the known synthetic slow event.
     selected_log_expr = (expr.replace('app=~"$app"', 'app=~"app-a"')
                          .replace('${method:regex}', 'GET').replace('${status:raw}', '2..')
@@ -373,7 +408,7 @@ def verify_application_detail(dashboard):
     assert path_filter_results and all(item["metric"].get("path", "").endswith("/slower") for item in path_filter_results), path_filter_results
 
     # A path variable is a Loki event-field filter; it is intentionally not a Prometheus label.
-    for title in ("Most requested paths", "Slowest observed requests", "Recent requests for selected app"):
+    for title in ("Most requested paths (event count)", "Slowest by app/method/status/path", "Recent requests for selected app"):
         target_expr = panels[title]["targets"][0]["expr"]
         for selector in ('$app', '${method:regex}', '${status:raw}', '${path:regex}'):
             assert selector in target_expr, f"{title} filter omits {selector}"
@@ -383,7 +418,7 @@ def verify_application_detail(dashboard):
             assert '$app' in expression, f"{title} is not application scoped"
             assert '${method:regex}' in expression, f"{title} does not honor the method filter"
             assert '${status:raw}' in expression, f"{title} does not honor the status filter"
-    return {"method_categories": sorted(method_labels), "path_categories": len(path_results),
+    return {"method_categories": sorted(method_labels), "path_categories": len(path_results), "paths_descending": path_sort == {"field": "Value", "desc": True},
             "slow_app_a_values": len(slow_app_a), "recent_frames": len(frames)}
 
 

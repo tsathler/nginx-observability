@@ -2,7 +2,7 @@
   "id": null,
   "uid": "nginx-application-detail",
   "title": "Nginx | Application Detail",
-  "description": "Compare and investigate one or all applications without per-app panels.",
+  "description": "Application, Method, and Status filter metrics and logs. Path filters Loki panels only because paths are not Prometheus labels.",
   "tags": [
     "nginx",
     "observability"
@@ -165,7 +165,7 @@
       },
       {
         "name": "path",
-        "label": "Path contains",
+        "label": "Path contains (Loki only)",
         "type": "textbox",
         "query": "",
         "current": {
@@ -352,7 +352,7 @@
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -415,7 +415,7 @@
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -478,7 +478,7 @@
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "center",
-        "orientation": "auto",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -655,7 +655,7 @@
     },
     {
       "id": 9,
-      "title": "Methods",
+      "title": "Methods (estimated period total)",
       "type": "barchart",
       "gridPos": {
         "x": 0,
@@ -686,7 +686,8 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -705,6 +706,7 @@
         },
         "xField": "Metric"
       },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
       "transformations": [
         {
           "id": "seriesToRows",
@@ -714,7 +716,7 @@
     },
     {
       "id": 10,
-      "title": "Most requested paths",
+      "title": "Most requested paths (event count)",
       "type": "barchart",
       "gridPos": {
         "x": 8,
@@ -745,7 +747,8 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -764,17 +767,28 @@
         },
         "xField": "Metric"
       },
-      "description": "Routes are grouped by path; method, status, app, and path filters apply. Path is structured metadata, not an indexed stream label.",
+      "description": "Exact Loki event count in the selected period. Top 10 paths, ordered by request volume; app, method, status, and path filters apply. Path is structured metadata, not an indexed stream label.",
       "transformations": [
         {
           "id": "seriesToRows",
           "options": {}
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
+          }
         }
       ]
     },
     {
       "id": 11,
-      "title": "Slowest observed requests",
+      "title": "Slowest by app/method/status/path",
       "type": "table",
       "gridPos": {
         "x": 16,
@@ -793,9 +807,10 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10,max_over_time({job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | unwrap request_time | __error__=\"\" [$__range]))",
+          "expr": "topk(10,1000 * max by (app,method,status,path) (max_over_time({job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | unwrap request_time | __error__=\"\" [$__range])))",
           "queryType": "instant",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "{{app}} / {{method}} / {{status}} / {{path}}"
         }
       ],
       "fieldConfig": {
@@ -803,7 +818,9 @@
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": []
+          "mappings": [],
+          "unit": "ms",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -812,40 +829,37 @@
         "cellHeight": "sm",
         "footer": {
           "show": false
-        }
+        },
+        "sortBy": [
+          {
+            "displayName": "Max duration (ms)",
+            "desc": true
+          }
+        ]
       },
-      "description": "Maximum observed request time per app, method, status, and path grouping in the selected range. Fields are structured metadata, not stream labels.",
+      "description": "Maximum request time in milliseconds for each app, method, status, and path group within the selected range. Results are limited to the top 10 and sorted by duration descending.",
       "transformations": [
         {
-          "id": "labelsToFields",
+          "id": "seriesToRows",
+          "options": {}
+        },
+        {
+          "id": "sortBy",
           "options": {
-            "mode": "columns"
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
           }
         },
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "detected_level": true,
-              "filename": true,
-              "job": true,
-              "service_name": true
-            },
-            "indexByName": {
-              "Time": 0,
-              "app": 1,
-              "method": 2,
-              "status": 3,
-              "path": 4,
-              "remote_addr": 5,
-              "Value": 6
-            },
             "renameByName": {
-              "method": "Method",
-              "status": "Status",
-              "path": "Path",
-              "remote_addr": "Source IP",
-              "Value": "Max request time (s)"
+              "Metric": "App / Method / Status / Path",
+              "Value": "Max duration (ms)"
             }
           }
         }
@@ -885,7 +899,24 @@
           },
           "mappings": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duration (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
@@ -893,9 +924,15 @@
         "footer": {
           "show": false,
           "enablePagination": true
-        }
+        },
+        "sortBy": [
+          {
+            "displayName": "Time",
+            "desc": true
+          }
+        ]
       },
-      "description": "Structured columns support quick scanning; Raw event preserves the original JSON line. Filters apply to app, method, status, and path.",
+      "description": "Shows Time, App, Method, Status, Path, Duration (ms), and Source IP. Other fields and the full JSON line remain available in Loki/Explore.",
       "transformations": [
         {
           "id": "extractFields",
@@ -906,13 +943,47 @@
           }
         },
         {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "request_time",
+                "destinationType": "number"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "request_time"
+                }
+              },
+              "operator": "*",
+              "right": {
+                "fixed": "1000"
+              }
+            },
+            "alias": "Duration (ms)",
+            "replaceFields": false
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
               "labels": true,
               "tsNs": true,
               "labelTypes": true,
-              "id": true
+              "id": true,
+              "request_time": true,
+              "Line": true
             },
             "indexByName": {
               "Time": 0,
@@ -920,17 +991,15 @@
               "method": 2,
               "status": 3,
               "path": 4,
-              "request_time": 5,
-              "remote_addr": 6,
-              "Line": 7
+              "Duration (ms)": 5,
+              "remote_addr": 6
             },
             "renameByName": {
+              "app": "App",
               "method": "Method",
               "status": "Status",
               "path": "Path",
-              "request_time": "Duration (s)",
-              "remote_addr": "Source IP",
-              "Line": "Raw event"
+              "remote_addr": "Source IP"
             }
           }
         }

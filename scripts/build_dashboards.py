@@ -85,12 +85,12 @@ def panel(panel_id, title, panel_type, x, y, w, h, targets, unit=None, descripti
 
 
 def stat(panel_id, title, expr, x, color="green", unit=None, description=None, y=0, w=4, h=5,
-         decimals=None, legend=None, instant=False, text_mode="value"):
+         decimals=None, legend=None, instant=False, text_mode="value", orientation="auto"):
     thresholds = [{"color": color, "value": None}]
     result = panel(panel_id, title, "stat", x, y, w, h,
                  [prom_target(expr, legend=legend, instant=instant)], unit, description,
                  {"colorMode": "value", "graphMode": "area", "justifyMode": "center",
-                  "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
+                  "orientation": orientation, "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
                   "showPercentChange": False, "textMode": text_mode}, thresholds=thresholds,
                  no_value="No samples in selected range")
     if decimals is not None:
@@ -107,7 +107,7 @@ def series_panel(panel_id, title, expr, x, y, w, h, unit=None, legend="{{app}}",
 
 
 def bar_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, legend="{{path}}", description=None,
-              category_field=None, decimals=None):
+              category_field=None, decimals=None, sort_descending=False):
     target = loki_target(expr, instant=True, legend=legend) if datasource == LOKI else prom_target(expr, legend=legend, instant=True)
     options = {"orientation": "horizontal", "showValue": "always", "stacking": "none",
                "legend": {"displayMode": "hidden", "placement": "bottom", "showLegend": False},
@@ -119,16 +119,24 @@ def bar_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, legend="{{path
         # Explicit instant-vector series names become one Metric row per series;
         # this avoids treating the 2026 Time field as the app category.
         result["transformations"] = [{"id": "seriesToRows", "options": {}}]
+        if sort_descending:
+            result["transformations"].append({"id": "sortBy", "options": {"sort": [{"field": "Value", "desc": True}]}})
     if decimals is not None:
         result["fieldConfig"]["defaults"]["decimals"] = decimals
     return result
 
 
-def table_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, description=None, transformations=None):
-    target = loki_target(expr, instant=True) if datasource == LOKI else prom_target(expr, instant=True)
-    return panel(panel_id, title, "table", x, y, w, h, [target], description=description,
-                 options={"showHeader": True, "cellHeight": "sm", "footer": {"show": False}},
-                 transformations=transformations)
+def table_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, description=None,
+                transformations=None, unit=None, decimals=None, overrides=None, sort_by=None, legend=None):
+    target = loki_target(expr, instant=True, legend=legend) if datasource == LOKI else prom_target(expr, instant=True, legend=legend)
+    options = {"showHeader": True, "cellHeight": "sm", "footer": {"show": False}}
+    if sort_by:
+        options["sortBy"] = [{"displayName": sort_by, "desc": True}]
+    result = panel(panel_id, title, "table", x, y, w, h, [target], unit, description,
+                   options=options, overrides=overrides, transformations=transformations)
+    if decimals is not None:
+        result["fieldConfig"]["defaults"]["decimals"] = decimals
+    return result
 
 
 def dashboard_links():
@@ -202,44 +210,49 @@ def application_detail():
     event_filter = ' | method=~"${method:regex}" | status=~"${status:raw}" | path=~".*${path:regex}.*"'
     panel_vars = [app_variable(), custom_variable("method", "Method", ["All : .*", "GET", "POST"]),
                   custom_variable("status", "Status class / code", ["All : .*", "2xx : 2..", "3xx : 3..", "4xx : 4..", "5xx : 5..", "403", "404", "429", "500"]),
-                  textbox_variable("path", "Path contains", "")]
+                  textbox_variable("path", "Path contains (Loki only)", "")]
     panels = [
         stat(1, "Requests / second", f"sum(rate(nginx_http_response_count_total{{{metric_filters}}}[$__rate_interval]))", 0, "blue", "reqps"),
         stat(2, "Requests in range", f"sum(increase(nginx_http_response_count_total{{{metric_filters}}}[$__range])) or vector(0)", 4, "blue", "short"),
-        stat(3, "P50 latency", f'histogram_quantile(0.50,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 8, "green", "s", legend="{{app}}", instant=True, text_mode="value_and_name"),
-        stat(4, "P95 latency", f'histogram_quantile(0.95,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 12, "yellow", "s", legend="{{app}}", instant=True, text_mode="value_and_name"),
-        stat(5, "P99 latency", f'histogram_quantile(0.99,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 16, "orange", "s", legend="{{app}}", instant=True, text_mode="value_and_name"),
+        stat(3, "P50 latency", f'histogram_quantile(0.50,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 8, "green", "s", legend="{{app}}", instant=True, text_mode="value_and_name", orientation="horizontal"),
+        stat(4, "P95 latency", f'histogram_quantile(0.95,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 12, "yellow", "s", legend="{{app}}", instant=True, text_mode="value_and_name", orientation="horizontal"),
+        stat(5, "P99 latency", f'histogram_quantile(0.99,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{{{metric_filters}}}[$__rate_interval])))', 16, "orange", "s", legend="{{app}}", instant=True, text_mode="value_and_name", orientation="horizontal"),
         stat(6, "429 responses", f'sum(increase(nginx_http_response_count_total{{{metric_filters},status="429"}}[$__range])) or vector(0)', 20, "orange", "short", "No 429s are synthesized by the current Nginx demo."),
         series_panel(7, "Request rate by HTTP status", f'sum by (status) (rate(nginx_http_response_count_total{{{metric_filters}}}[$__rate_interval]))', 0, 5, 12, 8, "reqps", "{{status}}"),
         series_panel(8, "4xx and 5xx over time", f'sum by (status) (rate(nginx_http_response_count_total{{{metric_filters},status=~"4..|5.."}}[$__rate_interval]))', 12, 5, 12, 8, "reqps", "{{status}}"),
-        bar_panel(9, "Methods", f'sum by (method) (increase(nginx_http_response_count_total{{{metric_filters}}}[$__range]))', 0, 13, 8, 8, PROM, "{{method}}", category_field="Metric"),
-        bar_panel(10, "Most requested paths", f'topk(10,sum by (path) (count_over_time({{job="nginx",app=~"$app"}}{event_filter} [$__range])))', 8, 13, 8, 8, LOKI, "{{path}}", "Routes are grouped by path; method, status, app, and path filters apply. Path is structured metadata, not an indexed stream label.", category_field="Metric"),
-        table_panel(11, "Slowest observed requests", f'topk(10,max_over_time({{job="nginx",app=~"$app"}}{event_filter} | unwrap request_time | __error__="" [$__range]))', 16, 13, 8, 8, LOKI, "Maximum observed request time per app, method, status, and path grouping in the selected range. Fields are structured metadata, not stream labels.", transformations=[
-            {"id": "labelsToFields", "options": {"mode": "columns"}},
+        bar_panel(9, "Methods (estimated period total)", f'sum by (method) (increase(nginx_http_response_count_total{{{metric_filters}}}[$__range]))', 0, 13, 8, 8, PROM, "{{method}}", INCREASE_NOTE, category_field="Metric", decimals=0),
+        bar_panel(10, "Most requested paths (event count)", f'topk(10,sum by (path) (count_over_time({{job="nginx",app=~"$app"}}{event_filter} [$__range])))', 8, 13, 8, 8, LOKI, "{{path}}", "Exact Loki event count in the selected period. Top 10 paths, ordered by request volume; app, method, status, and path filters apply. Path is structured metadata, not an indexed stream label.", category_field="Metric", decimals=0, sort_descending=True),
+        table_panel(11, "Slowest by app/method/status/path", f'topk(10,1000 * max by (app,method,status,path) (max_over_time({{job="nginx",app=~"$app"}}{event_filter} | unwrap request_time | __error__="" [$__range])))', 16, 13, 8, 8, LOKI, "Maximum request time in milliseconds for each app, method, status, and path group within the selected range. Results are limited to the top 10 and sorted by duration descending.", unit="ms", decimals=0, legend="{{app}} / {{method}} / {{status}} / {{path}}", sort_by="Max duration (ms)", transformations=[
+            {"id": "seriesToRows", "options": {}},
+            {"id": "sortBy", "options": {"sort": [{"field": "Value", "desc": True}]}},
             {"id": "organize", "options": {
-                "excludeByName": {"detected_level": True, "filename": True, "job": True, "service_name": True},
-                "indexByName": {"Time": 0, "app": 1, "method": 2, "status": 3, "path": 4,
-                                "remote_addr": 5, "Value": 6},
-                "renameByName": {"method": "Method", "status": "Status", "path": "Path",
-                                 "remote_addr": "Source IP", "Value": "Max request time (s)"},
+                "renameByName": {"Metric": "App / Method / Status / Path", "Value": "Max duration (ms)"},
             }},
         ]),
         panel(12, "Recent requests for selected app", "table", 0, 21, 24, 11,
               [loki_target(f'{{job="nginx",app=~"$app"}}{event_filter}', max_lines=100)],
-              description="Structured columns support quick scanning; Raw event preserves the original JSON line. Filters apply to app, method, status, and path.",
-              options={"showHeader": True, "cellHeight": "sm", "footer": {"show": False, "enablePagination": True}},
+              description="Shows Time, App, Method, Status, Path, Duration (ms), and Source IP. Other fields and the full JSON line remain available in Loki/Explore.",
+              options={"showHeader": True, "cellHeight": "sm", "footer": {"show": False, "enablePagination": True},
+                       "sortBy": [{"displayName": "Time", "desc": True}]},
+              overrides=[{"matcher": {"id": "byName", "options": "Duration (ms)"},
+                           "properties": [{"id": "unit", "value": "ms"}, {"id": "decimals", "value": 0}]}],
               transformations=[
                   {"id": "extractFields", "options": {"source": "Line", "format": "json", "replace": False}},
+                  {"id": "convertFieldType", "options": {"conversions": [{"targetField": "request_time", "destinationType": "number"}], "fields": {}}},
+                  {"id": "calculateField", "options": {"mode": "binary", "binary": {
+                      "left": {"matcher": {"id": "byName", "options": "request_time"}},
+                      "operator": "*", "right": {"fixed": "1000"}}, "alias": "Duration (ms)", "replaceFields": False}},
                   {"id": "organize", "options": {
-                      "excludeByName": {"labels": True, "tsNs": True, "labelTypes": True, "id": True},
+                      "excludeByName": {"labels": True, "tsNs": True, "labelTypes": True, "id": True,
+                                         "request_time": True, "Line": True},
                       "indexByName": {"Time": 0, "app": 1, "method": 2, "status": 3, "path": 4,
-                                      "request_time": 5, "remote_addr": 6, "Line": 7},
-                      "renameByName": {"method": "Method", "status": "Status", "path": "Path",
-                                       "request_time": "Duration (s)", "remote_addr": "Source IP", "Line": "Raw event"},
+                                      "Duration (ms)": 5, "remote_addr": 6},
+                      "renameByName": {"app": "App", "method": "Method", "status": "Status",
+                                       "path": "Path", "remote_addr": "Source IP"},
                   }},
               ]),
     ]
-    return base_dashboard("nginx-application-detail", "Nginx | Application Detail", "Compare and investigate one or all applications without per-app panels.", "10s", panel_vars, panels)
+    return base_dashboard("nginx-application-detail", "Nginx | Application Detail", "Application, Method, and Status filter metrics and logs. Path filters Loki panels only because paths are not Prometheus labels.", "10s", panel_vars, panels)
 
 
 def live_logs():

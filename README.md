@@ -136,3 +136,10 @@ The Live Logs dashboard presents a compact table with Time, App, Method, Status,
 The dashboard refreshes periodically every 2 seconds. This is separate from Grafana Explore Live, which uses Grafana Live WebSocket tailing. The Explore link carries the selected application, method, status, path, source IP regex, and time range; click Live in Explore to start streaming. Path and source IP filter Loki events only.
 
 Integration checks exercise every filter separately and in combination, validate the Explore query and range, query recent rows through Grafana/Loki, and check the Grafana Live WebSocket upgrade. Browser-based visual validation was unavailable in the execution environment; API/configuration checks do not claim visual confirmation. See [docs/live-logs-refinement.md](docs/live-logs-refinement.md) for evidence.
+
+
+## Marco 02.4 - Security dashboard
+
+The Security dashboard is organized into Overview, Suspicious Activity, and Investigation. HTTP Methods are rounded estimates from Prometheus increase(); rate panels show current req/s with three decimal places, and exporter parse errors remain a separate collection-health indicator. Scanner-like path matches are triage signals, not attack classifications. Origin rankings require at least two 4xx/5xx events in five minutes and aggregate source IP only in the Loki query result. Recent security events are shown as a seven-column table, newest first, capped at 500; the full JSON remains available in Explore. The Explore link preserves the selected application, source IP regex, status filter, and time range.
+
+See [docs/security-dashboard-refinement.md](docs/security-dashboard-refinement.md) for implementation details and validation evidence.

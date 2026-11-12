@@ -41,3 +41,15 @@ Também passaram `docker compose config --quiet`, validação JSON dos quatro da
 Não foi possível fazer captura ou inspeção visual nesta sessão: o serviço de automação informou que o host de navegador estava indisponível, e o ambiente não tem Playwright, Selenium, Pyppeteer ou navegador instalado. Portanto, os frames/consultas e o JSON provisionado foram verificados via API; isso **não** é declarado como confirmação visual da renderização final.
 
 As transformações `Extract fields` e `Organize fields` usadas na tabela seguem a documentação do Grafana: [transformações de dados](https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/query-transform-data/transform-data/). Para detalhes, os frames do painel podem ser inspecionados no Grafana via Panel inspector.
+
+## Refinamento final
+
+O painel **Methods (estimated period total)** mantém `increase()` e declara no título/descrição que a contagem é uma estimativa; `decimals: 0` arredonda somente a apresentação. **Most requested paths (event count)** conta eventos Loki no intervalo selecionado, limita a dez caminhos e usa o `sortBy` descendente após `seriesToRows`, pois a API Loki não garante a ordem do vetor `topk`. A categoria e o painel identificam os valores como caminhos e contagens de eventos.
+
+**Slowest by app/method/status/path** multiplica o valor `request_time` (segundos no evento) por 1000 na consulta LogQL, limita os resultados a dez e ordena o frame pelo valor decrescente. `max by (app,method,status,path)` explicita as dimensões da agregação, evitando uma linha por IP de origem. O campo é exibido em `ms` sem casas decimais.
+
+A tabela **Recent requests** mostra somente Time, App, Method, Status, Path, Duration (ms) e Source IP. As transformações `convertFieldType` e `calculateField` convertem o campo JSON textual em número e multiplicam por 1000; `organize` oculta `Line` e os campos auxiliares somente no painel. O JSON original e os metadados completos permanecem armazenados e consultáveis no Loki/Explore. Os filtros Application, Method e Status aplicam-se às consultas Prometheus e Loki; o controle visível Path indica “Loki only” porque caminho não é label Prometheus.
+
+Os três painéis de percentil usam `orientation: horizontal`, legenda por app e um valor instantâneo por app para alinhar nome e valor, inclusive quando o filtro seleciona apenas uma aplicação. As consultas `histogram_quantile` e seus buckets permanecem iguais.
+
+Validação desta revisão: `python tests/verify_pipeline.py --verify-scenarios --verify-persistence`, `docker compose config --quiet`, JSON dos quatro dashboards e `git diff --check`. A resposta de dados de Loki foi confirmada limitada ao Top 10; a ordenação descendente é aplicada pelo `sortBy` do frame Grafana. A validação visual segue pendente quando a sessão não disponibiliza navegador.

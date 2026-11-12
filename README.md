@@ -127,3 +127,12 @@ Diagnóstico e correções do Application Detail: [docs/application-detail-audit
 Grafana está em modo anônimo e deve permanecer acessível apenas em loopback; não use esta configuração como implantação corporativa. O Loki local não fornece autenticação. Rotação/limite de volume dos logs e gestão operacional de segredos pertencem à próxima etapa. IPs de origem podem ser dados pessoais; a retenção atual é local e deve ser reavaliada antes de qualquer uso real.
 
 Próxima etapa recomendada: avaliar autenticação/TLS, limites/rotação e retenção do Loki/Prometheus, política de privacidade para IPs, alertas operacionais e configuração corporativa desacoplada do Compose demo, tudo em ambiente autorizado e sem levar dados sintéticos como configuração de produção.
+
+
+## Marco 02.3 - Live Logs
+
+The Live Logs dashboard presents a compact table with Time, App, Method, Status, Path, Duration (ms), and Source IP. Rows are ordered newest first, with a 500-event query limit and pagination. The original JSON line remains available in Loki/Explore. Status cells use native thresholds to distinguish 4xx and 5xx responses.
+
+The dashboard refreshes periodically every 2 seconds. This is separate from Grafana Explore Live, which uses Grafana Live WebSocket tailing. The Explore link carries the selected application, method, status, path, source IP regex, and time range; click Live in Explore to start streaming. Path and source IP filter Loki events only.
+
+Integration checks exercise every filter separately and in combination, validate the Explore query and range, query recent rows through Grafana/Loki, and check the Grafana Live WebSocket upgrade. Browser-based visual validation was unavailable in the execution environment; API/configuration checks do not claim visual confirmation. See [docs/live-logs-refinement.md](docs/live-logs-refinement.md) for evidence.

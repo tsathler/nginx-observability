@@ -33,7 +33,7 @@ A security-specific check over a recent Loki range returned 35 scanner-like even
 
 `docker compose config --quiet`, dashboard JSON parsing, Python compilation, and `git diff --check` passed. The Grafana API confirmed 15 Security panels, including the three section rows. Rate panel PromQL was queried against Prometheus; the dashboard's LogQL was queried against Loki. The HTTP methods query returned GET and POST.
 
-Visual validation was unavailable: the computer-use host reported that no browser was available. Therefore no screenshot or claim of rendered visual confirmation is included. API, query, and dashboard-configuration checks passed, but the Grafana page should receive a visual review when a browser is available.
+Visual validation of **Scanner-like paths**, **Origins with repeated errors**, and **Recent security events** was confirmed after running the synthetic scan scenario. Their events were reviewed together as investigation signals; a 404 is not classified automatically as an attack. No screenshot artifact was added to the repository. The earlier browser limitation still applies to the agent's inspection session, so this record reflects the operator's completed visual review.
 
 ## Scope
 
@@ -44,3 +44,7 @@ Only the local Compose laboratory was used. No corporate servers, production dat
 The subsequent visual audit found a time-window mismatch: the scanner and origin panels used a hard-coded five-minute LogQL lookback while Recent security events followed the dashboard's selected interval (15 minutes by default). A red-capable regression check caught the fixed `[5m]` selector. Replaying the same synthetic scan and evaluating at one shared dashboard end time reproduced the reported symptom: the 15-minute table had 33 suspicious events, both five-minute panels returned no series, while equivalent 15-minute metric queries returned 16 app/path combinations and three repeated-error origins.
 
 Both aggregate panels now use Grafana's `$__range`, matching the time range used by the events table. The Source IP regex now filters scanner paths, origin rankings, and recent events consistently. The table's field organization explicitly hides every non-requested field from the current NGINX JSON schema (`request`, user, referrer, user agent, local time, byte count, raw line, and parser metadata), while retaining the complete source event in Loki/Explore. The regression test compares scanner counts and repeated-origin counts against events retrieved in the same interval, checks app/IP filters separately and together, and confirms that each scanner event appears in the table for the selected app/IP.
+
+## Future improvement
+
+Improve category readability in **Scanner-like paths** so full paths and application context are easier to distinguish at a glance. Keep this as a presentation improvement; current path detection, labels, and per-application query results are already validated.

@@ -34,7 +34,7 @@ Quatro dashboards são provisionados automaticamente: **Nginx | Overview**, **Ng
 - **Overview:** taxas atuais em req/s separadas das contagens estimadas no intervalo, P95, tráfego temporal por status, totais e P95 por app e ranking de erros no período. Totais são exibidos sem casas decimais e identificados como estimativas Prometheus; gráficos comparativos usam uma categoria por aplicação.
 - **Application Detail:** seletor de aplicação (inclui All), filtros de aplicação/método/status e Path (somente Loki), total e RPS, P50/P95/P99 identificados por app, categorias de método e rota, Top 10 rotas por volume, maiores durações por app/método/status/caminho em ms e tabela recente com Time, App, Method, Status, Path, Duration (ms) e Source IP.
 - **Live Logs:** filtro por app/método/status/path/IP e até 500 eventos; atualização do dashboard em 2s. Para streaming WebSocket genuíno, use o link **Open Loki Explore Live tail** e ative **Live** no Explore. Refresh de painel não é Live tail.
-- **Security:** tendências de 403/404/429/5xx, métodos, caminhos com padrão de sondagem, concentrações por IP de origem e erros por app. Os IPs/caminhos vêm de parsing em consulta, não são labels indexados. São sinais sintéticos para triagem; um 404 isolado não é classificado como ataque.
+- **Security:** seções Overview, Suspicious Activity e Investigation; taxas atuais req/s com precisão de três casas, 429 como estimativa do período e erros do exporter como saúde da coleta. Methods usa `increase()` arredondado. Scanner-like paths e origens recorrentes exigem o intervalo selecionado e os filtros app/IP; origens requerem ao menos dois erros 4xx/5xx. A tabela recente traz sete campos, em ordem decrescente e com limite de 500 eventos; Explore mantém o JSON completo. São sinais sintéticos para triagem: um 404 isolado não é classificado como ataque.
 
 As variáveis de método/status são opções fixas; `$app` é descoberta do label do exporter, portanto aplicações instrumentadas futuramente não exigem duplicar painéis. Application, Method e Status filtram as consultas Prometheus e Loki; Path filtra somente consultas Loki, pois caminho não é label Prometheus. O Loki usa os campos method/status/path/request_time que o Alloy guarda como structured metadata, sem adicionar IP ou URL às labels indexadas. “Slowest by app/method/status/path” mostra a duração máxima em ms por combinação no intervalo selecionado; o cenário normal não gera rotas lentas, então use degradação/pico ou uma requisição sintética `/slower` controlada para preencher esse painel. Methods usa `increase()` de counters e exibe uma estimativa arredondada a requisições inteiras. Most requested paths apresenta contagem de eventos Loki no intervalo, Top 10 ordenado por volume. A tabela recente mostra sete campos de leitura rápida; o payload JSON e os demais campos permanecem disponíveis no Loki/Explore.
 
@@ -122,24 +122,16 @@ Auditoria e comparação de referências: [docs/dashboard-audit.md](docs/dashboa
 
 Diagnóstico e correções do Application Detail: [docs/application-detail-audit.md](docs/application-detail-audit.md).
 
+## Marco 02 — encerramento e validação
+
+A revisão visual do dashboard Security, após o cenário sintético de varredura, confirmou os painéis Scanner-like paths, Origins with repeated errors e Recent security events. Os resultados foram avaliados como sinais para investigação; respostas 404 não são classificadas automaticamente como ataques. A causa da divergência de intervalo e a correção estão registradas em [docs/security-dashboard-refinement.md](docs/security-dashboard-refinement.md).
+
+A validação visual de Application Detail e Live Logs continua pendente. As consultas e a integração desses dashboards foram verificadas por API; essa verificação não substitui a revisão da renderização no Grafana.
+
+Validação integrada reproduzível: python tests/verify_pipeline.py --verify-scenarios --verify-persistence. O comando verifica consultas PromQL/LogQL dos quatro dashboards, separação por aplicação, cenários sintéticos e persistência após reiniciar Prometheus e Loki. Evidências específicas: [Application Detail](docs/application-detail-audit.md), [Live Logs](docs/live-logs-refinement.md) e [Security](docs/security-dashboard-refinement.md).
+
 ## Limitações do laboratório
 
 Grafana está em modo anônimo e deve permanecer acessível apenas em loopback; não use esta configuração como implantação corporativa. O Loki local não fornece autenticação. Rotação/limite de volume dos logs e gestão operacional de segredos pertencem à próxima etapa. IPs de origem podem ser dados pessoais; a retenção atual é local e deve ser reavaliada antes de qualquer uso real.
 
 Próxima etapa recomendada: avaliar autenticação/TLS, limites/rotação e retenção do Loki/Prometheus, política de privacidade para IPs, alertas operacionais e configuração corporativa desacoplada do Compose demo, tudo em ambiente autorizado e sem levar dados sintéticos como configuração de produção.
-
-
-## Marco 02.3 - Live Logs
-
-The Live Logs dashboard presents a compact table with Time, App, Method, Status, Path, Duration (ms), and Source IP. Rows are ordered newest first, with a 500-event query limit and pagination. The original JSON line remains available in Loki/Explore. Status cells use native thresholds to distinguish 4xx and 5xx responses.
-
-The dashboard refreshes periodically every 2 seconds. This is separate from Grafana Explore Live, which uses Grafana Live WebSocket tailing. The Explore link carries the selected application, method, status, path, source IP regex, and time range; click Live in Explore to start streaming. Path and source IP filter Loki events only.
-
-Integration checks exercise every filter separately and in combination, validate the Explore query and range, query recent rows through Grafana/Loki, and check the Grafana Live WebSocket upgrade. Browser-based visual validation was unavailable in the execution environment; API/configuration checks do not claim visual confirmation. See [docs/live-logs-refinement.md](docs/live-logs-refinement.md) for evidence.
-
-
-## Marco 02.4 - Security dashboard
-
-The Security dashboard is organized into Overview, Suspicious Activity, and Investigation. HTTP Methods are rounded estimates from Prometheus increase(); rate panels show current req/s with three decimal places, and exporter parse errors remain a separate collection-health indicator. Scanner-like path matches are triage signals, not attack classifications. Scanner paths, origin rankings, and the events table use the same selected dashboard interval. Application and Source IP filters scope all three; origin rankings require at least two 4xx/5xx events and aggregate source IP only in the Loki query result. Recent security events are shown as a seven-column table, newest first, capped at 500; the full JSON remains available in Explore. The Explore link preserves the selected application, source IP regex, status filter, and time range.
-
-See [docs/security-dashboard-refinement.md](docs/security-dashboard-refinement.md) for implementation details and validation evidence.

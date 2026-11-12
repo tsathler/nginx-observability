@@ -32,11 +32,11 @@ Quatro dashboards são provisionados automaticamente: **Nginx | Overview**, **Ng
 ### Dashboards
 
 - **Overview:** taxas atuais em req/s separadas das contagens estimadas no intervalo, P95, tráfego temporal por status, totais e P95 por app e ranking de erros no período. Totais são exibidos sem casas decimais e identificados como estimativas Prometheus; gráficos comparativos usam uma categoria por aplicação.
-- **Application Detail:** seletor de aplicação (inclui All), filtros de método/status/path, total e RPS, P50/P95/P99, status, métodos, rotas mais acessadas, requisições lentas e eventos recentes.
+- **Application Detail:** seletor de aplicação (inclui All), filtros de método/status/path, total e RPS, P50/P95/P99 identificados por aplicação, status e métodos ao longo do tempo, categorias de método/rota legíveis, tabela das requisições mais lentas e tabela de eventos recentes com colunas estruturadas e JSON original preservado.
 - **Live Logs:** filtro por app/método/status/path/IP e até 500 eventos; atualização do dashboard em 2s. Para streaming WebSocket genuíno, use o link **Open Loki Explore Live tail** e ative **Live** no Explore. Refresh de painel não é Live tail.
 - **Security:** tendências de 403/404/429/5xx, métodos, caminhos com padrão de sondagem, concentrações por IP de origem e erros por app. Os IPs/caminhos vêm de parsing em consulta, não são labels indexados. São sinais sintéticos para triagem; um 404 isolado não é classificado como ataque.
 
-As variáveis de método/status são opções fixas; `$app` é descoberta do label do exporter, portanto aplicações instrumentadas futuramente não exigem duplicar painéis. Rotas, IPs e eventos JSON são extraídos no momento da consulta ao Loki.
+As variáveis de método/status são opções fixas; `$app` é descoberta do label do exporter, portanto aplicações instrumentadas futuramente não exigem duplicar painéis. O filtro Path é aplicado às consultas Loki, pois caminho não é label Prometheus. O Loki usa os campos method/status/path/request_time que o Alloy guarda como structured metadata, sem adicionar IP ou URL às labels indexadas. “Slowest observed requests” mostra o maior tempo por combinação de aplicação, método, status e caminho no intervalo selecionado; o cenário normal não gera rotas lentas, então essa tabela só apresenta valores após um cenário de degradação/pico ou uma requisição sintética `/slower` controlada.
 
 ## Verificar o pipeline
 
@@ -119,6 +119,8 @@ Para remover também os dados persistidos do laboratório: `docker compose down 
 - Imagens estão fixadas em versões explícitas; armazenamento Prometheus, Loki, Alloy e Grafana usa volumes nomeados.
 
 Auditoria e comparação de referências: [docs/dashboard-audit.md](docs/dashboard-audit.md). Evidências de runtime e consultas do Marco 02: [docs/marco02-validation.md](docs/marco02-validation.md). Correção das categorias do Overview: [docs/dashboard-overview-fix.md](docs/dashboard-overview-fix.md). Decisões e fontes arquiteturais: [docs/architecture-research.md](docs/architecture-research.md).
+
+Diagnóstico e correções do Application Detail: [docs/application-detail-audit.md](docs/application-detail-audit.md).
 
 ## Limitações do laboratório
 

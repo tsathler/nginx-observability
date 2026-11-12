@@ -1,0 +1,45 @@
+local.file_match "nginx" {
+  path_targets = [
+    { __path__ = "/var/log/nginx/app-a.json", app = "app-a", job = "nginx" },
+    { __path__ = "/var/log/nginx/app-b.json", app = "app-b", job = "nginx" },
+    { __path__ = "/var/log/nginx/app-c.json", app = "app-c", job = "nginx" },
+  ]
+}
+
+loki.source.file "nginx" {
+  targets    = local.file_match.nginx.targets
+  forward_to = [loki.process.nginx.receiver]
+}
+
+loki.process "nginx" {
+  stage.json {
+    expressions = {
+      time         = "time",
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+  stage.structured_metadata {
+    values = {
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

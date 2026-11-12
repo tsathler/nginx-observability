@@ -198,7 +198,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -260,7 +260,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range])) or vector(0)",
           "refId": "A",
           "instant": false
         }
@@ -322,9 +322,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true,
+          "legendFormat": "{{app}}"
         }
       ],
       "fieldConfig": {
@@ -360,7 +361,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value"
+        "textMode": "value_and_name"
       }
     },
     {
@@ -384,9 +385,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true,
+          "legendFormat": "{{app}}"
         }
       ],
       "fieldConfig": {
@@ -422,7 +424,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value"
+        "textMode": "value_and_name"
       }
     },
     {
@@ -446,9 +448,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99,sum by (le,app) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true,
+          "legendFormat": "{{app}}"
         }
       ],
       "fieldConfig": {
@@ -484,7 +487,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value"
+        "textMode": "value_and_name"
       }
     },
     {
@@ -508,7 +511,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",status=\"429\"}[$__range])) or vector(0)",
+          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\",status=\"429\"}[$__range])) or vector(0)",
           "refId": "A",
           "instant": false
         }
@@ -571,7 +574,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "sum by (status) (rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{status}}"
@@ -621,7 +624,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
+          "expr": "sum by (status) (rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\",status=~\"4..|5..\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{status}}"
@@ -671,7 +674,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (method) (increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum by (method) (increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range]))",
           "refId": "A",
           "instant": true,
           "legendFormat": "{{method}}"
@@ -699,8 +702,15 @@
         "tooltip": {
           "mode": "single",
           "sort": "desc"
+        },
+        "xField": "Metric"
+      },
+      "transformations": [
+        {
+          "id": "seriesToRows",
+          "options": {}
         }
-      }
+      ]
     },
     {
       "id": 10,
@@ -723,7 +733,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10,sum by(app,path)(count_over_time({job=\"nginx\",app=~\"$app\"} | json | __error__=\"\" [$__auto])))",
+          "expr": "topk(10,sum by (path) (count_over_time({job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" [$__range])))",
           "queryType": "instant",
           "refId": "A",
           "legendFormat": "{{path}}"
@@ -751,9 +761,16 @@
         "tooltip": {
           "mode": "single",
           "sort": "desc"
-        }
+        },
+        "xField": "Metric"
       },
-      "description": "Path is parsed from the line at query time; it is never an indexed label."
+      "description": "Routes are grouped by path; method, status, app, and path filters apply. Path is structured metadata, not an indexed stream label.",
+      "transformations": [
+        {
+          "id": "seriesToRows",
+          "options": {}
+        }
+      ]
     },
     {
       "id": 11,
@@ -776,7 +793,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10,max_over_time({job=\"nginx\",app=~\"$app\"} | json | unwrap request_time | __error__=\"\" [$__auto]))",
+          "expr": "topk(10,max_over_time({job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\" | unwrap request_time | __error__=\"\" [$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -797,12 +814,47 @@
           "show": false
         }
       },
-      "description": "Latency is unwrapped from the JSON line over the selected window."
+      "description": "Maximum observed request time per app, method, status, and path grouping in the selected range. Fields are structured metadata, not stream labels.",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "detected_level": true,
+              "filename": true,
+              "job": true,
+              "service_name": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "app": 1,
+              "method": 2,
+              "status": 3,
+              "path": 4,
+              "remote_addr": 5,
+              "Value": 6
+            },
+            "renameByName": {
+              "method": "Method",
+              "status": "Status",
+              "path": "Path",
+              "remote_addr": "Source IP",
+              "Value": "Max request time (s)"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 12,
       "title": "Recent requests for selected app",
-      "type": "logs",
+      "type": "table",
       "gridPos": {
         "x": 0,
         "y": 21,
@@ -820,9 +872,10 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"nginx\",app=~\"$app\"} | json | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\"",
+          "expr": "{job=\"nginx\",app=~\"$app\"} | method=~\"${method:regex}\" | status=~\"${status:raw}\" | path=~\".*${path:regex}.*\"",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxLines": 100
         }
       ],
       "fieldConfig": {
@@ -835,16 +888,53 @@
         "overrides": []
       },
       "options": {
-        "showTime": true,
-        "showLabels": true,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "maxLines": 500
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "enablePagination": true
+        }
       },
-      "description": "Refreshes the selected time range. Open Live Logs / Explore for interactive search and websocket Live tail."
+      "description": "Structured columns support quick scanning; Raw event preserves the original JSON line. Filters apply to app, method, status, and path.",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "Line",
+            "format": "json",
+            "replace": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "labels": true,
+              "tsNs": true,
+              "labelTypes": true,
+              "id": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "app": 1,
+              "method": 2,
+              "status": 3,
+              "path": 4,
+              "request_time": 5,
+              "remote_addr": 6,
+              "Line": 7
+            },
+            "renameByName": {
+              "method": "Method",
+              "status": "Status",
+              "path": "Path",
+              "request_time": "Duration (s)",
+              "remote_addr": "Source IP",
+              "Line": "Raw event"
+            }
+          }
+        }
+      ]
     }
   ],
   "annotations": {

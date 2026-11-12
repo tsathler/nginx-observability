@@ -51,7 +51,7 @@ def grafana_prom_frames(expression):
     body = {
         "queries": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"},
                      "expr": expression, "instant": True, "range": False, "format": "time_series",
-                     "intervalMs": 10000, "maxDataPoints": 100}],
+                     "legendFormat": "{{app}}", "intervalMs": 10000, "maxDataPoints": 100}],
         "from": "now-15m", "to": "now",
     }
     request = urllib.request.Request(f"{grafana}/api/ds/query", data=json.dumps(body).encode(),
@@ -116,12 +116,20 @@ def verify_dashboard_and_datasources():
             for title in ("Requests by application (period total)", "Applications with the most errors (period total)"):
                 bar = by_title[title]
                 assert bar.get("type") == "barchart", f"{title} is not a bar chart"
-                assert bar.get("options", {}).get("xField") == "app", f"{title} does not use app as category"
-                assert any(item.get("id") == "labelsToFields" and item.get("options", {}).get("mode") == "columns"
+                assert bar.get("options", {}).get("xField") == "Metric", f"{title} does not use series Metric as category"
+                assert any(item.get("id") == "seriesToRows"
                            for item in bar.get("transformations", [])), f"{title} does not extract app labels into fields"
                 assert " by (app) " in bar["targets"][0]["expr"], f"{title} query does not group by app"
+                assert "increase(" in bar["targets"][0]["expr"], f"{title} no longer uses the counter increase estimate"
+                assert bar["fieldConfig"]["defaults"].get("decimals") == 0, f"{title} should display whole estimated requests"
+                assert "extrapolates" in bar.get("description", ""), f"{title} does not document increase() semantics"
             assert not any("429" in panel["title"] for panel in panels), "Overview reserves space for the synthetic zero-only 429 metric"
             assert any("period total" in panel["title"] for panel in panels if panel.get("type") == "barchart")
+            for title in ("Requests in selected period", "4xx responses (period)", "5xx responses (period)"):
+                total = by_title[title]
+                assert "increase(" in total["targets"][0]["expr"] and "round(" not in total["targets"][0]["expr"]
+                assert total["fieldConfig"]["defaults"].get("decimals") == 0
+                assert "extrapolates" in total.get("description", "")
         if uid != "nginx-overview":
             variables = dashboard.get("templating", {}).get("list", [])
             assert any(variable.get("name") == "app" for variable in variables), f"{uid} has no app selector"
@@ -184,12 +192,15 @@ def verify_overview_bar_categories(dashboard):
         expression = grafana_query_expression(panel["targets"][0]["expr"])
         frames = grafana_prom_frames(expression)
         labels = set()
+        series_names = set()
         for frame in frames:
             fields = frame["schema"]["fields"]
             value_field = next(field for field in fields if field["name"] == "Value")
             if "app" in value_field.get("labels", {}):
                 labels.add(value_field["labels"]["app"])
+                series_names.add(value_field.get("config", {}).get("displayNameFromDS"))
         assert labels == expected, f"{title}: Grafana query frame labels do not identify every app: {labels}"
+        assert series_names == expected, f"{title}: Grafana series names are not one name per app: {series_names}"
         selected = grafana_prom_frames(expression.replace('app=~".*"', 'app=~"app-b"'))
         selected_apps = {
             field.get("labels", {}).get("app")
@@ -197,6 +208,18 @@ def verify_overview_bar_categories(dashboard):
         }
         assert selected_apps == {"app-b"}, f"{title}: app variable filter leaked: {selected_apps}"
     return len(titles) * 2
+
+
+def verify_no_traffic_interval():
+    time.sleep(12)
+    for app in ("app-a", "app-b", "app-c"):
+        total = prom_query(f'sum by (app) (increase(nginx_http_response_count_total{{app="{app}"}}[10s]))')
+        assert total and len(total) == 1 and total[0]["metric"].get("app") == app, (app, total)
+        assert float(total[0]["value"][1]) == 0, f"{app}: request total was nonzero in an idle 10s interval: {total}"
+        errors = prom_query(f'sum by (app) (increase(nginx_http_response_count_total{{app="{app}",status=~"4..|5.."}}[10s])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{{app="{app}"}}))')
+        assert errors and len(errors) == 1 and errors[0]["metric"].get("app") == app, (app, errors)
+        assert float(errors[0]["value"][1]) == 0, f"{app}: error total was nonzero in an idle 10s interval: {errors}"
+    return 3
 
 
 def verify_queries():
@@ -258,7 +281,8 @@ def verify_scenarios():
         assert errors and any(float(item["value"][1]) > 0 for item in errors), "Degradation scenario produced no 500 rate"
         after = prom_scalar("sum(nginx_http_response_count_total)")
         assert after > before, "Scenario traffic did not increase Prometheus request counts"
-        return {"scan_events": sum(len(stream.get("values", [])) for stream in scan), "request_increase": round(after - before, 1)}
+        idle_apps = verify_no_traffic_interval()
+        return {"scan_events": sum(len(stream.get("values", [])) for stream in scan), "request_increase": round(after - before, 1), "idle_apps": idle_apps}
     finally:
         subprocess.run(["docker", "compose", "start", "traffic-generator"], check=True)
 
@@ -321,7 +345,7 @@ def main():
     suffix = "; persistence survived Prometheus/Loki restart" if args.verify_persistence else ""
     print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, app category/filter checks={category_checks}{suffix}")
     if scenario_result:
-        print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}")
+        print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}; no-traffic zero checks={scenario_result['idle_apps']}")
 
 
 if __name__ == "__main__":

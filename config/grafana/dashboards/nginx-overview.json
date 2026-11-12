@@ -188,7 +188,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -206,7 +207,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count."
     },
     {
       "id": 3,
@@ -312,7 +314,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -330,7 +333,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count."
     },
     {
       "id": 5,
@@ -436,7 +440,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -454,7 +459,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count."
     },
     {
       "id": 12,
@@ -662,7 +668,8 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -679,14 +686,13 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "app"
+        "xField": "Metric"
       },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
       "transformations": [
         {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
+          "id": "seriesToRows",
+          "options": {}
         }
       ]
     },
@@ -798,7 +804,7 @@
         "x": 0,
         "y": 20,
         "w": 24,
-        "h": 7
+        "h": 5
       },
       "datasource": {
         "type": "prometheus",
@@ -823,7 +829,8 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": []
       },
@@ -840,14 +847,13 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "app"
+        "xField": "Metric"
       },
+      "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
       "transformations": [
         {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
+          "id": "seriesToRows",
+          "options": {}
         }
       ]
     }

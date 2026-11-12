@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "config" / "grafana" / "dashboards"
 PROM = {"type": "prometheus", "uid": "prometheus"}
 LOKI = {"type": "loki", "uid": "loki"}
+INCREASE_NOTE = "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count."
 
 
 def app_variable():
@@ -79,14 +80,17 @@ def panel(panel_id, title, panel_type, x, y, w, h, targets, unit=None, descripti
     return result
 
 
-def stat(panel_id, title, expr, x, color="green", unit=None, description=None, y=0, w=4, h=5):
+def stat(panel_id, title, expr, x, color="green", unit=None, description=None, y=0, w=4, h=5, decimals=None):
     thresholds = [{"color": color, "value": None}]
-    return panel(panel_id, title, "stat", x, y, w, h,
+    result = panel(panel_id, title, "stat", x, y, w, h,
                  [prom_target(expr)], unit, description,
                  {"colorMode": "value", "graphMode": "area", "justifyMode": "center",
                   "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
                   "showPercentChange": False, "textMode": "value"}, thresholds=thresholds,
                  no_value="No samples in selected range")
+    if decimals is not None:
+        result["fieldConfig"]["defaults"]["decimals"] = decimals
+    return result
 
 
 def series_panel(panel_id, title, expr, x, y, w, h, unit=None, legend="{{app}}", description=None,
@@ -98,7 +102,7 @@ def series_panel(panel_id, title, expr, x, y, w, h, unit=None, legend="{{app}}",
 
 
 def bar_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, legend="{{path}}", description=None,
-              category_field=None):
+              category_field=None, decimals=None):
     target = loki_target(expr, instant=True, legend=legend) if datasource == LOKI else prom_target(expr, legend=legend, instant=True)
     options = {"orientation": "horizontal", "showValue": "always", "stacking": "none",
                "legend": {"displayMode": "hidden", "placement": "bottom", "showLegend": False},
@@ -107,9 +111,11 @@ def bar_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, legend="{{path
         options["xField"] = category_field
     result = panel(panel_id, title, "barchart", x, y, w, h, [target], "short", description, options)
     if category_field:
-        # Instant vectors keep labels in field metadata. Extract them into string
-        # columns so this bar chart can select a category instead of Time.
-        result["transformations"] = [{"id": "labelsToFields", "options": {"mode": "columns"}}]
+        # Explicit instant-vector series names become one Metric row per series;
+        # this avoids treating the 2026 Time field as the app category.
+        result["transformations"] = [{"id": "seriesToRows", "options": {}}]
+    if decimals is not None:
+        result["fieldConfig"]["defaults"]["decimals"] = decimals
     return result
 
 
@@ -160,11 +166,11 @@ def base_dashboard(uid, title, description, refresh, variables, panels):
 def overview():
     steps = [
         stat(1, "Current request rate", 'sum(rate(nginx_http_response_count_total{app=~"$app"}[$__rate_interval]))', 0, "blue", "reqps", y=0, w=4, h=4),
-        stat(2, "Requests in selected period", 'sum(increase(nginx_http_response_count_total{app=~"$app"}[$__range])) or vector(0)', 4, "blue", "short", y=0, w=4, h=4),
+        stat(2, "Requests in selected period", 'sum(increase(nginx_http_response_count_total{app=~"$app"}[$__range])) or vector(0)', 4, "blue", "short", INCREASE_NOTE, y=0, w=4, h=4, decimals=0),
         stat(3, "Current 4xx rate", 'sum(rate(nginx_http_response_count_total{app=~"$app",status=~"4.."}[$__rate_interval])) or vector(0)', 8, "orange", "reqps", y=0, w=4, h=4),
-        stat(4, "4xx responses (period)", 'sum(increase(nginx_http_response_count_total{app=~"$app",status=~"4.."}[$__range])) or vector(0)', 12, "orange", "short", y=0, w=3, h=4),
+        stat(4, "4xx responses (period)", 'sum(increase(nginx_http_response_count_total{app=~"$app",status=~"4.."}[$__range])) or vector(0)', 12, "orange", "short", INCREASE_NOTE, y=0, w=3, h=4, decimals=0),
         stat(5, "Current 5xx rate", 'sum(rate(nginx_http_response_count_total{app=~"$app",status=~"5.."}[$__rate_interval])) or vector(0)', 15, "red", "reqps", y=0, w=3, h=4),
-        stat(6, "5xx responses (period)", 'sum(increase(nginx_http_response_count_total{app=~"$app",status=~"5.."}[$__range])) or vector(0)', 18, "red", "short", y=0, w=3, h=4),
+        stat(6, "5xx responses (period)", 'sum(increase(nginx_http_response_count_total{app=~"$app",status=~"5.."}[$__range])) or vector(0)', 18, "red", "short", INCREASE_NOTE, y=0, w=3, h=4, decimals=0),
         stat(12, "P95 latency", f'histogram_quantile(0.95,sum by (le) (rate(nginx_http_response_time_seconds_hist_bucket{{app=~"$app"}}[$__rate_interval])))', 21, "green", "s", y=0, w=3, h=4),
     ]
     panels = steps + [
@@ -174,10 +180,10 @@ def overview():
             {"matcher": {"id": "byRegexp", "options": "4.."}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]},
             {"matcher": {"id": "byRegexp", "options": "5.."}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]},
         ]),
-        bar_panel(8, "Requests by application (period total)", 'sum by (app) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 4, 12, 8, PROM, "{{app}}", category_field="app"),
+        bar_panel(8, "Requests by application (period total)", 'sum by (app) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 4, 12, 8, PROM, "{{app}}", INCREASE_NOTE, category_field="Metric", decimals=0),
         series_panel(9, "P95 by application", 'histogram_quantile(0.95,sum by (app,le) (rate(nginx_http_response_time_seconds_hist_bucket{app=~"$app"}[$__rate_interval])))', 0, 12, 12, 8, "s", "{{app}}"),
         series_panel(10, "Error rate over time by application", 'sum by (app) (rate(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__rate_interval]))', 12, 12, 12, 8, "reqps", "{{app}}"),
-        bar_panel(11, "Applications with the most errors (period total)", 'topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~"$app"})))', 0, 20, 24, 7, PROM, "{{app}}", category_field="app"),
+        bar_panel(11, "Applications with the most errors (period total)", 'topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~"$app"})))', 0, 20, 24, 5, PROM, "{{app}}", INCREASE_NOTE, category_field="Metric", decimals=0),
     ]
     return base_dashboard("nginx-overview", "Nginx | Overview", "Traffic, reliability, latency, and cross-application comparison.", "10s", [app_variable()], panels)
 

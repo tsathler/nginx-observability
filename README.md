@@ -1,4 +1,4 @@
-# Nginx Observability
+﻿# Nginx Observability
 
 Laboratório local e reproduzível para observar várias aplicações HTTP publicadas pelo mesmo Nginx. Este marco não se conecta a ambientes corporativos: o gerador usa apenas a rede interna do Compose.
 

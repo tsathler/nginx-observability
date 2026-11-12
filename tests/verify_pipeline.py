@@ -127,7 +127,7 @@ def verify_dashboard_and_datasources():
         "nginx-overview": ("Nginx | Overview", 10),
         "nginx-application-detail": ("Nginx | Application Detail", 10),
         "nginx-live-logs": ("Nginx | Live Logs", 2),
-        "nginx-security": ("Nginx | Security", 10),
+        "nginx-security": ("Nginx | Security", 15),
     }
     dashboards = {}
     counts = {}
@@ -166,6 +166,8 @@ def verify_dashboard_and_datasources():
             live_panel = next(panel for panel in panels if panel["title"] == "HTTP access events")
             assert live_panel.get("type") == "table", f"{uid} access events are not a table"
             assert any("/explore?panes=" in link.get("url", "") for link in dashboard.get("links", [])), "Live Logs has no Explore link"
+        if uid == "nginx-security":
+            verify_security_dashboard(dashboard)
         dashboards[uid] = dashboard
         counts[uid] = len(panels)
     return sorted(source["name"] for source in sources), counts, dashboards
@@ -301,6 +303,129 @@ def verify_grafana_live_websocket():
         (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest()).decode()
     assert f"Sec-WebSocket-Accept: {expected_accept}" in headers, "Grafana returned an invalid WebSocket accept key"
     return status_line
+
+
+def resolve_security_expression(expression, app=".*", source_ip=".*"):
+    return expression.replace('$app', app).replace('${source_ip:raw}', source_ip)
+
+
+def verify_security_dashboard(dashboard):
+    panels = {panel["title"]: panel for panel in dashboard["panels"]}
+    rows = [panel["title"] for panel in dashboard["panels"] if panel.get("type") == "row"]
+    assert rows == ["Overview", "Suspicious Activity", "Investigation"], rows
+    assert [panels[title]["gridPos"]["y"] for title in rows] == [0, 14, 32]
+
+    methods = panels["HTTP methods (estimated period total)"]
+    method_expr = methods["targets"][0]["expr"]
+    assert "increase(" in method_expr and methods["fieldConfig"]["defaults"].get("decimals") == 0
+    assert methods["options"].get("xField") == "Metric"
+    assert [item.get("id") for item in methods.get("transformations", [])] == ["seriesToRows"]
+    assert "extrapolates" in methods["description"] and "rounded" in methods["description"]
+    frames = grafana_prom_frames(grafana_query_expression(method_expr), methods["targets"][0]["legendFormat"])
+    labels = {field.get("labels", {}).get("method") for frame in frames
+              for field in frame["schema"]["fields"] if field["name"] == "Value"}
+    assert labels >= {"GET", "POST"}, f"HTTP methods lost their method series: {labels}"
+
+    rate_panels = [panel for panel in dashboard["panels"]
+                   if panel.get("type") in ("stat", "timeseries")
+                   and panel.get("fieldConfig", {}).get("defaults", {}).get("unit") == "reqps"]
+    assert rate_panels, "No HTTP rate panels found"
+    for panel in rate_panels:
+        defaults = panel["fieldConfig"]["defaults"]
+        assert "min" not in defaults and "max" not in defaults, f"{panel['title']} has a fixed scale"
+        assert defaults.get("decimals", 0) >= 3, f"{panel['title']} does not retain precision below 1 req/s"
+    for panel in rate_panels:
+        assert "rate(" in panel["targets"][0]["expr"], f"{panel['title']} is not a current rate"
+    assert "period total" in panels["429 responses (period total, estimated)"]["title"]
+    assert "increase(" in panels["429 responses (period total, estimated)"]["targets"][0]["expr"]
+    assert "cumulative exporter parse errors" in panels["Exporter parse errors (collection health)"]["description"].lower()
+    metric_series = prom_query("nginx_http_response_count_total")
+    assert metric_series and all("remote_addr" not in item["metric"] for item in metric_series), \
+        "Source IP must not become a Prometheus label"
+
+    scanner = panels["Observed scanner-like paths"]
+    scanner_expr = scanner["targets"][0]["expr"]
+    assert scanner["targets"][0].get("queryType") == "instant"
+    assert all(path in scanner_expr for path in (".env", ".git", "wp-admin", "wp-login", "phpmyadmin", "/etc/passwd"))
+    assert "not proof of an attack" in scanner["description"] and "query errors are reported separately" in scanner["description"]
+
+    origins = panels["Origins with repeated 4xx / 5xx (by app)"]
+    origin_expr = origins["targets"][0]["expr"]
+    assert "topk(10," in origin_expr and "status=~\"4..|5..\"" in origin_expr
+    assert "remote_addr=~\"${source_ip:raw}\"" in origin_expr and "sum by (app,remote_addr)" in origin_expr
+    assert " >= 2)" in origin_expr, "Origins panel does not require repeated errors"
+    assert "ephemeral query result dimension" in origins["description"]
+
+    recent = panels["Recent security events"]
+    assert recent["type"] == "table" and recent["targets"][0]["queryType"] == "range"
+    assert recent["targets"][0].get("maxLines") == 500
+    assert recent["options"].get("sortBy") == [{"displayName": "Time", "desc": True}]
+    assert [item["id"] for item in recent["transformations"]] == [
+        "extractFields", "convertFieldType", "calculateField", "organize"]
+    organize = recent["transformations"][-1]["options"]
+    columns = {"Time", "app", "status", "method", "path", "remote_addr", "Duration (ms)"}
+    assert set(organize["indexByName"]) == columns
+    assert organize["excludeByName"].get("Line") is True
+    assert "${source_ip:raw}" in recent["targets"][0]["expr"] and '$app' in recent["targets"][0]["expr"]
+    assert "403|404|5.." in recent["targets"][0]["expr"]
+
+    explore_links = [link for link in dashboard["links"] if "/explore?panes=" in link.get("url", "")]
+    assert len(explore_links) == 1
+    panes = json.loads(urllib.parse.parse_qs(urllib.parse.urlsplit(explore_links[0]["url"]).query)["panes"][0])
+    explore_expr = panes["0"]["queries"][0]["expr"]
+    assert '$app' in explore_expr and '${source_ip:raw}' in explore_expr and "403|404|5.." in explore_expr
+    assert panes["0"]["range"] == {"from": "$__from", "to": "$__to"}
+    return {"methods": sorted(labels), "sections": rows, "rate_panels": len(rate_panels), "recent_columns": len(columns)}
+
+
+def verify_security_scenario(dashboard, scan_start_ns):
+    panels = {panel["title"]: panel for panel in dashboard["panels"]}
+    scanner = panels["Observed scanner-like paths"]
+    scan_query = grafana_query_expression(scanner["targets"][0]["expr"])
+    path_pattern = re.search(r'path=~"([^"]+)"', scan_query).group(1)
+    scan_log_query = '{job="nginx",app=~".*"} | path=~"' + path_pattern + '"'
+    scan_results = loki_query(scan_log_query, start_ns=scan_start_ns)
+    scan_events = [json.loads(line) for stream in scan_results for _, line in stream.get("values", [])]
+    expected_paths = (".env", ".git/config", "/wp-admin", "/wp-login.php", "/phpmyadmin", "/etc/passwd")
+    assert scan_events, "Scan scenario ran, but no matching scanner-like paths were returned"
+    assert all(any(event.get("path", "").endswith(path) for path in expected_paths) for event in scan_events), scan_events[:5]
+    assert {event.get("app") for event in scan_events} <= {"app-a", "app-b", "app-c"}
+    assert all(str(event.get("status", "")).startswith(("4", "5")) for event in scan_events), "Synthetic probe produced no corresponding error responses"
+    metric_paths = loki_instant(scan_query)
+    assert metric_paths and all(item["metric"].get("app") in {"app-a", "app-b", "app-c"} and
+                                item["metric"].get("path") for item in metric_paths), metric_paths
+
+    origins_panel = panels["Origins with repeated 4xx / 5xx (by app)"]
+    origin_expr = grafana_query_expression(origins_panel["targets"][0]["expr"])
+    all_origins = loki_instant(origin_expr)
+    assert all_origins and all(float(result["value"][1]) >= 2 for result in all_origins), all_origins
+    scan_ips = {event["remote_addr"] for event in scan_events}
+    matching_origins = [result for result in all_origins if result["metric"].get("remote_addr") in scan_ips]
+    assert matching_origins, f"No repeated-error origin correlated with scanner source {scan_ips}: {all_origins}"
+    app_a_origins = loki_instant(resolve_security_expression(origins_panel["targets"][0]["expr"], app="app-a"))
+    assert app_a_origins and all(item["metric"].get("app") == "app-a" for item in app_a_origins), app_a_origins
+    source_ip_regex = next(iter(scan_ips)).replace(".", "[.]")
+    ip_only_origins = loki_instant(resolve_security_expression(
+        origins_panel["targets"][0]["expr"], source_ip=source_ip_regex))
+    assert ip_only_origins and all(item["metric"].get("remote_addr") in scan_ips for item in ip_only_origins), ip_only_origins
+    combined_origins = loki_instant(resolve_security_expression(
+        origins_panel["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex))
+    assert combined_origins and all(item["metric"].get("app") == "app-a" and
+                                    item["metric"].get("remote_addr") in scan_ips and
+                                    float(item["value"][1]) >= 2 for item in combined_origins), combined_origins
+
+    recent_panel = panels["Recent security events"]
+    recent_expr = resolve_security_expression(recent_panel["targets"][0]["expr"], app="app-a", source_ip=source_ip_regex)
+    recent_streams = loki_query(recent_expr, start_ns=scan_start_ns)
+    recent_events = [json.loads(line) for stream in recent_streams for _, line in stream.get("values", [])]
+    assert recent_events and all(event.get("app") == "app-a" and event.get("remote_addr") in scan_ips and
+                                 str(event.get("status", "")).startswith(("4", "5")) for event in recent_events), recent_events[:5]
+    frames = grafana_loki_frames(recent_expr, max_lines=500)
+    fields = {field["name"] for frame in frames for field in frame["schema"]["fields"]}
+    assert {"Line", "Time"} <= fields, f"Recent security events lost the original JSON: {fields}"
+    return {"scan_events": len(scan_events), "scan_apps": sorted({event["app"] for event in scan_events}),
+            "origins": len(all_origins), "correlated_ips": sorted(scan_ips), "ip_filter_origins": len(ip_only_origins),
+            "app_ip_combined_origins": len(combined_origins), "recent_app_a_events": len(recent_events)}
 
 
 def verify_dashboard_queries(dashboards):
@@ -601,24 +726,31 @@ def verify_queries():
     return report
 
 
-def verify_scenarios():
+def verify_scenarios(security_dashboard):
     subprocess.run(["docker", "compose", "stop", "traffic-generator"], check=True)
     try:
         before = prom_scalar("sum(nginx_http_response_count_total)")
+        scan_start_ns = None
         for scenario in ("degradation", "scan", "peak"):
+            if scenario == "scan":
+                scan_start_ns = time.time_ns()
             subprocess.run(["docker", "compose", "run", "--rm", "--no-deps", "traffic-generator",
                             "python", "-u", "generate.py", "--scenario", scenario, "--duration", "8", "--rps", "4", "--concurrency", "2"], check=True, timeout=40)
             time.sleep(7)
-        wait_for(lambda: bool(loki_query('{job="nginx"} | json | path=~".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*"')),
+        scanner = next(panel for panel in security_dashboard["panels"] if panel.get("title") == "Observed scanner-like paths")
+        path_pattern = scanner["targets"][0]["expr"].split('path=~"', 1)[1].split('"', 1)[0]
+        scan_log_query = '{job="nginx",app=~".*"} | path=~"' + path_pattern + '"'
+        wait_for(lambda: bool(loki_query(scan_log_query, start_ns=scan_start_ns)),
                  "Scan scenario events did not reach Loki")
-        scan = loki_query('{job="nginx"} | json | path=~".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*"')
+        scan = loki_query(scan_log_query, start_ns=scan_start_ns)
         assert scan, "No scanner-like synthetic paths in Loki"
+        security_result = verify_security_scenario(security_dashboard, scan_start_ns)
         errors = prom_query('sum(rate(nginx_http_response_count_total{status="500"}[2m]))')
         assert errors and any(float(item["value"][1]) > 0 for item in errors), "Degradation scenario produced no 500 rate"
         after = prom_scalar("sum(nginx_http_response_count_total)")
         assert after > before, "Scenario traffic did not increase Prometheus request counts"
         idle_apps = verify_no_traffic_interval()
-        return {"scan_events": sum(len(stream.get("values", [])) for stream in scan), "request_increase": round(after - before, 1), "idle_apps": idle_apps}
+        return {"scan_events": sum(len(stream.get("values", [])) for stream in scan), "request_increase": round(after - before, 1), "idle_apps": idle_apps, "security": security_result}
     finally:
         subprocess.run(["docker", "compose", "start", "traffic-generator"], check=True)
 
@@ -673,7 +805,7 @@ def main():
     application_detail_checks = verify_application_detail(dashboards["nginx-application-detail"])
     live_logs_checks = verify_live_logs(dashboards["nginx-live-logs"])
     live_websocket = verify_grafana_live_websocket()
-    scenario_result = verify_scenarios() if args.verify_scenarios else None
+    scenario_result = verify_scenarios(dashboards["nginx-security"]) if args.verify_scenarios else None
     if args.verify_persistence:
         verify_persistence()
         report = verify_queries()

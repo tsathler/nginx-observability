@@ -51,7 +51,7 @@ Alertas de capacidade usam tamanho de blocos TSDB versus limite configurado; nã
 
 Os quatro dashboards, seus datasources e consultas PromQL/LogQL foram validados por API real do Grafana/Prometheus/Loki. O teste verificou 31 queries Prometheus, 7 LogQL, categorias, filtros, isolamento de aplicações, eventos, percentis e retenção.
 
-O teste verificou o endpoint Live WebSocket do Grafana com resposta HTTP 101, além do link Explore provisionado; isso valida disponibilidade do endpoint e não uma captura da interface Live tail. A revisão visual de Security foi registrada após conferência do operador em `docs/security-dashboard-refinement.md`. A validação visual de Application Detail e Live Logs permanece pendente conforme `docs/application-detail-audit.md` e `docs/live-logs-refinement.md`. Não há screenshots reais versionadas; nenhum resultado de API é apresentado como captura visual.
+O teste verificou o endpoint Live WebSocket do Grafana com resposta HTTP 101, além do link Explore provisionado; isso valida disponibilidade do endpoint e não uma captura da interface Live tail. As revisões visuais do Overview e Security foram concluídas e registradas em `docs/dashboard-overview-fix.md` e `docs/security-dashboard-refinement.md`. A validação visual de Application Detail e Live Logs permanece pendente conforme `docs/application-detail-audit.md` e `docs/live-logs-refinement.md`. Não há screenshots reais versionadas; nenhum resultado de API é apresentado como captura visual.
 
 ## README e reprodução
 

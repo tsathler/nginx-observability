@@ -104,7 +104,7 @@ O exporter não faz backfill: requisições durante sua indisponibilidade podem 
 
 ## Capturas e licença
 
-Não há capturas reais de dashboards versionadas neste repositório. A validação de Security foi registrada após inspeção visual do operador; Application Detail e Live Logs permanecem com pendência de revisão visual nesta sessão. Os resultados de API e testes não são apresentados como capturas visuais.
+Não há capturas reais de dashboards versionadas neste repositório. Overview e Security têm revisões visuais concluídas e registradas; Application Detail e Live Logs permanecem com pendência de revisão visual. Os resultados de API e testes não são apresentados como capturas visuais.
 
 O repositório ainda não contém arquivo `LICENSE`. A seleção da licença precisa ser confirmada pelo mantenedor antes de anunciar ou distribuir o projeto como open source; nenhum texto de licença foi escolhido automaticamente nesta auditoria. Consulte o estado de publicação em [docs/final-audit.md](docs/final-audit.md).
 

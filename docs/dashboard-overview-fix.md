@@ -39,6 +39,10 @@ Total estimado de respostas de erro no período; a expressão mantém as apps co
 - O JSON dos quatro dashboards foi validado; Compose e `git diff --check` passaram. Os outros três dashboards continuam provisionados com 12, 2 e 12 painéis.
 - A confirmação visual por pixels continua indisponível nesta sessão: o host do navegador automatizado não iniciou e o endpoint de render do Grafana informa que não há Image Renderer instalado. A API não foi tratada como prova visual.
 
+## Confirmação visual posterior
+
+Após a sessão documentada acima, a revisão visual do operador confirmou que as categorias corrigidas renderizam `app-a`, `app-b` e `app-c` individualmente. Essa confirmação complementa a limitação anterior; não há captura de tela real versionada neste repositório.
+
 ## Arquivos alterados neste ajuste
 
 - `scripts/build_dashboards.py` — transformação, eixo categórico, precisão de exibição e altura do ranking.

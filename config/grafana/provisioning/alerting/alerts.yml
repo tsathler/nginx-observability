@@ -1,0 +1,509 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: Local test webhook
+    receivers:
+      - uid: local-test-webhook
+        type: webhook
+        settings:
+          url: http://alert-receiver:8081/alerts
+          httpMethod: POST
+        disableResolveMessage: false
+
+policies:
+  - orgId: 1
+    receiver: Local test webhook
+    group_by: [alertname, app, component]
+    group_wait: 1s
+    group_interval: 10s
+    repeat_interval: 1h
+
+groups:
+  - orgId: 1
+    name: nginx-operational-alerts
+    folder: Nginx Operations
+    interval: 10s
+    rules:
+      - uid: app_unavailable
+        title: Application unavailable
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '((up{job="app-health"} == bool 0) and on(instance) (max by (instance) (up{job="nginx-health"}) == 1))'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: &reduce
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: __expr__
+            model: &condition
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [B]}
+                  reducer: {type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: B
+              refId: C
+              type: threshold
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 20s
+        labels: {severity: critical, component: application}
+        annotations:
+          summary: '{{ $labels.app }} health endpoint is not responding through Nginx'
+          description: 'Prometheus cannot scrape the app health endpoint while Nginx remains reachable. No request traffic is required for this signal.'
+          cause: 'The app process is stopped, unhealthy, or its route is broken.'
+          action: 'Check the named app container health and its Nginx upstream.'
+
+      - uid: nginx_unavailable
+        title: Nginx unavailable
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'up{job="nginx-health"} == bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 20s
+        labels: {severity: critical, component: nginx}
+        annotations:
+          summary: Nginx health endpoint is unavailable
+          description: 'The Nginx metrics endpoint cannot be scraped.'
+          cause: 'Nginx is stopped, unreachable, or its internal health route is misconfigured.'
+          action: 'Check Nginx container health, host-access networking, and the /nginx-metrics route.'
+
+      - uid: exporter_unavailable
+        title: Nginx log exporter unavailable
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'up{job="nginx-access"} == bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 20s
+        labels: {severity: critical, component: exporter}
+        annotations:
+          summary: Nginx log exporter scrape failed
+          description: 'Prometheus cannot scrape the log exporter. Requests during this outage may remain in Loki without being backfilled into Prometheus counters.'
+          cause: 'The exporter is stopped, cannot read the access logs, or is unreachable on the metrics network.'
+          action: 'Restore the exporter and check its logs. Compare Loki events with Prometheus counters to assess the known non-backfill gap.'
+
+      - uid: alloy_unavailable
+        title: Grafana Alloy unavailable
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'up{job="alloy"} == bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 20s
+        labels: {severity: critical, component: alloy}
+        annotations:
+          summary: Alloy metrics endpoint is unavailable
+          description: 'Log collection health cannot be confirmed while Alloy metrics are not scrapeable.'
+          cause: 'Alloy is stopped or its internal metrics endpoint is unreachable.'
+          action: 'Check Alloy health, file source positions, and the logs network.'
+
+      - uid: loki_unavailable
+        title: Loki unavailable
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'up{job="loki"} == bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 20s
+        labels: {severity: critical, component: loki}
+        annotations:
+          summary: Loki metrics endpoint is unavailable
+          description: 'Loki availability cannot be confirmed from its metrics endpoint.'
+          cause: 'Loki is stopped or unreachable from the internal monitoring network.'
+          action: 'Check Loki health, its filesystem volume, and logs-network connectivity.'
+
+      - uid: prometheus_config_failed
+        title: Prometheus configuration reload failed
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'prometheus_config_last_reload_successful == bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 15s
+        labels: {severity: critical, component: prometheus}
+        annotations:
+          summary: Prometheus rejected a configuration reload
+          description: 'Prometheus is running, but its most recent configuration reload failed.'
+          cause: 'A scrape, rule, or Prometheus configuration file is invalid.'
+          action: 'Inspect the Prometheus logs and /api/v1/status/config before reloading again.'
+
+      - uid: exporter_parse_errors
+        title: Nginx access log parse errors
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 300, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'sum by (app) (increase(nginx_parse_errors_total[5m])) > bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        labels: {severity: warning, component: exporter}
+        annotations:
+          summary: 'Exporter parse errors detected for {{ $labels.app }}'
+          description: 'The exporter has reported malformed access log entries during the last five minutes.'
+          cause: 'The Nginx access log format no longer matches the exporter configuration.'
+          action: 'Inspect exporter parse errors and compare the configured log format with the generated file.'
+
+      - uid: loki_ingestion_failures
+        title: Loki ingestion or flush failures
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 300, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '(sum(increase(loki_ingester_wal_disk_full_failures_total[5m])) + sum(increase(loki_ingester_chunks_flush_failures_total[5m]))) > bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        labels: {severity: critical, component: loki}
+        annotations:
+          summary: Loki reported ingestion or chunk flush failures
+          description: 'Loki reported WAL disk-full failures or failed chunk flushes during the last five minutes.'
+          cause: 'The Loki volume may be full or the filesystem may be returning write errors.'
+          action: 'Inspect Loki logs and Docker volume capacity; this lab has no reliable filesystem free-space metric.'
+
+      - uid: alloy_dropped_logs
+        title: Alloy dropped log entries
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 300, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'sum(increase(loki_write_dropped_entries_total[5m])) > bool 0'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        labels: {severity: critical, component: alloy}
+        annotations:
+          summary: Alloy dropped log entries before Loki ingestion
+          description: 'The Alloy Loki writer reported dropped entries during the last five minutes.'
+          cause: 'The receiver may be unavailable or rejecting writes beyond the writer retry window.'
+          action: 'Check Alloy writer metrics and Loki availability. Correlate affected intervals with Nginx access files and Loki events.'
+
+      - uid: http_5xx_warning
+        title: Elevated HTTP 5xx ratio
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '((sum by (app) (increase(nginx_http_response_count_total{status=~"5.."}[1m])) or on (app) (0 * nginx_observability_http_5xx_warning_min_requests)) / clamp_min((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_5xx_warning_min_requests)), 1) > bool on (app) nginx_observability_http_5xx_warning_ratio) * on (app) ((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_5xx_warning_min_requests)) >= bool on (app) nginx_observability_http_5xx_warning_min_requests)'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        labels: {severity: warning, component: http}
+        annotations:
+          summary: 'HTTP 5xx ratio is elevated for {{ $labels.app }}'
+          description: 'The 5xx share exceeded the per-app warning limit and the minimum request volume over one minute.'
+          cause: 'The application or an upstream dependency may be failing.'
+          action: 'Compare application logs and Recent requests for the affected app before escalating.'
+
+      - uid: http_5xx_critical
+        title: Critical HTTP 5xx ratio
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '((sum by (app) (increase(nginx_http_response_count_total{status=~"5.."}[1m])) or on (app) (0 * nginx_observability_http_5xx_critical_min_requests)) / clamp_min((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_5xx_critical_min_requests)), 1) > bool on (app) nginx_observability_http_5xx_critical_ratio) * on (app) ((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_5xx_critical_min_requests)) >= bool on (app) nginx_observability_http_5xx_critical_min_requests)'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 15s
+        labels: {severity: critical, component: http}
+        annotations:
+          summary: 'Critical HTTP 5xx ratio for {{ $labels.app }}'
+          description: 'The 5xx share exceeded the per-app critical limit with at least the configured minimum request volume over one minute.'
+          cause: 'The application is likely experiencing a sustained failure.'
+          action: 'Check the app health endpoint, Nginx upstream status, and recent error responses.'
+
+      - uid: http_p95_warning
+        title: Elevated HTTP P95 latency
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '((histogram_quantile(0.95, sum by (app, le) (rate(nginx_http_response_time_seconds_hist_bucket[1m]))) or on (app) (0 * nginx_observability_http_p95_warning_seconds)) > bool on (app) nginx_observability_http_p95_warning_seconds) * on (app) ((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_latency_min_requests)) >= bool on (app) nginx_observability_http_latency_min_requests)'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        labels: {severity: warning, component: http}
+        annotations:
+          summary: 'HTTP P95 latency is elevated for {{ $labels.app }}'
+          description: 'P95 latency exceeded the configurable per-app warning threshold with sufficient recent request volume.'
+          cause: 'The application, Nginx upstream, or a dependency may be slow.'
+          action: 'Inspect the Application Detail latency panels and slowest request events in Loki.'
+
+      - uid: http_p95_critical
+        title: Critical HTTP P95 latency
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '((histogram_quantile(0.95, sum by (app, le) (rate(nginx_http_response_time_seconds_hist_bucket[1m]))) or on (app) (0 * nginx_observability_http_p95_critical_seconds)) > bool on (app) nginx_observability_http_p95_critical_seconds) * on (app) ((sum by (app) (increase(nginx_http_response_count_total[1m])) or on (app) (0 * nginx_observability_http_latency_min_requests)) >= bool on (app) nginx_observability_http_latency_min_requests)'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        labels: {severity: critical, component: http}
+        annotations:
+          summary: 'Critical HTTP P95 latency for {{ $labels.app }}'
+          description: 'P95 latency exceeded the configurable per-app critical threshold with sufficient recent request volume.'
+          cause: 'The app is severely delayed or a dependency is degraded.'
+          action: 'Check for slow upstream operations and compare recent request latency in Loki.'
+
+      - uid: prometheus_tsdb_storage_warning
+        title: Prometheus TSDB blocks near retention limit
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'prometheus_tsdb_storage_blocks_bytes / clamp_min(prometheus_tsdb_retention_limit_bytes, 1) > bool 0.8'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        labels: {severity: warning, component: storage}
+        annotations:
+          summary: Prometheus TSDB blocks exceed 80% of the configured retention size
+          description: 'This signal covers persisted TSDB blocks only; WAL, head data, and filesystem free space are not included.'
+          cause: 'Metric volume or retention duration is using most of the configured TSDB block budget.'
+          action: 'Review cardinality, retention settings, and free space on the Docker data disk.'
+
+      - uid: prometheus_tsdb_storage_critical
+        title: Prometheus TSDB blocks near retention limit (critical)
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 120, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: 'prometheus_tsdb_storage_blocks_bytes / clamp_min(prometheus_tsdb_retention_limit_bytes, 1) > bool 0.9'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        labels: {severity: critical, component: storage}
+        annotations:
+          summary: Prometheus TSDB blocks exceed 90% of the configured retention size
+          description: 'This signal covers persisted TSDB blocks only; it is not a filesystem-capacity alert.'
+          cause: 'The configured TSDB retention size is nearly saturated.'
+          action: 'Review metric growth and free space; do not assume Prometheus will protect the Docker host filesystem.'

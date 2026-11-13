@@ -1,0 +1,68 @@
+groups:
+  - name: nginx-observability-thresholds
+    interval: 5s
+    rules:
+      # Edit the per-app values below to tune the corresponding Grafana rules.
+      - record: nginx_observability_http_5xx_warning_ratio
+        expr: vector(0.05)
+        labels: {app: app-a}
+      - record: nginx_observability_http_5xx_warning_ratio
+        expr: vector(0.05)
+        labels: {app: app-b}
+      - record: nginx_observability_http_5xx_warning_ratio
+        expr: vector(0.05)
+        labels: {app: app-c}
+      - record: nginx_observability_http_5xx_critical_ratio
+        expr: vector(0.15)
+        labels: {app: app-a}
+      - record: nginx_observability_http_5xx_critical_ratio
+        expr: vector(0.15)
+        labels: {app: app-b}
+      - record: nginx_observability_http_5xx_critical_ratio
+        expr: vector(0.15)
+        labels: {app: app-c}
+      - record: nginx_observability_http_5xx_warning_min_requests
+        expr: vector(10)
+        labels: {app: app-a}
+      - record: nginx_observability_http_5xx_warning_min_requests
+        expr: vector(10)
+        labels: {app: app-b}
+      - record: nginx_observability_http_5xx_warning_min_requests
+        expr: vector(10)
+        labels: {app: app-c}
+      - record: nginx_observability_http_5xx_critical_min_requests
+        expr: vector(20)
+        labels: {app: app-a}
+      - record: nginx_observability_http_5xx_critical_min_requests
+        expr: vector(20)
+        labels: {app: app-b}
+      - record: nginx_observability_http_5xx_critical_min_requests
+        expr: vector(20)
+        labels: {app: app-c}
+      - record: nginx_observability_http_p95_warning_seconds
+        expr: vector(0.5)
+        labels: {app: app-a}
+      - record: nginx_observability_http_p95_warning_seconds
+        expr: vector(0.5)
+        labels: {app: app-b}
+      - record: nginx_observability_http_p95_warning_seconds
+        expr: vector(0.5)
+        labels: {app: app-c}
+      - record: nginx_observability_http_p95_critical_seconds
+        expr: vector(1)
+        labels: {app: app-a}
+      - record: nginx_observability_http_p95_critical_seconds
+        expr: vector(1)
+        labels: {app: app-b}
+      - record: nginx_observability_http_p95_critical_seconds
+        expr: vector(1)
+        labels: {app: app-c}
+      - record: nginx_observability_http_latency_min_requests
+        expr: vector(10)
+        labels: {app: app-a}
+      - record: nginx_observability_http_latency_min_requests
+        expr: vector(10)
+        labels: {app: app-b}
+      - record: nginx_observability_http_latency_min_requests
+        expr: vector(10)
+        labels: {app: app-c}

@@ -22,7 +22,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", choices=("normal", "degradation", "scan", "peak"), default="normal")
+    parser.add_argument("--scenario", choices=("normal", "degradation", "scan", "peak", "latency"), default="normal")
     parser.add_argument("--duration", type=float, default=0, help="seconds; 0 runs the default normal service indefinitely")
     parser.add_argument("--rps", type=float, default=float(os.getenv("REQUESTS_PER_SECOND", "2")), help=f"target rate, maximum {MAX_RPS:g}")
     parser.add_argument("--concurrency", type=int, default=1, help=f"parallel requests, maximum {MAX_CONCURRENCY}")
@@ -47,6 +47,8 @@ def parse_args():
 def request_path(scenario, progress, rng):
     if scenario == "scan":
         return rng.choice(SCAN_PATHS)
+    if scenario == "latency":
+        return "/slower"
     if scenario == "degradation":
         error_chance = 0.05 + 0.35 * progress
         slow_chance = 0.10 + 0.60 * progress

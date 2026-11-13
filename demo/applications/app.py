@@ -19,6 +19,18 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/health":
             self.respond(200, {"app": APP_ID, "status": "ok"})
             return
+        if path == "/metrics":
+            body = (
+                "# HELP nginx_observability_app_health Application health endpoint.\n"
+                "# TYPE nginx_observability_app_health gauge\n"
+                f'nginx_observability_app_health{{app="{APP_ID}"}} 1\n'
+            ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
 
         code = {
             "/redirect": 301,

@@ -11,17 +11,18 @@ Laboratório local e reproduzível para observar várias aplicações HTTP publi
 ## Iniciar
 
 ```shell
+python scripts/init_lab_env.py
 docker compose up -d --build
 docker compose ps
 ```
 
 O Compose inicia três aplicações simuladas, Nginx, exporter de access logs, Prometheus, Loki, Alloy, Grafana e gerador contínuo. O tráfego percorre o proxy Nginx e as respostas são distribuídas entre 200, 301, 403, 404 e 500, incluindo diferentes tempos de resposta.
 
-As portas e a taxa do gerador têm padrões documentados em `.env.example`; crie um `.env` local para alterá-los.
+O script cria `.env` (ignorado pelo Git) com uma senha aleatória do Grafana, sem exibi-la, e preserva um arquivo existente. O usuário inicial é `admin`; consulte a senha localmente no `.env` e mantenha esse arquivo privado. Se Grafana já estiver rodando, executar novamente o script sincroniza a senha da instância com o arquivo. Portas e taxa do gerador têm padrões em `.env.example`; ajuste apenas o `.env` local.
 
 ## Acessos locais
 
-- Grafana: <http://localhost:3000> (modo de laboratório sem login; vinculada somente a loopback).
+- Grafana: <http://localhost:3000> (login obrigatório; porta vinculada somente a loopback).
 - Prometheus: <http://localhost:9090>.
 - Loki: <http://localhost:3100> (API local, vinculada somente a loopback).
 - Aplicações pelo proxy: `http://localhost:8080/app-a/`, `/app-b/` e `/app-c/`.
@@ -130,8 +131,8 @@ A validação visual de Application Detail e Live Logs continua pendente. As con
 
 Validação integrada reproduzível: python tests/verify_pipeline.py --verify-scenarios --verify-persistence. O comando verifica consultas PromQL/LogQL dos quatro dashboards, separação por aplicação, cenários sintéticos e persistência após reiniciar Prometheus e Loki. Evidências específicas: [Application Detail](docs/application-detail-audit.md), [Live Logs](docs/live-logs-refinement.md) e [Security](docs/security-dashboard-refinement.md).
 
-## Limitações do laboratório
+## Segurança e limitações
 
-Grafana está em modo anônimo e deve permanecer acessível apenas em loopback; não use esta configuração como implantação corporativa. O Loki local não fornece autenticação. Rotação/limite de volume dos logs e gestão operacional de segredos pertencem à próxima etapa. IPs de origem podem ser dados pessoais; a retenção atual é local e deve ser reavaliada antes de qualquer uso real.
+As portas Nginx, Prometheus, Loki e Grafana são publicadas no loopback. Aplicações e gerador ficam em rede interna separada das redes de métricas/logs; Alloy e exporter não publicam portas. Grafana exige login, mas Prometheus e Loki não têm autenticação própria nesta configuração local. Loki também depende de um proxy autenticador para autenticação de usuário. Não exponha portas a outras interfaces nem use o Compose demo como configuração corporativa.
 
-Próxima etapa recomendada: avaliar autenticação/TLS, limites/rotação e retenção do Loki/Prometheus, política de privacidade para IPs, alertas operacionais e configuração corporativa desacoplada do Compose demo, tudo em ambiente autorizado e sem levar dados sintéticos como configuração de produção.
+O laboratório usa HTTP local, dados sintéticos e volumes persistentes sem política automática de retenção do Loki. Logs guardam IP, referer, user-agent e o campo request (que inclui a query string), embora `path` separado não a inclua. Antes de ingerir dados reais, reduza/mascare campos, proíba secrets em URLs, defina retenção e acesso autorizado. A estratégia corporativa recomendada de TLS, autenticação e proteção de logs está em [docs/security-audit.md](docs/security-audit.md).

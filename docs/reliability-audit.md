@@ -1,0 +1,85 @@
+# Auditoria de retenção e confiabilidade
+
+**Escopo:** Docker Compose local, serviços simulados e volumes do projeto. Nenhum volume foi removido; não houve acesso corporativo. Auditoria e testes executados em 2026-11-13.
+
+## Diagnóstico inicial
+
+| Componente | Estado encontrado | Risco / evidência |
+|---|---|---|
+| Prometheus | `--storage.tsdb.retention.time=7d`; sem limite de tamanho configurado. Volume nomeado `prometheus-data`. | O tempo limitava dados antigos, mas volume sem teto por tamanho; crescimento de séries ainda podia consumir o disco Docker. |
+| Loki | `auth_enabled: false`, filesystem em volume `loki-data`, sem compactor nem retenção. | Sem política de expiração, os chunks/indexes permaneciam indefinidamente. O modo filesystem não apaga dados por pressão de espaço. |
+| Access logs Nginx | Seis arquivos ativos (`app-a/b/c.json` e `.log`) no volume compartilhado `nginx-logs`; sem rotação. | Volume medido em 28,82 MB no início da auditoria e aumentando com tráfego contínuo. |
+| Alloy | `loki.source.file` lê os três JSON ativos. `alloy-data` é persistente e contém checkpoints de posição. | Reinício retoma offsets persistidos. O comportamento diante de rename e indisponibilidade do Loki precisava de validação integrada. |
+| nginxlog-exporter | Lê os três arquivos de texto ativos; métricas são counters em memória do processo. | O exporter observa renames, reabre o arquivo ativo e continuou a coletar no teste. Ao reiniciar, a versão observada inicia a leitura no fim do arquivo (`Seeked ... Whence:2`); linhas gravadas durante a indisponibilidade não são reprocessadas. Os counters reiniciam. |
+| Grafana | Volume nomeado `grafana-data`, 50,68 MB na medição inicial. | Persistência necessária aos dados próprios do Grafana; não é removida pelas políticas novas. |
+
+Medição inicial, via Docker Desktop: `nginx-logs` 28,82 MB; `prometheus-data` 18,41 MB; `loki-data` 1,73 MB; `alloy-data` 395 B; `grafana-data` 50,68 MB. `docker stats` mostrou cerca de 385 MB de memória somada para os dez containers durante tráfego sintético de 2 req/s, em host com 7,6 GiB disponíveis ao engine. São amostras deste laboratório, não garantias de capacidade.
+
+## Políticas implementadas
+
+### Prometheus
+
+Padrão configurável por `.env`:
+
+- `PROMETHEUS_RETENTION_TIME=7d`
+- `PROMETHEUS_RETENTION_SIZE=1GB`
+
+O Compose passa os dois limites ao Prometheus. O endpoint de flags confirmou valores efetivos equivalentes a `1w` e `1GiB`. A exclusão ocorre quando o limite de tempo **ou** de tamanho for atingido. O limite por tamanho cobre blocos TSDB, mas WAL, head e compactações podem elevar o uso temporário acima desse valor; reserve margem no disco. A documentação do Prometheus recomenda definir o tamanho de retenção abaixo da capacidade alocada, com folga para compactação.
+
+O volume nomeado mantém dados entre reinícios. O teste de persistência consulta um marcador recente antes e depois do restart de Prometheus. A expiração de dados com sete dias não foi observada, pois exigiria uma janela longa; a política efetiva foi verificada pela API.
+
+### Loki
+
+Padrão configurável por `LOKI_RETENTION_PERIOD=168h` (sete dias, mínimo de 24 horas). A configuração usa TSDB com período de índice diário, Compactor habilitado, diretório de trabalho em `/loki/retention` no volume persistente e `delete_request_store: filesystem`. `max_query_lookback` acompanha o período para manter as consultas dentro da janela configurada.
+
+Loki aplica retenção temporal pelo Compactor, com exclusão assíncrona e atraso operacional; não oferece, no backend filesystem desta stack, retenção por bytes nem remoção ao atingir um percentual do disco. Em disco cheio é necessária intervenção operacional. O período de sete dias foi comprovado na configuração efetiva e dados dentro do período sobreviveram ao restart. A expiração real não foi aguardada nem simulada sobre o volume existente. Teste de expiração futura deve usar projeto/volume descartável separado.
+
+### Rotação de access logs
+
+`scripts/rotate_logs.py` verifica seis arquivos ativos, com padrões configuráveis:
+
+- `NGINX_LOG_ROTATE_BYTES=16777216` (16 MiB por arquivo ativo)
+- `NGINX_LOG_ROTATE_KEEP=3` arquivos rotacionados por arquivo ativo.
+
+Quando o limite é atingido, o script renomeia os arquivos no mesmo volume (`.1`, `.2`, ...), remove arquivos além da retenção configurada e envia `nginx -s reopen`. Isso usa o mecanismo documentado do Nginx (USR1) e não usa `copytruncate`. O exporter e o Alloy continuam lendo os arquivos ativos após o Nginx reabri-los. Arquivos renomeados são mantidos para diagnóstico, mas não são fontes configuradas para os coletores.
+
+A rotação é acionada pelo host, sem Docker socket montado em container e sem novo serviço. Para verificação contínua, execute `python scripts/rotate_logs.py --watch --interval 60` enquanto a stack estiver rodando; no Windows, agende `python.exe` e esses argumentos no Agendador de Tarefas. Uma execução única pode ser feita com `python scripts/rotate_logs.py`. O limite é verificado por intervalo, portanto não é uma quota rígida: se o volume de tráfego ultrapassar o limite entre verificações, cada arquivo pode crescer além de 16 MiB. Com seis arquivos, três arquivos retidos por cada ativo e checagem pontual, o orçamento nominal é até 6 × 4 × 16 MiB = 384 MiB, mais o tráfego produzido durante o intervalo e a margem de filesystem.
+
+## Recuperação observada
+
+`python tests/verify_pipeline.py --verify-reliability` executa tráfego sintético local, força duas rotações por rename com requests ativos, e interrompe/reinicia Loki, Alloy, Prometheus e exporter. Identificadores aleatórios por evento são consultados no Loki; counters do exporter são comparados antes e depois de rotação e reinícios.
+
+Resultado validado nesta execução:
+
+- 21 eventos sintéticos (7 por aplicação) apareceram exatamente uma vez no Loki, inclusive eventos gravados durante a parada temporária de Loki/Alloy.
+- As duas rotações reabriram os seis arquivos. Antes da interrupção do exporter, os counters Prometheus avançaram ao menos os cinco requests por aplicação gerados nesse período. O exporter reabriu arquivos renomeados durante sua execução.
+- O target do exporter voltou a `up` após reiniciar Prometheus e exporter; novas requisições voltaram a incrementar os counters após a recuperação.
+- **Limitação observada:** um request por aplicação foi produzido enquanto o exporter estava parado. Após reiniciá-lo, a versão `v1.9.2` fez seek para o fim dos arquivos ativos e não fez backfill desses requests nas métricas. Esses requests continuaram consultáveis como logs via Alloy/Loki. Durante restart do exporter, os counters em memória também resetam; Prometheus trata o reset como reinício de counter, mas a contagem anterior não é reconstruída.
+- Marcadores Prometheus e Loki sobreviveram ao restart persistente coberto por `--verify-persistence`. Isso comprova reinício curto, não retenção histórica de sete dias nem HA.
+- As verificações de segurança continuaram passando: endpoints publicados só em loopback, API Grafana 401 sem autenticação, redes segmentadas, e os quatro dashboards provisionados e consultados por API.
+
+### Recuperação do pipeline e garantias
+
+- **Loki indisponível:** os requests permaneceram nos arquivos do Nginx e os identificadores foram recuperados após Loki e Alloy voltarem. Neste ensaio controlado não houve perda ou duplicação. Isso não constitui garantia exactly-once para falhas prolongadas ou disco cheio.
+- **Alloy reiniciado:** o volume `alloy-data` conserva offsets; os marcadores posteriores à parada foram enviados uma vez no teste. Se o arquivo ativo/backup sair do alcance do leitor antes que ele esvazie o descritor, podem ocorrer perda ou replay.
+- **Prometheus reiniciado:** o volume `prometheus-data` preservou blocos e WAL; o target voltou a ser raspado. Scrapes que coincidem com a parada não existem retroativamente, embora o exporter normalmente exponha o counter acumulado após voltar.
+- **Exporter reiniciado:** a coleta de métricas retoma para eventos novos, mas a lacuna de outage não é recuperada. Os access logs e Loki preservam investigação detalhada.
+
+## Testes e limites
+
+```shell
+docker compose config --quiet
+python tests/verify_pipeline.py --verify-scenarios --verify-persistence
+python tests/verify_pipeline.py --verify-reliability
+git diff --check
+```
+
+O teste integrado também valida consultas PromQL/LogQL e os quatro dashboards. A API Prometheus confirma retenção por tempo/tamanho; `/config` do Loki confirma período e compactor. O teste não espera sete dias para verificar expiração, não força o filesystem a encher e não valida restauração de backup após corrupção do volume. Os dados de retenção permanecem nos volumes nomeados existentes.
+
+## Referências oficiais
+
+- [Prometheus: armazenamento, retenção e espaço extra de compactação](https://prometheus.io/docs/prometheus/latest/storage/).
+- [Loki: configuração de retenção e Compactor](https://grafana.com/docs/loki/latest/operations/storage/retention/) e [limitações do filesystem](https://grafana.com/docs/loki/latest/operations/storage/filesystem/).
+- [Grafana Alloy: `loki.source.file`, offsets persistidos e recuperação](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.file/).
+- [Nginx: sinal USR1 para reabrir arquivos de log](https://nginx.org/en/docs/control.html).
+- [Exporter: leitura contínua de access logs](https://github.com/martin-helmich/prometheus-nginxlog-exporter/).

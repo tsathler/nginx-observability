@@ -20,7 +20,7 @@ Isso reduz a evidência de recorrência no código atualizado, mas não reconstr
 - Não há `.env` rastreado em nenhum commit alcançável; `.env.example` é o único arquivo de ambiente versionado e contém valores-modelo sem senha preenchida. `.gitignore` ignora `.env` e variantes, exceto `.env.example`, logs originais/rotacionados, `__pycache__/` e bytecode Python.
 - A lista de arquivos rastreados não contém dumps de log, chaves privadas ou arquivos de volume. Foram pesquisados padrões conhecidos de access key AWS, token GitHub, marcador PEM privado e o identificador de host visto em metadados de log; nenhum achado foi encontrado no histórico versionado.
 - O endereço `origin` é o GitHub do projeto. Nenhuma conexão de servidor corporativo ou publicação foi realizada. O histórico local permanece sem reescrita.
-- Não existe `LICENSE` ou `COPYING`. Nenhuma licença foi escolhida nesta auditoria: antes de anunciar ou distribuir o projeto como open source, o mantenedor precisa decidir e adicionar a licença desejada. Não foi identificado código de dashboard comunitário importado integralmente; referências e adaptações estão registradas em `docs/architecture-research.md` e `docs/dashboard-audit.md`.
+- O arquivo raiz `LICENSE` agora declara MIT para os arquivos originais do projeto, com titularidade baseada no autor dos commits (`Thiago Sathler`). Confirme que essa é a pessoa/entidade titular dos direitos antes da publicação. A licença MIT não substitui as licenças de Grafana/Loki e dos outros componentes externos; veja [docs/license-audit.md](license-audit.md). Não foi identificado código de dashboard comunitário importado integralmente; referências e adaptações estão registradas em `docs/architecture-research.md` e `docs/dashboard-audit.md`.
 
 ### Segurança e exposição
 
@@ -78,7 +78,7 @@ Os testes não demonstram continuidade completa de toda a série histórica nem 
 
 ## Pendências antes de divulgação open source
 
-1. Escolher e adicionar uma licença. Sem isso, não anunciar a distribuição como open source.
+1. Confirmar a titularidade indicada em `LICENSE` antes de publicar.
 2. Produzir capturas reais dos quatro dashboards numa sessão com navegador disponível; revisar visualmente Application Detail e Live Logs.
 3. Para publicação mais robusta, fixar imagens por digest e definir processo de atualização/scan de vulnerabilidades.
 4. Manter cópia consistente dos volumes e observar Prometheus em uso prolongado; comparar dados históricos com uma fonte independente se for necessário comprovar lacunas.
@@ -86,4 +86,4 @@ Os testes não demonstram continuidade completa de toda a série histórica nem 
 
 ## Estado final
 
-As regressões de pipeline não foram observadas após a atualização do Prometheus. A causa provável dos chunks mmap foi endereçada por um upstream fix diretamente relacionado e não se repetiu nos testes executados. A integridade histórica completa permanece inconclusiva. O repositório está tecnicamente preparado para revisão de portfólio, mas a publicação como projeto open source ainda depende da decisão de licença e das capturas/revisões visuais pendentes.
+As regressões de pipeline não foram observadas após a atualização do Prometheus. A causa provável dos chunks mmap foi endereçada por um upstream fix diretamente relacionado e não se repetiu nos testes executados. A integridade histórica completa permanece inconclusiva. O projeto agora declara MIT para arquivos próprios, sujeito à confirmação de titularidade; as capturas/revisões visuais pendentes também impedem considerar concluída a preparação da release.

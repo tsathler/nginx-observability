@@ -13,10 +13,27 @@ import urllib.parse
 import urllib.request
 import uuid
 
+def load_local_env():
+    """Read ignored Compose .env values without printing them or overriding process env."""
+    env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    try:
+        with open(env_file, encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip().strip('"\''))
+    except FileNotFoundError:
+        pass
+
+
+load_local_env()
 base = os.getenv("LAB_URL", "http://127.0.0.1:8080").rstrip("/")
 prom = os.getenv("PROMETHEUS_URL", "http://127.0.0.1:9090").rstrip("/")
 loki = os.getenv("LOKI_URL", "http://127.0.0.1:3100").rstrip("/")
 grafana = os.getenv("GRAFANA_URL", "http://127.0.0.1:3000").rstrip("/")
+grafana_user = os.getenv("GRAFANA_ADMIN_USER", "admin")
+grafana_password = os.getenv("GRAFANA_ADMIN_PASSWORD", "")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -35,9 +52,19 @@ def request_status(url):
         return error.code
 
 
+def open_grafana(request, timeout=10):
+    if not grafana_password:
+        raise AssertionError("Grafana password is unavailable; run python scripts/init_lab_env.py")
+    authorization = base64.b64encode(f"{grafana_user}:{grafana_password}".encode()).decode()
+    request.add_header("Authorization", f"Basic {authorization}")
+    return urllib.request.urlopen(request, timeout=timeout)
+
+
 def get_json(url):
     try:
-        with urllib.request.urlopen(url, timeout=5) as response:
+        request = urllib.request.Request(url)
+        opener = open_grafana if url.startswith(grafana + "/") else urllib.request.urlopen
+        with opener(request, timeout=5) as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
         raise AssertionError(f"HTTP {error.code} from {url}: {error.read().decode(errors='replace')}") from error
@@ -59,7 +86,7 @@ def grafana_prom_frames(expression, legend_format="{{app}}"):
     }
     request = urllib.request.Request(f"{grafana}/api/ds/query", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(request, timeout=10) as response:
+    with open_grafana(request, timeout=10) as response:
         result = json.load(response)
     assert result["results"]["A"]["status"] == 200, result
     return result["results"]["A"]["frames"]
@@ -76,7 +103,7 @@ def grafana_loki_frames(expression, query_type="range", legend_format=None, max_
     }
     request = urllib.request.Request(f"{grafana}/api/ds/query", data=json.dumps(body).encode(),
                                      headers={"Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(request, timeout=10) as response:
+    with open_grafana(request, timeout=10) as response:
         result = json.load(response)
     assert result["results"]["A"]["status"] == 200, result
     return result["results"]["A"]["frames"]
@@ -120,6 +147,67 @@ def wait_for(predicate, message, timeout=90):
         time.sleep(2)
     suffix = f" (last error: {last_error})" if last_error else ""
     raise AssertionError(message + suffix)
+
+
+def verify_platform_security():
+    """Check local-only publication, Grafana authentication, and Compose isolation."""
+    assert grafana_password, "Grafana password is missing from environment/.env"
+    completed = subprocess.run(["docker", "compose", "config", "--format", "json"],
+                               check=True, capture_output=True, text=True)
+    config = json.loads(completed.stdout)
+    services = config["services"]
+    allowed_published = {"nginx", "prometheus", "loki", "grafana"}
+    for name, service in services.items():
+        for port in service.get("ports", []):
+            assert name in allowed_published, f"Unexpected host-published service: {name}"
+            assert port.get("host_ip") in {"127.0.0.1", "::1"}, f"{name} published outside loopback"
+    for name in ("app-a", "app-b", "app-c", "traffic-generator", "nginxlog-exporter", "alloy"):
+        assert not services[name].get("ports"), f"{name} unexpectedly publishes a host port"
+
+    grafana_env = services["grafana"]["environment"]
+    assert grafana_env["GF_AUTH_ANONYMOUS_ENABLED"] == "false"
+    assert grafana_env["GF_USERS_ALLOW_SIGN_UP"] == "false"
+    assert grafana_env["GF_SECURITY_ADMIN_PASSWORD"] == grafana_password
+    assert "GF_AUTH_DISABLE_LOGIN_FORM" not in grafana_env
+
+    for network in ("frontend", "metrics", "logs"):
+        assert config["networks"][network].get("internal") is True, f"{network} is not internal"
+    assert set(services["grafana"]["networks"]) == {"metrics", "logs", "host-access"}
+    assert "frontend" not in services["prometheus"]["networks"]
+    assert "frontend" not in services["loki"]["networks"]
+    assert "host-access" not in services["traffic-generator"]["networks"]
+    assert "host-access" not in services["app-a"]["networks"]
+    assert all("no-new-privileges:true" in service.get("security_opt", [])
+               for service in services.values()), "A service lacks no-new-privileges"
+
+    status = request_status(f"{grafana}/api/datasources")
+    assert status == 401, f"Unauthenticated Grafana API returned HTTP {status}, expected 401"
+    sources = get_json(f"{grafana}/api/datasources")
+    assert {source["name"] for source in sources} >= {"Prometheus", "Loki"}
+
+    root = os.path.dirname(os.path.dirname(__file__))
+    tracked = subprocess.run(["git", "ls-files", "-z"], cwd=root, check=True,
+                             capture_output=True).stdout.decode().split("\0")
+    tracked = {path.replace("\\", "/") for path in tracked if path}
+    assert ".env" not in tracked, "Local .env is tracked"
+    assert not any(path.lower().endswith((".pem", ".key", ".p12", ".pfx")) for path in tracked), \
+        "A private key/certificate file is tracked"
+    hardcoded_secret = re.compile(
+        r"(?i)\b(?:password|passwd|client_secret|api[_-]?token)\b\s*[:=]\s*['\"](?!\$)[^'\"]{8,}['\"]")
+    for relative in tracked:
+        candidate = os.path.join(root, relative.replace("/", os.sep))
+        try:
+            content = open(candidate, encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        assert not hardcoded_secret.search(content), f"Possible hardcoded credential in tracked file: {relative}"
+    example = open(os.path.join(root, ".env.example"), encoding="utf-8").read()
+    assert re.search(r"(?m)^GRAFANA_ADMIN_PASSWORD=\s*$", example), \
+        ".env.example contains a non-empty Grafana password"
+    ignore = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=root)
+    assert ignore.returncode == 0, ".env is not ignored by Git"
+    return {"ports_loopback_only": True, "grafana_unauthorized_http": status,
+            "networks_internal": True, "tracked_env_or_key_files": False}
 
 
 def verify_dashboard_and_datasources():
@@ -286,9 +374,11 @@ def verify_grafana_live_websocket():
     port = endpoint.port or (443 if endpoint.scheme == "https" else 80)
     key = base64.b64encode(os.urandom(16)).decode()
     origin = f"{endpoint.scheme}://{endpoint.netloc}"
+    authorization = base64.b64encode(f"{grafana_user}:{grafana_password}".encode()).decode()
     request = (f"GET /api/live/ws HTTP/1.1\r\nHost: {endpoint.netloc}\r\n"
                f"Upgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\n"
-               f"Sec-WebSocket-Version: 13\r\nOrigin: {origin}\r\n\r\n").encode()
+               f"Sec-WebSocket-Version: 13\r\nOrigin: {origin}\r\n"
+               f"Authorization: Basic {authorization}\r\n\r\n").encode()
     with socket.create_connection((endpoint.hostname, port), timeout=5) as connection:
         connection.settimeout(5)
         connection.sendall(request)
@@ -849,6 +939,7 @@ def main():
     parser.add_argument("--verify-persistence", action="store_true", help="restart Prometheus and Loki and verify retained data")
     parser.add_argument("--verify-scenarios", action="store_true", help="run bounded degradation, scan, and peak scenarios")
     args = parser.parse_args()
+    security_result = verify_platform_security()
     cases = (("", 200), ("redirect", 301), ("forbidden", 403), ("missing", 404), ("error", 500), ("slower", 200), (".env", 404))
     for app in ("app-a", "app-b", "app-c"):
         for path, expected in cases:
@@ -884,7 +975,7 @@ def main():
     for app, result in report.items():
         print(f"{app}: status={','.join(result['statuses'])}; methods={','.join(result['methods'])}; p95={result['p95_seconds']}s; Loki entries={result['log_entries']}")
     suffix = "; persistence survived Prometheus/Loki restart" if args.verify_persistence else ""
-    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}{suffix}")
+    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}; security={security_result}{suffix}")
     if scenario_result:
         print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}; no-traffic zero checks={scenario_result['idle_apps']}")
 

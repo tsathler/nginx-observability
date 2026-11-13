@@ -7,6 +7,7 @@ import os
 import re
 import socket
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -34,6 +35,9 @@ loki = os.getenv("LOKI_URL", "http://127.0.0.1:3100").rstrip("/")
 grafana = os.getenv("GRAFANA_URL", "http://127.0.0.1:3000").rstrip("/")
 grafana_user = os.getenv("GRAFANA_ADMIN_USER", "admin")
 grafana_password = os.getenv("GRAFANA_ADMIN_PASSWORD", "")
+prom_retention_time = os.getenv("PROMETHEUS_RETENTION_TIME", "7d")
+prom_retention_size = os.getenv("PROMETHEUS_RETENTION_SIZE", "1GB")
+loki_retention_period = os.getenv("LOKI_RETENTION_PERIOD", "168h")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -124,6 +128,11 @@ def prom_scalar(expression):
     return float(result[0]["value"][1])
 
 
+def target_scraped_after(job, epoch):
+    return any(float(item["value"][0]) >= epoch and item["value"][1] == "1"
+               for item in prom_query(f'up{{job="{job}"}}'))
+
+
 def loki_query(expression, start_ns=None, end_ns=None, limit=200):
     end_ns = end_ns or time.time_ns()
     params = {
@@ -208,6 +217,157 @@ def verify_platform_security():
     assert ignore.returncode == 0, ".env is not ignored by Git"
     return {"ports_loopback_only": True, "grafana_unauthorized_http": status,
             "networks_internal": True, "tracked_env_or_key_files": False}
+
+
+def verify_retention_configuration():
+    flags = get_json(f"{prom}/api/v1/status/flags")["data"]
+    def duration_seconds(value):
+        units = {"ms": .001, "s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800, "y": 31536000}
+        parts = re.findall(r"(\d+(?:\.\d+)?)(ms|[smhdwy])", value)
+        assert parts and "".join(number + unit for number, unit in parts) == value
+        return sum(float(number) * units[unit] for number, unit in parts)
+
+    def size_bytes(value):
+        units = {"B": 1, "KB": 1024, "MB": 1024**2, "GB": 1024**3,
+                 "TB": 1024**4, "PB": 1024**5, "EB": 1024**6,
+                 "KIB": 1024, "MIB": 1024**2, "GIB": 1024**3,
+                 "TIB": 1024**4, "PIB": 1024**5, "EIB": 1024**6}
+        match = re.fullmatch(r"(\d+(?:\.\d+)?)(B|KB|MB|GB|TB|PB|EB|KiB|MiB|GiB|TiB|PiB|EiB)", value, re.IGNORECASE)
+        assert match, f"Unsupported Prometheus retention size syntax: {value}"
+        return float(match.group(1)) * units[match.group(2).upper()]
+
+    assert duration_seconds(flags["storage.tsdb.retention.time"]) == duration_seconds(prom_retention_time), \
+        f"Prometheus effective time retention differs from configured policy"
+    assert size_bytes(flags["storage.tsdb.retention.size"]) == size_bytes(prom_retention_size), \
+        f"Prometheus effective size retention differs from configured policy"
+    with urllib.request.urlopen(f"{loki}/config", timeout=10) as response:
+        loki_config = response.read().decode()
+    retention_values = re.findall(r"(?m)^\s*retention_period:\s*(\S+)\s*$", loki_config)
+    lookback_values = re.findall(r"(?m)^\s*max_query_lookback:\s*(\S+)\s*$", loki_config)
+    expected_loki_seconds = duration_seconds(loki_retention_period)
+    assert any(duration_seconds(value) == expected_loki_seconds for value in retention_values)
+    assert any(duration_seconds(value) == expected_loki_seconds for value in lookback_values)
+    assert re.search(r"(?m)^\s*retention_enabled:\s*true\s*$", loki_config)
+    assert re.search(r"(?m)^\s*delete_request_store:\s*filesystem\s*$", loki_config)
+    return {"prometheus_time": prom_retention_time, "prometheus_size": prom_retention_size,
+            "loki_time": loki_retention_period, "loki_compactor": True}
+
+
+def compose_action(*args):
+    return subprocess.run(["docker", "compose", *args], check=True, cwd=os.path.dirname(os.path.dirname(__file__)),
+                          capture_output=True, text=True)
+
+
+def exporter_request_counters():
+    root = os.path.dirname(os.path.dirname(__file__))
+    response = subprocess.run(["docker", "compose", "exec", "-T", "prometheus", "wget", "-qO-",
+                               "http://nginxlog-exporter:4040/metrics"], cwd=root,
+                              check=True, capture_output=True, text=True).stdout
+    values = {app: 0.0 for app in ("app-a", "app-b", "app-c")}
+    for line in response.splitlines():
+        if not line.startswith("nginx_http_response_count_total{"):
+            continue
+        labels = dict(re.findall(r'([a-zA-Z_]+)="([^"]*)"', line))
+        if labels.get("app") in values and labels.get("method") == "GET" and labels.get("status") == "200":
+            values[labels["app"]] = float(line.rsplit(" ", 1)[1])
+    return values
+
+
+def loki_marker_count(app, marker, start_ns):
+    expression = f'{{job="nginx",app="{app}"}} | json | request=~".*{marker}.*"'
+    return sum(len(stream.get("values", [])) for stream in loki_query(expression, start_ns=start_ns, limit=100))
+
+
+def verify_rotation_and_recovery():
+    root = os.path.dirname(os.path.dirname(__file__))
+    was_generator_running = bool(compose_action("ps", "--status", "running", "--quiet", "traffic-generator").stdout.strip())
+    compose_action("stop", "traffic-generator")
+    marker_start = time.time_ns()
+    marker_counts = {app: 0 for app in ("app-a", "app-b", "app-c")}
+    marker_ids = []
+    try:
+        time.sleep(7)
+        metric_before = {app: prom_scalar(f'sum(nginx_http_response_count_total{{app="{app}"}})')
+                         for app in marker_counts}
+
+        def emit_markers(prefix, rounds=1):
+            for round_number in range(rounds):
+                for app in marker_counts:
+                    marker = f"{prefix}-{uuid.uuid4().hex}"
+                    assert request_status(f"{base}/{app}/?marker={marker}") == 200
+                    marker_counts[app] += 1
+                    marker_ids.append((app, marker))
+                if prefix == "rotate":
+                    rotated = subprocess.run([sys.executable, os.path.join(root, "scripts", "rotate_logs.py"),
+                                              "--max-bytes", "1", "--keep", "20"],
+                                             cwd=root, check=True, capture_output=True, text=True)
+                    assert "rotated:6" in rotated.stdout, f"Expected six Nginx files rotated: {rotated.stdout}"
+
+        emit_markers("rotate", rounds=2)
+
+        compose_action("stop", "loki")
+        emit_markers("loki-down")
+        time.sleep(3)
+        compose_action("start", "loki")
+        wait_for(lambda: request_status(f"{loki}/ready") == 200, "Loki did not recover", timeout=90)
+
+        compose_action("stop", "alloy")
+        emit_markers("alloy-down")
+        compose_action("start", "alloy")
+        wait_for(lambda: all(loki_marker_count(app, marker, marker_start) == 1
+                             for app, marker in marker_ids),
+                 "Loki did not ingest each rotation/outage marker exactly once", timeout=90)
+
+        compose_action("stop", "prometheus")
+        emit_markers("prometheus-down")
+        time.sleep(7)
+        prometheus_started_at = time.time()
+        compose_action("start", "prometheus")
+        wait_for(lambda: target_scraped_after("nginx-access", prometheus_started_at),
+                 "Prometheus target did not recover", timeout=90)
+        wait_for(lambda: all(prom_scalar(f'sum(nginx_http_response_count_total{{app="{app}"}})')
+                             >= metric_before[app] + marker_counts[app] for app in marker_counts),
+                 "Prometheus did not catch up on exporter counters after its interruption", timeout=90)
+        metrics_before_exporter_restart = {
+            app: round(prom_scalar(f'sum(nginx_http_response_count_total{{app="{app}"}})') - metric_before[app], 1)
+            for app in marker_counts}
+        assert all(metrics_before_exporter_restart[app] >= marker_counts[app] for app in marker_counts), \
+            f"Rotation/recovery counters lost requests before exporter restart: {metrics_before_exporter_restart}"
+
+        compose_action("stop", "nginxlog-exporter")
+        emit_markers("exporter-down")
+        exporter_started_at = time.time()
+        compose_action("start", "nginxlog-exporter")
+        wait_for(lambda: target_scraped_after("nginx-access", exporter_started_at) and
+                 bool(prom_query("nginx_http_response_count_total")),
+                 "Exporter metrics did not recover", timeout=90)
+        exporter_recovered = exporter_request_counters()
+        assert not any(exporter_recovered.values()), \
+            "Exporter restart unexpectedly replayed lines appended during its outage"
+        post_restart_at = time.time()
+        emit_markers("post-exporter-restart", rounds=1)
+        wait_for(lambda: all(exporter_request_counters()[app] >= exporter_recovered[app] + 1
+                             for app in marker_counts),
+                 "Exporter counters did not advance after post-restart requests", timeout=90)
+        wait_for(lambda: target_scraped_after("nginx-access", post_restart_at),
+                 "Prometheus did not scrape the recovered exporter", timeout=90)
+        wait_for(lambda: all(loki_marker_count(app, marker, marker_start) == 1
+                             for app, marker in marker_ids),
+                 "A synthetic log marker was missing or duplicated", timeout=90)
+        deltas = {}
+        exporter_after = exporter_request_counters()
+        for app, before in exporter_recovered.items():
+            after = exporter_after[app]
+            deltas[app] = round(after - before, 1)
+            assert deltas[app] >= 1, f"Exporter counters did not advance after restart for {app}: {deltas[app]}"
+        return {"unique_loki_markers": len(marker_ids), "markers_per_app": marker_counts,
+                "prometheus_counter_deltas_before_exporter_restart": metrics_before_exporter_restart,
+                "exporter_outage_events_backfilled": False,
+                "post_exporter_restart_deltas": deltas, "rotation_cycles": 2,
+                "loki_alloy_prometheus_exporter_recovered": True}
+    finally:
+        if was_generator_running:
+            compose_action("start", "traffic-generator")
 
 
 def verify_dashboard_and_datasources():
@@ -938,8 +1098,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify-persistence", action="store_true", help="restart Prometheus and Loki and verify retained data")
     parser.add_argument("--verify-scenarios", action="store_true", help="run bounded degradation, scan, and peak scenarios")
+    parser.add_argument("--verify-reliability", action="store_true", help="verify log rotation, retention, and recovery from temporary service interruptions")
     args = parser.parse_args()
     security_result = verify_platform_security()
+    retention_result = verify_retention_configuration()
     cases = (("", 200), ("redirect", 301), ("forbidden", 403), ("missing", 404), ("error", 500), ("slower", 200), (".env", 404))
     for app in ("app-a", "app-b", "app-c"):
         for path, expected in cases:
@@ -972,12 +1134,15 @@ def main():
         query_counts = verify_dashboard_queries(dashboards)
         application_detail_checks = verify_application_detail(dashboards["nginx-application-detail"])
         live_logs_checks = verify_live_logs(dashboards["nginx-live-logs"])
+    reliability_result = verify_rotation_and_recovery() if args.verify_reliability else None
     for app, result in report.items():
         print(f"{app}: status={','.join(result['statuses'])}; methods={','.join(result['methods'])}; p95={result['p95_seconds']}s; Loki entries={result['log_entries']}")
     suffix = "; persistence survived Prometheus/Loki restart" if args.verify_persistence else ""
-    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}; security={security_result}{suffix}")
+    print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}; security={security_result}; retention={retention_result}{suffix}")
     if scenario_result:
         print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}; no-traffic zero checks={scenario_result['idle_apps']}")
+    if reliability_result:
+        print(f"OK: reliability={reliability_result}")
 
 
 if __name__ == "__main__":

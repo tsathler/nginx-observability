@@ -172,6 +172,9 @@ def verify_platform_security():
             assert port.get("host_ip") in {"127.0.0.1", "::1"}, f"{name} published outside loopback"
     for name in ("app-a", "app-b", "app-c", "traffic-generator", "nginxlog-exporter", "alloy"):
         assert not services[name].get("ports"), f"{name} unexpectedly publishes a host port"
+    assert not services["alert-receiver"].get("ports"), "Local webhook receiver unexpectedly publishes a host port"
+    assert set(services["alert-receiver"]["networks"]) == {"alerts"}, \
+        "Local webhook receiver must remain isolated on the internal alerts network"
 
     grafana_env = services["grafana"]["environment"]
     assert grafana_env["GF_AUTH_ANONYMOUS_ENABLED"] == "false"
@@ -179,9 +182,10 @@ def verify_platform_security():
     assert grafana_env["GF_SECURITY_ADMIN_PASSWORD"] == grafana_password
     assert "GF_AUTH_DISABLE_LOGIN_FORM" not in grafana_env
 
-    for network in ("frontend", "metrics", "logs"):
+    for network in ("frontend", "metrics", "logs", "alerts"):
         assert config["networks"][network].get("internal") is True, f"{network} is not internal"
-    assert set(services["grafana"]["networks"]) == {"metrics", "logs", "host-access"}
+    assert set(services["grafana"]["networks"]) == {"metrics", "logs", "host-access", "alerts"}
+    assert "alerts" not in services["prometheus"]["networks"]
     assert "frontend" not in services["prometheus"]["networks"]
     assert "frontend" not in services["loki"]["networks"]
     assert "host-access" not in services["traffic-generator"]["networks"]

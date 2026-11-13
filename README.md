@@ -16,7 +16,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-O Compose inicia três aplicações simuladas, Nginx, exporter de access logs, Prometheus, Loki, Alloy, Grafana e gerador contínuo. O tráfego percorre o proxy Nginx e as respostas são distribuídas entre 200, 301, 403, 404 e 500, incluindo diferentes tempos de resposta.
+O Compose inicia três aplicações simuladas, Nginx, exporter de access logs, Prometheus, Loki, Alloy, Grafana, gerador contínuo e um receptor local de webhook para testar alertas. O tráfego percorre o proxy Nginx e as respostas são distribuídas entre 200, 301, 403, 404 e 500, incluindo diferentes tempos de resposta. O receptor permanece apenas na rede Docker interna `alerts` e não publica porta no host.
 
 O script cria `.env` (ignorado pelo Git) com uma senha aleatória do Grafana, sem exibi-la, e preserva um arquivo existente. O usuário inicial é `admin`; consulte a senha localmente no `.env` e mantenha esse arquivo privado. Se Grafana já estiver rodando, executar novamente o script sincroniza a senha da instância com o arquivo. Portas e taxa do gerador têm padrões em `.env.example`; ajuste apenas o `.env` local.
 
@@ -37,6 +37,16 @@ Quatro dashboards são provisionados automaticamente: **Nginx | Overview**, **Ng
 - **Live Logs:** filtro por app/método/status/path/IP e até 500 eventos; atualização do dashboard em 2s. Para streaming WebSocket genuíno, use o link **Open Loki Explore Live tail** e ative **Live** no Explore. Refresh de painel não é Live tail.
 - **Security:** seções Overview, Suspicious Activity e Investigation; taxas atuais req/s com precisão de três casas, 429 como estimativa do período e erros do exporter como saúde da coleta. Methods usa `increase()` arredondado. Scanner-like paths e origens recorrentes exigem o intervalo selecionado e os filtros app/IP; origens requerem ao menos dois erros 4xx/5xx. A tabela recente traz sete campos, em ordem decrescente e com limite de 500 eventos; Explore mantém o JSON completo. São sinais sintéticos para triagem: um 404 isolado não é classificado como ataque.
 
+### Alertas operacionais
+
+As regras ficam provisionadas em **Grafana → Alerting → Alert rules**, na pasta **Nginx Operations**. Há alertas por aplicação para indisponibilidade, proporção sustentada de 5xx e P95, além de saúde de Nginx, exporter, Alloy, Loki e reload do Prometheus. O pipeline também alerta sobre parse errors do exporter, falhas de flush/WAL no Loki e entradas descartadas pelo writer do Alloy. Os limiares editáveis por aplicação estão em `config/prometheus/rules/alert-thresholds.yml`.
+
+Os padrões são 5xx acima de 5%/15% com mínimo de 10/20 respostas por minuto; P95 acima de 500 ms/1 s com volume mínimo; e `for` entre 15 segundos e 10 minutos conforme o sinal. Consulte causas, ações e estados `No Data`/`Error` nas regras provisionadas e em [docs/alerting-audit.md](docs/alerting-audit.md). As consultas de tráfego produzem zero quando não há eventos, enquanto a indisponibilidade é determinada por health scrapes próprios; ausência inesperada da série de threshold ou erro de datasource permanece visível como `No Data`/`Error`.
+
+O contact point **Local test webhook** entrega ao receptor sem porta publicada ou integração externa. O serviço guarda somente as transições recentes em memória. Para validar regras, estados e entrega/resolução com tráfego sintético local, execute `python tests/verify_alerting.py` (cerca de alguns minutos). A validação interrompe e reinicia temporariamente `app-a`, `nginxlog-exporter` e Loki, dispara 5xx/P95 e deixa o gerador padrão parado durante o ensaio. O script reinicia os serviços e o gerador no `finally`.
+
+Para alterar thresholds por app, edite as recording rules correspondentes à série e labels `app` no arquivo `config/prometheus/rules/alert-thresholds.yml`; a avaliação acompanha os grupos Prometheus. Mudanças no provisionamento Grafana são aplicadas ao reiniciar Grafana. Para notificações reais futuras, configurar endpoint autenticado/TLS, secrets fora do repositório, políticas de roteamento e teste de entrega/resolução em ambiente de destino; o receptor do laboratório não é adequado para produção.
+
 As variáveis de método/status são opções fixas; `$app` é descoberta do label do exporter, portanto aplicações instrumentadas futuramente não exigem duplicar painéis. Application, Method e Status filtram as consultas Prometheus e Loki; Path filtra somente consultas Loki, pois caminho não é label Prometheus. O Loki usa os campos method/status/path/request_time que o Alloy guarda como structured metadata, sem adicionar IP ou URL às labels indexadas. “Slowest by app/method/status/path” mostra a duração máxima em ms por combinação no intervalo selecionado; o cenário normal não gera rotas lentas, então use degradação/pico ou uma requisição sintética `/slower` controlada para preencher esse painel. Methods usa `increase()` de counters e exibe uma estimativa arredondada a requisições inteiras. Most requested paths apresenta contagem de eventos Loki no intervalo, Top 10 ordenado por volume. A tabela recente mostra sete campos de leitura rápida; o payload JSON e os demais campos permanecem disponíveis no Loki/Explore.
 
 ## Verificar o pipeline
@@ -47,9 +57,10 @@ Com os serviços em execução e Python 3.11 ou superior instalado, rode:
 python tests/verify_pipeline.py
 python tests/verify_pipeline.py --verify-persistence
 python tests/verify_pipeline.py --verify-scenarios --verify-persistence
+python tests/verify_alerting.py
 ```
 
-O verificador valida respostas 200/301/403/404/500 nas três apps, séries e histogramas isolados, percentis P50/P95/P99, eventos JSON/labels do Loki, target do exporter, zero erros de parse, datasources e quatro dashboards provisionados. Também executa na API real os alvos PromQL e LogQL contidos nos dashboards. `--verify-scenarios` interrompe temporariamente o gerador contínuo, executa os cenários finitos e o reinicia no `finally`. `--verify-persistence` envia uma requisição marcada e reinicia Prometheus e Loki, sem apagar volumes, para verificar que as amostras e o evento permanecem consultáveis. Para acompanhar logs: `docker compose logs -f nginx alloy loki nginxlog-exporter`.
+O verificador valida respostas 200/301/403/404/500 nas três apps, séries e histogramas isolados, percentis P50/P95/P99, eventos JSON/labels do Loki, targets, zero erros de parse, datasources e quatro dashboards provisionados. Também executa na API real os alvos PromQL e LogQL contidos nos dashboards. `--verify-scenarios` interrompe temporariamente o gerador contínuo, executa os cenários finitos e o reinicia no `finally`. `--verify-persistence` envia uma requisição marcada e reinicia Prometheus e Loki, sem apagar volumes, para verificar que as amostras e o evento permanecem consultáveis. `verify_alerting.py` verifica provisionamento e avalia transições/entrega dos alertas com eventos locais. Para acompanhar logs: `docker compose logs -f nginx alloy loki nginxlog-exporter`.
 
 Os cenários também podem ser executados individualmente. A duração é limitada a 300s, taxa a 20 RPS e concorrência a 4; somente targets localhost/loopback ou o serviço Compose `nginx` são aceitos:
 
@@ -59,6 +70,7 @@ docker compose run --rm --no-deps traffic-generator python -u generate.py --scen
 docker compose run --rm --no-deps traffic-generator python -u generate.py --scenario degradation --duration 60 --rps 4 --concurrency 2
 docker compose run --rm --no-deps traffic-generator python -u generate.py --scenario scan --duration 30 --rps 4 --concurrency 2
 docker compose run --rm --no-deps traffic-generator python -u generate.py --scenario peak --duration 30 --rps 8 --concurrency 2
+docker compose run --rm --no-deps traffic-generator python -u generate.py --scenario latency --duration 60 --rps 2 --concurrency 2
 docker compose start traffic-generator
 ```
 
@@ -114,7 +126,7 @@ Para remover também os dados persistidos do laboratório: `docker compose down 
 - Nginx roteia `/app-a/`, `/app-b/`, `/app-c/` e grava um arquivo JSON por aplicação em volume compartilhado. IP e caminho são mantidos como campos do log, nunca como labels Loki/Prometheus.
 - `prometheus-nginxlog-exporter` lê os access logs e fornece contagem de respostas por método/status e histogramas de tempo de resposta. O label `app` tem apenas três valores fixos.
 - Alloy lê os arquivos JSON, extrai timestamp e metadados e envia eventos ao Loki. O label de aplicação vem do caminho/target fixo; IP e URI ficam nos metadados do evento.
-- Prometheus raspa o exporter a cada 5 segundos. Grafana recebe datasources e dashboard por provisioning.
+- Prometheus raspa o exporter, health endpoints internos e métricas de Alloy/Loki a cada 5 segundos. As regras do Grafana usam intervalo de 10 segundos, preservam labels por aplicação com expressões Reduce/Threshold e são provisionadas como código.
 - Não usamos o `nginx-prometheus-exporter` oficial para métricas HTTP por app: ele expõe estatísticas globais de `stub_status`, sem status ou latência individual. É adequado como complemento para conexões e estado do Nginx.
 - Os dashboards públicos 25257 e 17452 foram avaliados; padrões do 25257 foram adaptados para esta instrumentação. Não foi importado código de painel comunitário sem licença clara. O dashboard 17452 depende das métricas `nginx-prometheus-exporter`/stub_status, ausentes neste laboratório.
 - Imagens estão fixadas em versões explícitas; armazenamento Prometheus, Loki, Alloy e Grafana usa volumes nomeados.
@@ -129,7 +141,7 @@ A revisão visual do dashboard Security, após o cenário sintético de varredur
 
 A validação visual de Application Detail e Live Logs continua pendente. As consultas e a integração desses dashboards foram verificadas por API; essa verificação não substitui a revisão da renderização no Grafana.
 
-Validação integrada reproduzível: python tests/verify_pipeline.py --verify-scenarios --verify-persistence. O comando verifica consultas PromQL/LogQL dos quatro dashboards, separação por aplicação, cenários sintéticos e persistência após reiniciar Prometheus e Loki. Evidências específicas: [Application Detail](docs/application-detail-audit.md), [Live Logs](docs/live-logs-refinement.md) e [Security](docs/security-dashboard-refinement.md).
+Validação integrada reproduzível: `python tests/verify_pipeline.py --verify-scenarios --verify-persistence`; alertas ponta a ponta: `python tests/verify_alerting.py`. O primeiro comando verifica consultas PromQL/LogQL dos quatro dashboards, separação por aplicação, cenários sintéticos e persistência após reiniciar Prometheus e Loki; o segundo testa alert states e entrega local. Evidências específicas: [Application Detail](docs/application-detail-audit.md), [Live Logs](docs/live-logs-refinement.md), [Security](docs/security-dashboard-refinement.md) e [Alerting](docs/alerting-audit.md).
 
 ## Segurança e limitações
 

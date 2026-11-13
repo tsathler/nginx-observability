@@ -46,6 +46,9 @@ def inspect_history() -> list[str]:
             name = Path(path).name.lower()
             if (name.startswith(".env") and name != ".env.example") or Path(name).suffix in SENSITIVE_SUFFIXES:
                 findings.add(f"{commit[:12]}:{path} (sensitive artifact path)")
+            # This audit tool contains detection regexes and sample credential terms.
+            if path.replace("\\", "/") == "tests/audit_repository_history.py":
+                continue
 
             blob_id = object_id.decode("ascii")
             if blob_id not in blob_cache:

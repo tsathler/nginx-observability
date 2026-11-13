@@ -10,6 +10,7 @@ Laboratório local, reproduzível e multiaplicação para explorar métricas HTT
 - Alertas operacionais por aplicação e componente, com receptor webhook local para testes.
 - Retenção configurável, rotação de logs por renomeação e testes de recuperação.
 - Controles de laboratório: autenticação Grafana, portas publicadas em loopback e redes Docker segmentadas.
+- Diferenciais técnicos: labels de baixa cardinalidade, consultas por aplicação, infraestrutura/dashboards/alertas como código e testes de recuperação.
 
 ## Arquitetura
 
@@ -34,6 +35,10 @@ Prometheus coleta métricas HTTP com labels de baixa cardinalidade, como `app`, 
 - Python 3.11 ou superior.
 - Cerca de 2 GB de memória disponível ao Docker Engine.
 - Portas locais 8080, 9090, 3100 e 3000 livres. Podem ser alteradas no `.env`.
+
+## Release
+
+A release `v0.1.0` está preparada localmente, mas ainda não foi tagueada nem publicada. Consulte o [changelog](CHANGELOG.md) e o [checklist/notas da release](docs/release-v0.1.0.md).
 
 ## Executar
 
@@ -102,15 +107,18 @@ Access logs guardam IP, referer, user-agent e o campo original da requisição, 
 
 O exporter não faz backfill: requisições durante sua indisponibilidade podem permanecer nos logs Loki, mas não são reconstruídas nos counters Prometheus. O volume Prometheus também apresentou avisos de recuperação de chunks mmap antes da atualização para 3.16.0. Após a atualização, os testes de restart/persistência passaram sem recorrência observada; uma lacuna histórica eventualmente descartada não pode ser reconstruída nem excluída sem fonte independente. Veja [a auditoria final](docs/final-audit.md) e [retenção e recuperação](docs/reliability-audit.md).
 
-## Capturas e licença
+## Capturas
 
-Não há capturas reais de dashboards versionadas neste repositório. Overview e Security têm revisões visuais concluídas e registradas; Application Detail e Live Logs permanecem com pendência de revisão visual. Os resultados de API e testes não são apresentados como capturas visuais.
+Não há capturas reais de dashboards versionadas neste repositório. Overview e Security têm revisões visuais concluídas e registradas; Application Detail e Live Logs permanecem pendentes de revisão num navegador disponível. Não usamos respostas de API como substituto para capturas visuais.
 
-O repositório ainda não contém arquivo `LICENSE`. A seleção da licença precisa ser confirmada pelo mantenedor antes de anunciar ou distribuir o projeto como open source; nenhum texto de licença foi escolhido automaticamente nesta auditoria. Consulte o estado de publicação em [docs/final-audit.md](docs/final-audit.md).
+## Licença
+
+Os arquivos originais deste repositório são licenciados sob [MIT](LICENSE). Os serviços externos executados pelas imagens Docker mantêm suas próprias licenças e avisos; MIT não as substitui. Consulte a [auditoria de licenças](docs/license-audit.md). Esta configuração é um laboratório de portfólio e não foi homologada para produção; confira o [preparo da release v0.1.0](docs/release-v0.1.0.md) e as [limitações técnicas](docs/final-audit.md).
 
 ## Mapa do repositório
 
 - `compose.yaml`, `.env.example`: orquestração e parâmetros do laboratório.
+- `LICENSE`, `CHANGELOG.md`: licença dos arquivos próprios e histórico da release preparada.
 - `config/`: Nginx, Prometheus, Loki, Alloy, dashboards e provisionamento Grafana.
 - `demo/`: aplicações, tráfego sintético e receptor local de alertas.
 - `tests/`: verificações de pipeline, confiabilidade e alertas.

@@ -21,6 +21,7 @@ O achado mais grave era o Grafana sem autenticação, com acesso anônimo de adm
 
 - As quatro portas para uso local (Nginx, Prometheus, Loki, Grafana) são publicadas somente em `127.0.0.1`; Alloy e exporter não publicam portas.
 - Grafana requer login local; `.env.example` não contém senha. Execute `python scripts/init_lab_env.py` antes do Compose. O script gera o segredo sem mostrá-lo, não substitui `.env` existente e, se Grafana estiver em execução, sincroniza a senha do usuário admin com a configuração local. Em Windows o arquivo herda a ACL da pasta do usuário; mantenha o diretório privado e não copie `.env` para backups compartilhados.
+- A senha é passada ao container pela variável de ambiente do Compose e fica acessível a administradores do daemon Docker e processos locais com privilégio suficiente. Isto é adequado apenas para um laboratório de usuário único; em implantação corporativa use secret store/secret mount e não compartilhe o `.env`.
 - Todas as aplicações e serviços recebem `no-new-privileges`; capabilities são removidas para os serviços em que a stack foi validada.
 - `frontend`, `metrics` e `logs` são redes `internal: true`. A rede `host-access` existe somente para preservar acesso local às portas e não inclui aplicações, gerador, Alloy ou exporter.
 - Configurações são montadas read-only; dados são gravados em volumes nomeados. Não há arquivos de certificados, chaves ou credenciais corporativas no repositório.

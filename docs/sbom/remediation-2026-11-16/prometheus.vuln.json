@@ -3,10 +3,10 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e4ca-6bea-7b4d-baea-b4d9a8f078eb",
-  "CreatedAt": "2026-11-16T11:37:13.5787407-03:00",
+  "ReportID": "01a1e576-4a33-7ae9-a9ed-fcc074272035",
+  "CreatedAt": "2026-11-16T14:44:57.1397152-03:00",
   "ArtifactID": "sha256:6e2104be2ecede08060a7d7de50f5a04c3116c3dea214a437834d56f7f59635d",
-  "ArtifactName": "prom/prometheus:v3.16.0",
+  "ArtifactName": "sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06",
   "ArtifactType": "container_image",
   "Metadata": {
     "Size": 272267776,

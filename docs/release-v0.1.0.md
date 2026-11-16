@@ -2,6 +2,8 @@
 
 **Status:** prepared locally; no tag or publication created.
 
+**Reavaliação técnica:** dependências Nginx/Grafana e minimização de logs remediadas e testadas em 2026-11-16. **Release ainda NO-GO:** confirmação de titularidade MIT permanece pendente. Não foi feita revisão visual recente de Application Detail e Live Logs. Esta release não está homologada para produção.
+
 **Target:** `v0.1.0`
 **Scope:** portfolio/demo release only. This project has not been homologated for production use.
 
@@ -42,3 +44,19 @@ The browser visual review for Application Detail and Live Logs was not completed
 - Image tags are pinned by version, not digest, and full package-level SBOM/license inventory for image contents was not produced.
 - The MIT copyright attribution comes from the current Git author identity and has not been independently confirmed by the rights holder.
 - Do not market this Compose configuration as production-ready, secure for shared hosting, or homologated for corporate operation.
+
+## Security remediation record — 2026-11-16
+
+- Updated pinned images to `nginx:1.30.6-alpine` and `grafana/grafana:12.4.15`; startup/migration and integration, security, alert, persistence, and reliability suites passed. See [pre-release audit](pre-release-audit.md) for advisory references and evidence. No complete image CVE/SBOM scan was run.
+- Nginx now logs only allowlisted route names (unknown paths collapse to `/_unclassified`), method, app, status, duration, response bytes, and source IP. Raw request targets/query strings, Cookie, Authorization, Referer, and User-Agent are not persisted in new access events. `python tests/verify_log_privacy.py` passed with synthetic canaries.
+- Historical events and rotated files were not purged; old fields can remain in local volumes until retention/rotation. No real traffic was used during the test. Do not treat the privacy check as a historical scrub.
+- Full results and remaining limits—including exporter outage counter gaps, no full restore rehearsal, no reliable free-space metric, and pending visual review—are documented in `pre-release-audit.md` and `security-audit.md`.
+
+### Updated publication checklist
+
+- [x] Update Nginx and Grafana from the previously flagged versions and validate the lab.
+- [x] Verify new access events do not persist synthetic path/query/header canaries.
+- [x] Re-run integration/scenario/persistence, reliability, alerting, and Compose validation.
+- [ ] Confirm the actual rights holder for the MIT attribution.
+- [ ] Complete visual review of Application Detail and Live Logs, or leave clearly marked as pending.
+- [ ] Review staged release contents; create a tag only after separate authorization.

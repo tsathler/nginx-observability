@@ -1,0 +1,1928 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3",
+  "documentNamespace": "http://trivy.dev/container_image/nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3-c03f3b80-8ff1-4b45-81b3-7dafc36c3a5b",
+  "creationInfo": {
+    "creators": [
+      "Organization: aquasecurity",
+      "Tool: trivy-0.76.2"
+    ],
+    "created": "2026-11-16T15:56:37Z"
+  },
+  "packages": [
+    {
+      "name": "prometheus-nginxlog-exporter",
+      "SPDXID": "SPDXRef-Application-22eaa331174b6d7d",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "primaryPackagePurpose": "APPLICATION",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Class: lang-pkgs"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Type: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3",
+      "SPDXID": "SPDXRef-ContainerImage-757033ad7121de89",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/nginx-observability-nginxlog-exporter@sha256:7155217f44f00ce783d236b2d5c713f678ae025a0bfb74b8598174c3d36abeb2?arch=amd64\u0026repository_url=index.docker.io%2Flibrary%2Fnginx-observability-nginxlog-exporter"
+        }
+      ],
+      "primaryPackagePurpose": "CONTAINER",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "DiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "ImageID: sha256:7155217f44f00ce783d236b2d5c713f678ae025a0bfb74b8598174c3d36abeb2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Labels:com.docker.compose.project: nginx-observability"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Labels:com.docker.compose.service: nginxlog-exporter"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Labels:com.docker.compose.version: 5.4.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Reference: nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "RepoDigest: nginx-observability-nginxlog-exporter@sha256:7155217f44f00ce783d236b2d5c713f678ae025a0bfb74b8598174c3d36abeb2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "RepoTag: nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "SchemaVersion: 2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "Size: 19580416"
+        }
+      ]
+    },
+    {
+      "name": "github.com/armon/go-metrics",
+      "SPDXID": "SPDXRef-Package-2f7329bec733ff64",
+      "versionInfo": "v0.4.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/armon/go-metrics@v0.4.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/armon/go-metrics@v0.4.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/beorn7/perks",
+      "SPDXID": "SPDXRef-Package-2a762d2fcbf668b6",
+      "versionInfo": "v1.0.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/beorn7/perks@v1.0.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/beorn7/perks@v1.0.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/cespare/xxhash/v2",
+      "SPDXID": "SPDXRef-Package-fe9b459e14031a13",
+      "versionInfo": "v2.2.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/cespare/xxhash/v2@v2.2.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/cespare/xxhash/v2@v2.2.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/fatih/color",
+      "SPDXID": "SPDXRef-Package-5a82060adbf68815",
+      "versionInfo": "v1.14.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/fatih/color@v1.14.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/fatih/color@v1.14.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/fsnotify/fsnotify",
+      "SPDXID": "SPDXRef-Package-35953e0826c03874",
+      "versionInfo": "v1.4.9",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/fsnotify/fsnotify@v1.4.9"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/fsnotify/fsnotify@v1.4.9"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang/protobuf",
+      "SPDXID": "SPDXRef-Package-84090dc7e3697ec7",
+      "versionInfo": "v1.5.3",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang/protobuf@v1.5.3"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/golang/protobuf@v1.5.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/consul/api",
+      "SPDXID": "SPDXRef-Package-28afdab330fd30f1",
+      "versionInfo": "v1.22.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/consul/api@v1.22.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/consul/api@v1.22.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-cleanhttp",
+      "SPDXID": "SPDXRef-Package-3ccd6fa2411574fe",
+      "versionInfo": "v0.5.2",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-cleanhttp@v0.5.2"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-cleanhttp@v0.5.2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-hclog",
+      "SPDXID": "SPDXRef-Package-f8aa47f41e516e48",
+      "versionInfo": "v1.5.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-hclog@v1.5.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-hclog@v1.5.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-immutable-radix",
+      "SPDXID": "SPDXRef-Package-3397896a542e1559",
+      "versionInfo": "v1.3.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-immutable-radix@v1.3.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-immutable-radix@v1.3.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-rootcerts",
+      "SPDXID": "SPDXRef-Package-c959dfc3ea1a1b7d",
+      "versionInfo": "v1.0.2",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-rootcerts@v1.0.2"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-rootcerts@v1.0.2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/golang-lru",
+      "SPDXID": "SPDXRef-Package-80b64e832bb4da89",
+      "versionInfo": "v0.5.4",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/golang-lru@v0.5.4"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/golang-lru@v0.5.4"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/hcl",
+      "SPDXID": "SPDXRef-Package-d31cf0c1fde3ea2e",
+      "versionInfo": "v1.0.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/hcl@v1.0.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/hcl@v1.0.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/serf",
+      "SPDXID": "SPDXRef-Package-ba0100933e205d87",
+      "versionInfo": "v0.10.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/serf@v0.10.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/serf@v0.10.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/martin-helmich/prometheus-nginxlog-exporter",
+      "SPDXID": "SPDXRef-Package-228c3736985b0e25",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/martin-helmich/prometheus-nginxlog-exporter"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/martin-helmich/prometheus-nginxlog-exporter"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mattn/go-colorable",
+      "SPDXID": "SPDXRef-Package-c0d1a58a627b6cad",
+      "versionInfo": "v0.1.13",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mattn/go-colorable@v0.1.13"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mattn/go-colorable@v0.1.13"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mattn/go-isatty",
+      "SPDXID": "SPDXRef-Package-9e5bb10120d88089",
+      "versionInfo": "v0.0.17",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mattn/go-isatty@v0.0.17"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mattn/go-isatty@v0.0.17"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/matttproud/golang_protobuf_extensions",
+      "SPDXID": "SPDXRef-Package-a6340ebb24e0f6e",
+      "versionInfo": "v1.0.4",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/matttproud/golang_protobuf_extensions@v1.0.4"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/matttproud/golang_protobuf_extensions@v1.0.4"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mitchellh/mapstructure",
+      "SPDXID": "SPDXRef-Package-1292dafbcc42b576",
+      "versionInfo": "v1.5.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mitchellh/mapstructure@v1.5.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mitchellh/mapstructure@v1.5.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/nxadm/tail",
+      "SPDXID": "SPDXRef-Package-cb71bb575a4bf19f",
+      "versionInfo": "v1.4.8",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/nxadm/tail@v1.4.8"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/nxadm/tail@v1.4.8"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/pkg/errors",
+      "SPDXID": "SPDXRef-Package-dcaf0fe1fe72ba78",
+      "versionInfo": "v0.9.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/pkg/errors@v0.9.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/pkg/errors@v0.9.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_golang",
+      "SPDXID": "SPDXRef-Package-e00eb3bd621433de",
+      "versionInfo": "v1.16.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_golang@v1.16.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/client_golang@v1.16.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_model",
+      "SPDXID": "SPDXRef-Package-2dd2d4530116885b",
+      "versionInfo": "v0.4.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_model@v0.4.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/client_model@v0.4.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/common",
+      "SPDXID": "SPDXRef-Package-d7617a3bd6acab60",
+      "versionInfo": "v0.44.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/common@v0.44.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/common@v0.44.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/procfs",
+      "SPDXID": "SPDXRef-Package-da4a2b8d4e13381a",
+      "versionInfo": "v0.10.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/procfs@v0.10.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/procfs@v0.10.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/satyrius/gonx",
+      "SPDXID": "SPDXRef-Package-f3230db0d177a99a",
+      "versionInfo": "v1.4.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/satyrius/gonx@v1.4.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/satyrius/gonx@v1.4.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/atomic",
+      "SPDXID": "SPDXRef-Package-fc90c0db28deba2e",
+      "versionInfo": "v1.7.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/atomic@v1.7.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: go.uber.org/atomic@v1.7.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/multierr",
+      "SPDXID": "SPDXRef-Package-2d7e0ade469c2d5f",
+      "versionInfo": "v1.6.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/multierr@v1.6.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: go.uber.org/multierr@v1.6.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/zap",
+      "SPDXID": "SPDXRef-Package-448eb9e7ce39bd22",
+      "versionInfo": "v1.24.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/zap@v1.24.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: go.uber.org/zap@v1.24.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/exp",
+      "SPDXID": "SPDXRef-Package-a17cf1280fc519d",
+      "versionInfo": "v0.0.0-20230321023759-10a507213a29",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/exp@v0.0.0-20230321023759-10a507213a29"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: golang.org/x/exp@v0.0.0-20230321023759-10a507213a29"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/sys",
+      "SPDXID": "SPDXRef-Package-ba1393d063337cf",
+      "versionInfo": "v0.49.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.49.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: golang.org/x/sys@v0.49.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/protobuf",
+      "SPDXID": "SPDXRef-Package-d0205db85c20f738",
+      "versionInfo": "v1.30.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/protobuf@v1.30.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: google.golang.org/protobuf@v1.30.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/mcuadros/go-syslog.v2",
+      "SPDXID": "SPDXRef-Package-b48fdf6fa999a358",
+      "versionInfo": "v2.3.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/mcuadros/go-syslog.v2@v2.3.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/mcuadros/go-syslog.v2@v2.3.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/tomb.v1",
+      "SPDXID": "SPDXRef-Package-83adad92524bddba",
+      "versionInfo": "v1.0.0-20141024135613-dd632973f1e7",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/tomb.v1@v1.0.0-20141024135613-dd632973f1e7"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/tomb.v1@v1.0.0-20141024135613-dd632973f1e7"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/yaml.v3",
+      "SPDXID": "SPDXRef-Package-da9d4463840b728f",
+      "versionInfo": "v3.0.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/yaml.v3@v3.0.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/yaml.v3@v3.0.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "stdlib",
+      "SPDXID": "SPDXRef-Package-545fa0142b612579",
+      "versionInfo": "v1.27.3",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/stdlib@v1.27.3"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:8c210b94d0acfc8f53f3a0ac1c9a84cdc1180d09e638c2c9581d92186e2653ba"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: stdlib@v1.27.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T15:56:37Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Application-22eaa331174b6d7d",
+      "relatedSpdxElement": "SPDXRef-Package-228c3736985b0e25",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-ContainerImage-757033ad7121de89",
+      "relatedSpdxElement": "SPDXRef-Application-22eaa331174b6d7d",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-ContainerImage-757033ad7121de89",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-1292dafbcc42b576",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-28afdab330fd30f1",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-2a762d2fcbf668b6",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-2d7e0ade469c2d5f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-2dd2d4530116885b",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-2f7329bec733ff64",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-3397896a542e1559",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-35953e0826c03874",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-3ccd6fa2411574fe",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-448eb9e7ce39bd22",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-545fa0142b612579",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-5a82060adbf68815",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-80b64e832bb4da89",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-83adad92524bddba",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-84090dc7e3697ec7",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-9e5bb10120d88089",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-a17cf1280fc519d",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-a6340ebb24e0f6e",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-b48fdf6fa999a358",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-ba0100933e205d87",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-ba1393d063337cf",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-c0d1a58a627b6cad",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-c959dfc3ea1a1b7d",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-cb71bb575a4bf19f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-d0205db85c20f738",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-d31cf0c1fde3ea2e",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-d7617a3bd6acab60",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-da4a2b8d4e13381a",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-da9d4463840b728f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-dcaf0fe1fe72ba78",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-e00eb3bd621433de",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-f3230db0d177a99a",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-f8aa47f41e516e48",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-fc90c0db28deba2e",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-228c3736985b0e25",
+      "relatedSpdxElement": "SPDXRef-Package-fe9b459e14031a13",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 Trivy `0.76.2` scanned all 11 image artifacts used by the final local Compose run. This folder contains one SPDX JSON SBOM and one raw Trivy vulnerability JSON report per image. `trivy-vulnerability-summary.json` records image IDs, repo digests, package versions, fixed versions, advisory URLs and package-finding counts. The repo digests, rather than only mutable tags, identify the scanned bytes.
 
+**Loki scan superseded:** the Loki artifacts in this directory describe `grafana/loki:3.7.8`. The Compose runtime now uses `grafana/loki:3.7.10`; its final-digest Trivy report and SPDX are [`../loki-v3.7.10.vuln.json`](../loki-v3.7.10.vuln.json) and [`../loki-v3.7.10.spdx.json`](../loki-v3.7.10.spdx.json). See [`../../cve-triage.md`](../../cve-triage.md) for the updated two-CVE finding and WAL recovery evidence.
+
 ## Findings after remediation
 
 Counts are package-CVE findings in the order Critical / High / Medium / Low / Unknown. A single CVE can appear in multiple packages; the five Python-derived images repeat the same base findings.

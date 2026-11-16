@@ -69,7 +69,8 @@ services:
   nginxlog-exporter:
     <<: *hardened
     cap_drop: [ALL]
-    image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2
+    build: ./demo/nginxlog-exporter
+    image: nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3
     command: ["-config-file", "/etc/exporter/config.yml"]
     volumes:
       - ./config/exporters/nginxlog-exporter.yml:/etc/exporter/config.yml:ro
@@ -95,7 +96,7 @@ services:
   loki:
     <<: *hardened
     cap_drop: [ALL]
-    image: grafana/loki:3.5.7
+    image: grafana/loki:3.7.8
     command: ["-config.file=/etc/loki/config.yml", "-config.expand-env=true"]
     environment:
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-168h}
@@ -108,7 +109,7 @@ services:
 
   alloy:
     <<: *hardened
-    image: grafana/alloy:v1.12.2
+    image: grafana/alloy:v1.22.0
     command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data", "--server.http.listen-addr=0.0.0.0:12345"]
     volumes:
       - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro

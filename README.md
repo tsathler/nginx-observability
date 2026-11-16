@@ -38,7 +38,7 @@ Prometheus coleta métricas HTTP com labels de baixa cardinalidade, como `app`, 
 
 ## Release
 
-A release `v0.1.0` está preparada localmente, mas ainda não foi tagueada nem publicada. Consulte o [changelog](CHANGELOG.md) e o [checklist/notas da release](docs/release-v0.1.0.md).
+A preparação local da release `v0.1.0` está **NO-GO** e não foi tagueada nem publicada. A varredura encontrou CVEs CRITICAL/HIGH ainda sem triagem; também permanecem pendentes a titularidade MIT e a revisão visual de dois dashboards. Consulte o [changelog](CHANGELOG.md) e o [checklist/notas da release](docs/release-v0.1.0.md).
 
 ## Executar
 
@@ -92,6 +92,7 @@ Com a stack em execução:
 python tests/verify_pipeline.py --verify-scenarios --verify-persistence
 python tests/verify_pipeline.py --verify-reliability
 python tests/verify_alerting.py
+python tests/verify_log_privacy.py
 python tests/audit_repository_history.py
 docker compose config --quiet
 git diff --check
@@ -103,7 +104,7 @@ Os testes exercitam APIs Prometheus, Loki e Grafana, consultam os quatro dashboa
 
 Padrões: Prometheus 7 dias e até 1 GB de blocos TSDB; Loki 168 horas, com exclusão assíncrona via Compactor. O limite de blocos do Prometheus não limita sozinho WAL/head nem o volume Docker. Loki no backend filesystem não tem teto por bytes nem métrica confiável de espaço livre nesta stack. Reserve espaço adicional e mantenha backups externos antes de qualquer uso além do laboratório.
 
-Access logs guardam IP, referer, user-agent e o campo original da requisição, que pode incluir query string. Antes de coletar dados reais, remova ou mascare campos sensíveis, evite segredos em URLs e defina acesso e retenção. Prometheus e Loki não têm autenticação própria nesta configuração local e não devem ser expostos fora do host sem proxy autenticador, TLS e controles de rede apropriados.
+Novos access logs guardam IP de origem, aplicação, método, rota allowlisted ou `/_unclassified`, status, duração e bytes enviados. Query strings, usuário autenticado, Cookie, Authorization, Referer e User-Agent não são persistidos. O IP continua sendo dado pessoal; os volumes Loki e de logs locais também podem conter registros anteriores à sanitização até a retenção/rotação expirá-los. Use somente tráfego sintético, não publique volumes e defina minimização, acesso e retenção antes de qualquer coleta real. Prometheus e Loki não têm autenticação própria nesta configuração local e não devem ser expostos fora do host sem proxy autenticador, TLS e controles de rede apropriados.
 
 O exporter não faz backfill: requisições durante sua indisponibilidade podem permanecer nos logs Loki, mas não são reconstruídas nos counters Prometheus. O volume Prometheus também apresentou avisos de recuperação de chunks mmap antes da atualização para 3.16.0. Após a atualização, os testes de restart/persistência passaram sem recorrência observada; uma lacuna histórica eventualmente descartada não pode ser reconstruída nem excluída sem fonte independente. Veja [a auditoria final](docs/final-audit.md) e [retenção e recuperação](docs/reliability-audit.md).
 
@@ -113,7 +114,7 @@ Não há capturas reais de dashboards versionadas neste repositório. Overview e
 
 ## Licença
 
-Os arquivos originais deste repositório são licenciados sob [MIT](LICENSE). Os serviços externos executados pelas imagens Docker mantêm suas próprias licenças e avisos; MIT não as substitui. Consulte a [auditoria de licenças](docs/license-audit.md). Esta configuração é um laboratório de portfólio e não foi homologada para produção; confira o [preparo da release v0.1.0](docs/release-v0.1.0.md) e as [limitações técnicas](docs/final-audit.md).
+O arquivo [LICENSE](LICENSE) propõe MIT para o conteúdo próprio, mas a titularidade/autoridade de concessão ainda não foi confirmada pelo mantenedor; a publicação permanece bloqueada. As imagens e serviços externos mantêm licenças e avisos próprios, não substituídos pela MIT. Consulte a [auditoria de licenças](docs/license-audit.md) e os [SBOMs](docs/sbom/). Este laboratório não foi homologado para produção; confira o [preparo da release v0.1.0](docs/release-v0.1.0.md) e as [limitações técnicas](docs/final-audit.md).
 
 ## Mapa do repositório
 
@@ -126,6 +127,8 @@ Os arquivos originais deste repositório são licenciados sob [MIT](LICENSE). Os
 - `docs/`: decisões, auditorias, procedimentos, resultados e limitações por marco.
 
 Auditorias técnicas e evidências: [arquitetura](docs/architecture-research.md), [segurança](docs/security-audit.md), [dashboards](docs/dashboard-audit.md), [alertas](docs/alerting-audit.md), [retenção e recuperação](docs/reliability-audit.md) e [auditoria final](docs/final-audit.md).
+
+A varredura Trivy da release e os SBOMs SPDX das 11 imagens examinadas estão em [`docs/sbom/`](docs/sbom/). A varredura atual encontrou CVEs CRITICAL/HIGH ainda sem avaliação completa de explorabilidade; por isso a v0.1.0 permanece **NO-GO**. Esses relatórios não são certificação de segurança nem substituem uma triagem de VEX e alcance do código.
 
 ## Encerrar
 

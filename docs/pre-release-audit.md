@@ -291,3 +291,40 @@ Esta seção supersede qualquer expectativa de que os testes anteriores validem 
 **Verificações pendentes/bloqueadas:** não foram gerados SBOMs ou scans Trivy para os digests finais; integração/persistência/cenários falhou como descrito; confiabilidade, alertas e privacidade não foram executados após estas alterações. Uma tentativa da suíte também atingiu timeout na API Grafana durante reinicialização/indisponibilidade do Docker Desktop; após reiniciar o Docker Desktop e subir a stack, a falha determinística remanescente foi a categoria de caminho sem label. O Docker Compose foi reiniciado sem apagar volumes. Sem varredura final e sem todas as regressões aprovadas, CVEs corrigidas/remanescentes não podem ser enumeradas com confiança.
 
 **Decisão após a tentativa: NO-GO.** Não publicar nem criar tag. Bloqueadores: scan e SBOM ausentes dos digests finais; teste integrado falha com dados Loki persistidos; testes de confiabilidade, alertas e privacidade não repetidos; Prometheus e demais imagens ainda sem remediação/triagem final. As alterações funcionais relacionadas permanecem em avaliação local e não representam uma remediação concluída.
+
+### Revalidação CVE e integração — 2026-11-16 (supersede o estado parcial acima)
+
+As imagens foram reconstruídas/substituídas e a varredura final foi executada sobre os artefatos efetivamente usados. Os 11 relatórios Trivy e 11 SBOMs SPDX estão em [`docs/sbom/remediation-2026-11-16/`](sbom/remediation-2026-11-16/); a tabela comparativa e a metodologia estão no README desse diretório. Os digests completos constam no resumo JSON e nos SBOMs.
+
+**Remediação aplicada:** exporter reconstruído a partir do upstream `prometheus-nginxlog-exporter v1.11.0` (commit `76552e7cadc1f76b4e28b5c872412db4a091aca0`) com Go `1.27.3` e `golang.org/x/net v0.62.0`; Python base atualizado de `3.13.2-slim` para `3.13.18-slim-trixie`, com pacotes Debian atualizados na build; Loki atualizado de `3.5.7` para `3.7.8`; Alloy de `1.12.2` para `1.21.3`. Grafana `12.4.15`, Nginx `1.30.6-alpine` e Prometheus `v3.16.0` mantiveram o mesmo digest. Nenhum volume foi removido.
+
+**Resultados Trivy — package findings Critical / High:** todas as 11 imagens tiveram zero Critical na base consultada em 2026-11-16. Permanecem High: cada imagem Python-derived 52; Loki 7; Alloy 3; Grafana 2; Nginx 3. O exporter local apresentou zero High e zero Critical (1 Medium, 1 Unknown). Prometheus apresentou zero High na base atual, mas seu digest não mudou e o scan inicial apontara dois High: não atribuir essa diferença à remediação; a atualização do feed/avaliação do scanner não foi isolada. Os novos SBOMs e relatórios listam IDs CVE, pacotes, versões corrigidas e advisories. Findings por pacote se repetem e não equivalem a CVEs únicas. Nenhuma aplicabilidade, explorabilidade ou falsa identificação foi presumida; os High restantes não têm VEX/aceite e bloqueiam a release.
+
+**Causa/compatibilidade do evento Loki histórico:** a consulta `Most requested paths` agregava uma série sem label `path` quando havia uma linha NUL/legada ou evento sem structured metadata no volume existente. A leitura do evento bruto identificou bytes NUL persistidos. O volume foi preservado. Application Detail agora extrai os campos do JSON no momento da consulta e filtra falhas de parsing (`__error__=""`), preservando as linhas válidas. Isso não apaga nem reescreve o histórico.
+
+**Verificações após a atualização final dos images:**
+
+- `docker compose config --quiet`: passou.
+- `python tests/verify_pipeline.py --verify-scenarios --verify-persistence`: passou; app-a/b/c, códigos 200/301/403/404/500, métodos GET/POST, 31 consultas PromQL, 7 LogQL, quatro dashboards, filtros e websocket Live verificados; persistência após restart Prometheus/Loki aprovada.
+- `python tests/verify_pipeline.py --verify-reliability`: passou; 21 marcadores (7 por app), rotação, retomada dos componentes e persistência; indisponibilidade do exporter não fez backfill dos counters (`exporter_outage_events_backfilled=False`).
+- `python tests/verify_alerting.py`: passou; saúde/idle, indisponibilidade, 5xx, P95, recuperação e entrega ao receptor local.
+- `python tests/verify_log_privacy.py`: passou; canários sintéticos ausentes dos logs Nginx e Loki após sanitização.
+- Validação visual humana dos dashboards: não realizada nesta etapa. As consultas API e testes de integração não substituem revisão visual.
+- Restore integral de backup continua não testado; os testes exercitam persistência após reinício, não restauração de backup.
+
+**Decisão atual: NO-GO para v0.1.0.** Não foram encontrados Critical na varredura atual, e os Critical do exporter publicado/Loki/Alloy/imagens Python deixaram de aparecer após as mudanças, mas ainda há findings High (incluindo 52 por imagem Python, 7 Loki, 3 Alloy, 2 Grafana e 3 Nginx) sem triagem de reachability ou VEX. Prometheus não mudou de digest e sua diferença de classificação não tem causa isolada. Também não foram resolvidas confirmação da titularidade MIT, revisão visual pendente nem restore integral validado. Não criar tag ou publicar até tratar/aceitar explicitamente esses pontos.
+
+### Revalidação após atualização do Alloy — 2026-11-16
+
+Para tratar os findings residuais e os eventos Loki históricos com prefixos NUL, Alloy foi atualizado de `v1.21.3` para `v1.22.0`, release oficial de 2026-11-12. O registro oficial documenta Go `1.27.3`, `golang.org/x/net v0.62.0` e correções em `loki.source.file` para persistir atualizações de posição e reler arquivos recriados com inode reutilizado. O SBOM SPDX e o JSON Trivy foram regenerados para o digest Alloy efetivamente usado; `trivy image --severity CRITICAL,HIGH grafana/alloy:v1.22.0` reportou zero findings nessas severidades. O resumo e arquivos estão em [`docs/sbom/remediation-2026-11-16/`](sbom/remediation-2026-11-16/).
+
+**Evento NUL:** após subir Alloy 1.22.0, os arquivos Nginx de origem foram verificados e continham JSON válido; ocorrências NUL previamente persistidas no Loki eram históricas. Um novo ciclo completo de cenários, incluindo restart de Prometheus/Loki, passou a verificar eventos JSON válidos e não encontrou registro Loki inválido na janela consultada. O teste de confiabilidade também confirmou continuidade após duas rotações e retomada de Alloy. Nenhum volume foi apagado ou reparado. Isso evidencia ingestão válida após a atualização e ausência de recorrência na janela testada; não reescreve nem comprova limpeza dos registros históricos já persistidos.
+
+**Suítes após as atualizações finais:**
+
+- `python tests/verify_pipeline.py --verify-scenarios --verify-persistence`: passou; 3 aplicações, códigos 200/301/403/404/500, GET/POST, 31 consultas PromQL, 7 LogQL, quatro dashboards, filtros, Live websocket HTTP 101, auth 401 sem credencial, cenários e persistência após restart Prometheus/Loki. A verificação adicional observou eventos Loki válidos e sem erro de parsing do exporter.
+- `python tests/verify_pipeline.py --verify-reliability`: passou; 21 marcadores únicos, duas rotações, recuperação do pipeline e confirmação de que o exporter não faz backfill após indisponibilidade.
+- `python tests/verify_alerting.py`: passou; saúde/sem tráfego, indisponibilidade, 5xx, P95, recuperação e entrega ao webhook local.
+- `python tests/verify_log_privacy.py`: passou; canários sintéticos de query, path, Cookie, Authorization, Referer e User-Agent ausentes dos logs ativos/rotacionados e do Loki.
+
+**Decisão permanece NO-GO.** O scan atual removeu os findings Critical/High de Alloy, mas persistem High nas cinco imagens Python (52 findings por imagem), Loki (7), Grafana (2) e Nginx (3). Trivy identifica correspondência de pacote/versão, não explorabilidade; ainda falta triagem por advisory e aplicabilidade ou VEX justificada para cada finding. Também permanecem a confirmação da titularidade MIT, revisão visual de Application Detail/Live Logs, validação de restauração completa de backup e riscos de dados antigos nos volumes locais. Não houve push, tag ou publicação.

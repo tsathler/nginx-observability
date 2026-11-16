@@ -1,0 +1,2410 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2",
+  "documentNamespace": "http://trivy.dev/container_image/quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2-66edeae5-91f0-402a-8a35-02207bf62652",
+  "creationInfo": {
+    "creators": [
+      "Organization: aquasecurity",
+      "Tool: trivy-0.76.2"
+    ],
+    "created": "2026-11-16T12:48:07Z"
+  },
+  "packages": [
+    {
+      "name": "prometheus-nginxlog-exporter",
+      "SPDXID": "SPDXRef-Application-22eaa331174b6d7d",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "primaryPackagePurpose": "APPLICATION",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "Class: lang-pkgs"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "Type: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2",
+      "SPDXID": "SPDXRef-ContainerImage-55c3a56c114a64cd",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/prometheus-nginxlog-exporter@sha256:62987d855bb07edc5d126b926751c733e6683a6a6d2844026d3af332bac654be?arch=amd64\u0026repository_url=quay.io%2Fmartinhelmich%2Fprometheus-nginxlog-exporter"
+        }
+      ],
+      "primaryPackagePurpose": "CONTAINER",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "DiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "ImageID: sha256:62987d855bb07edc5d126b926751c733e6683a6a6d2844026d3af332bac654be"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "Reference: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "RepoDigest: quay.io/martinhelmich/prometheus-nginxlog-exporter@sha256:62987d855bb07edc5d126b926751c733e6683a6a6d2844026d3af332bac654be"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "RepoTag: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "SchemaVersion: 2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "Size: 11863552"
+        }
+      ]
+    },
+    {
+      "name": "github.com/armon/go-metrics",
+      "SPDXID": "SPDXRef-Package-d586d0a08f84155a",
+      "versionInfo": "v0.3.4",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/armon/go-metrics@v0.3.4"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/armon/go-metrics@v0.3.4"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/beorn7/perks",
+      "SPDXID": "SPDXRef-Package-80e1b4b032945d6b",
+      "versionInfo": "v1.0.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/beorn7/perks@v1.0.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/beorn7/perks@v1.0.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/cespare/xxhash/v2",
+      "SPDXID": "SPDXRef-Package-5ecc31ee33b04fa1",
+      "versionInfo": "v2.1.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/cespare/xxhash/v2@v2.1.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/cespare/xxhash/v2@v2.1.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/fatih/color",
+      "SPDXID": "SPDXRef-Package-2bd013dacb118a7f",
+      "versionInfo": "v1.9.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/fatih/color@v1.9.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/fatih/color@v1.9.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang/protobuf",
+      "SPDXID": "SPDXRef-Package-8e6ea85b07fc3864",
+      "versionInfo": "v1.4.3",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang/protobuf@v1.4.3"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/golang/protobuf@v1.4.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/consul/api",
+      "SPDXID": "SPDXRef-Package-cd3f62437aee8e93",
+      "versionInfo": "v1.8.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/consul/api@v1.8.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/consul/api@v1.8.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-cleanhttp",
+      "SPDXID": "SPDXRef-Package-8f5cb68a6caf3f4e",
+      "versionInfo": "v0.5.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-cleanhttp@v0.5.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-cleanhttp@v0.5.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-hclog",
+      "SPDXID": "SPDXRef-Package-287bd02bd83e7c30",
+      "versionInfo": "v0.12.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-hclog@v0.12.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-hclog@v0.12.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-immutable-radix",
+      "SPDXID": "SPDXRef-Package-4369f87d98a76a55",
+      "versionInfo": "v1.2.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-immutable-radix@v1.2.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-immutable-radix@v1.2.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/go-rootcerts",
+      "SPDXID": "SPDXRef-Package-14bf0f2c31354766",
+      "versionInfo": "v1.0.2",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/go-rootcerts@v1.0.2"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/go-rootcerts@v1.0.2"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/golang-lru",
+      "SPDXID": "SPDXRef-Package-f5e88078a61c30ad",
+      "versionInfo": "v0.5.4",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/golang-lru@v0.5.4"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/golang-lru@v0.5.4"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/hcl",
+      "SPDXID": "SPDXRef-Package-a9a80c00b4720eda",
+      "versionInfo": "v1.0.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/hcl@v1.0.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/hcl@v1.0.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hashicorp/serf",
+      "SPDXID": "SPDXRef-Package-add29dfd46c19a2c",
+      "versionInfo": "v0.9.5",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hashicorp/serf@v0.9.5"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hashicorp/serf@v0.9.5"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/hpcloud/tail",
+      "SPDXID": "SPDXRef-Package-f6c1a40abd75e5ab",
+      "versionInfo": "v1.0.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/hpcloud/tail@v1.0.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/hpcloud/tail@v1.0.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/martin-helmich/prometheus-nginxlog-exporter",
+      "SPDXID": "SPDXRef-Package-3b8d2234bb805ea4",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/martin-helmich/prometheus-nginxlog-exporter"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/martin-helmich/prometheus-nginxlog-exporter"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mattn/go-colorable",
+      "SPDXID": "SPDXRef-Package-91ee5bba8229424c",
+      "versionInfo": "v0.1.6",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mattn/go-colorable@v0.1.6"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mattn/go-colorable@v0.1.6"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mattn/go-isatty",
+      "SPDXID": "SPDXRef-Package-31228c7447b5d77f",
+      "versionInfo": "v0.0.12",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mattn/go-isatty@v0.0.12"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mattn/go-isatty@v0.0.12"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/matttproud/golang_protobuf_extensions",
+      "SPDXID": "SPDXRef-Package-d85a79f332444a14",
+      "versionInfo": "v1.0.1",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/matttproud/golang_protobuf_extensions@v1.0.1"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/matttproud/golang_protobuf_extensions@v1.0.1"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/mitchellh/mapstructure",
+      "SPDXID": "SPDXRef-Package-fd0f0718b170d22e",
+      "versionInfo": "v1.3.3",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mitchellh/mapstructure@v1.3.3"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/mitchellh/mapstructure@v1.3.3"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_golang",
+      "SPDXID": "SPDXRef-Package-aecab70aacd68b82",
+      "versionInfo": "v1.9.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_golang@v1.9.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-21698"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/client_golang@v1.9.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_model",
+      "SPDXID": "SPDXRef-Package-9ac7ae27892eb44f",
+      "versionInfo": "v0.2.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_model@v0.2.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/client_model@v0.2.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/common",
+      "SPDXID": "SPDXRef-Package-e4611d32bce4f880",
+      "versionInfo": "v0.15.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/common@v0.15.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/common@v0.15.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/procfs",
+      "SPDXID": "SPDXRef-Package-f0794531fb1b4155",
+      "versionInfo": "v0.2.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/procfs@v0.2.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/prometheus/procfs@v0.2.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "github.com/satyrius/gonx",
+      "SPDXID": "SPDXRef-Package-bf9f5c3ce976ecdf",
+      "versionInfo": "v1.3.1-0.20180709120835-47c52b995fe5",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/satyrius/gonx@v1.3.1-0.20180709120835-47c52b995fe5"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: github.com/satyrius/gonx@v1.3.1-0.20180709120835-47c52b995fe5"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/sys",
+      "SPDXID": "SPDXRef-Package-29fe100a2daab121",
+      "versionInfo": "v0.0.0-20201214210602-f9fddec55a1e",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.0.0-20201214210602-f9fddec55a1e"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-29526"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39824"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: golang.org/x/sys@v0.0.0-20201214210602-f9fddec55a1e"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/protobuf",
+      "SPDXID": "SPDXRef-Package-e49bf97d68f0229e",
+      "versionInfo": "v1.23.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/protobuf@v1.23.0"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24786"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: google.golang.org/protobuf@v1.23.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/fsnotify.v1",
+      "SPDXID": "SPDXRef-Package-f7504c9bbd9a5305",
+      "versionInfo": "v1.4.7",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/fsnotify.v1@v1.4.7"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/fsnotify.v1@v1.4.7"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/mcuadros/go-syslog.v2",
+      "SPDXID": "SPDXRef-Package-9d699f7ff033f6d0",
+      "versionInfo": "v2.3.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/mcuadros/go-syslog.v2@v2.3.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/mcuadros/go-syslog.v2@v2.3.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/tomb.v1",
+      "SPDXID": "SPDXRef-Package-854c6ada01e22407",
+      "versionInfo": "v1.0.0-20141024135613-dd632973f1e7",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/tomb.v1@v1.0.0-20141024135613-dd632973f1e7"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/tomb.v1@v1.0.0-20141024135613-dd632973f1e7"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/yaml.v2",
+      "SPDXID": "SPDXRef-Package-892b1b56c5d26de0",
+      "versionInfo": "v2.4.0",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/yaml.v2@v2.4.0"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: gopkg.in/yaml.v2@v2.4.0"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    },
+    {
+      "name": "stdlib",
+      "SPDXID": "SPDXRef-Package-335e001aae515373",
+      "versionInfo": "v1.13.15",
+      "supplier": "NOASSERTION",
+      "downloadLocation": "NONE",
+      "filesAnalyzed": false,
+      "sourceInfo": "package found in: prometheus-nginxlog-exporter",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/stdlib@v1.13.15"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-23806"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24538"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24540"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24790"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-68121"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-27918"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-33195"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-33196"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-33198"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-39293"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-41771"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-41772"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-44716"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-23772"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-24675"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-24921"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-27664"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-28131"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-28327"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-2879"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-2880"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-29804"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30580"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30630"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30631"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30632"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30633"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30634"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30635"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-32189"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41715"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41716"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41720"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41722"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41723"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41724"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41725"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24534"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24536"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24537"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24539"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-29400"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-29403"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-39325"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45283"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45287"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45288"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-34156"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61726"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61729"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-111943"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-25679"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-27145"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32280"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32281"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32283"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-33811"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-33814"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-33818"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39820"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39821"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39822"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39836"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-42499"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-42504"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56853"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56858"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56859"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56860"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56862"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-78667"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-78669"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-97031"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2020-24553"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-3114"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-31525"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-33197"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-34558"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-36221"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2021-44717"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-1705"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-1962"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-29526"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-32148"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-41717"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-24532"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-29406"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-29409"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-39318"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-39319"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-39326"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45284"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45289"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2023-45290"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24783"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24784"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24785"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24789"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-24791"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-34155"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-34158"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-45336"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-0913"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-22866"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-22870"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-22871"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-22873"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-4673"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-47906"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-47907"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-47912"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58183"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58185"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58187"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58188"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58189"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61723"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61724"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61725"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61727"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61728"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-61730"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-27142"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32282"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32288"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-32289"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39823"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39825"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-39826"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-42505"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-42507"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56866"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-78659"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-78660"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-78663"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-94439"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-94440"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-94448"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-97030"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-97032"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2022-30629"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2024-45341"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2025-58186"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-27139"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-56857"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "advisory",
+          "referenceLocator": "https://avd.aquasec.com/nvd/cve-2026-97054"
+        }
+      ],
+      "primaryPackagePurpose": "LIBRARY",
+      "annotations": [
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDiffID: sha256:9609b74a1150345e6caa49539757bed69eedf8f829da3bfc4d3be7ea3b234e69"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "LayerDigest: sha256:02b07b68cef83268a9eb01d0b89739a36d9f03e51fa853fc2c9ff6ae89548197"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgID: stdlib@v1.13.15"
+        },
+        {
+          "annotator": "Tool: trivy-0.76.2",
+          "annotationDate": "2026-11-16T12:48:07Z",
+          "annotationType": "OTHER",
+          "comment": "PkgType: gobinary"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Application-22eaa331174b6d7d",
+      "relatedSpdxElement": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-ContainerImage-55c3a56c114a64cd",
+      "relatedSpdxElement": "SPDXRef-Application-22eaa331174b6d7d",
+      "relationshipType": "CONTAINS"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-ContainerImage-55c3a56c114a64cd",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-14bf0f2c31354766",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-287bd02bd83e7c30",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-29fe100a2daab121",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-2bd013dacb118a7f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-31228c7447b5d77f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-335e001aae515373",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-4369f87d98a76a55",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-5ecc31ee33b04fa1",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-80e1b4b032945d6b",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-854c6ada01e22407",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-892b1b56c5d26de0",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-8e6ea85b07fc3864",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-8f5cb68a6caf3f4e",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-91ee5bba8229424c",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-9ac7ae27892eb44f",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-9d699f7ff033f6d0",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-a9a80c00b4720eda",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-add29dfd46c19a2c",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-aecab70aacd68b82",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-bf9f5c3ce976ecdf",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-cd3f62437aee8e93",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-d586d0a08f84155a",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-d85a79f332444a14",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-e4611d32bce4f880",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-e49bf97d68f0229e",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-f0794531fb1b4155",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-f5e88078a61c30ad",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-f6c1a40abd75e5ab",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-f7504c9bbd9a5305",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-3b8d2234bb805ea4",
+      "relatedSpdxElement": "SPDXRef-Package-fd0f0718b170d22e",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}

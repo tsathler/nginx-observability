@@ -3,10 +3,10 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e4cc-7783-7293-8680-682badccd0f7",
-  "CreatedAt": "2026-11-16T11:39:27.6191688-03:00",
+  "ReportID": "01a1e576-0d97-779d-91ae-db392b522a97",
+  "CreatedAt": "2026-11-16T14:44:41.6234991-03:00",
   "ArtifactID": "sha256:f9e34b207fd3fdb12c282de13ed0f7d797ed32cdb1ee305aa2d4a22fdf80fe1c",
-  "ArtifactName": "grafana/loki:3.7.8",
+  "ArtifactName": "sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193",
   "ArtifactType": "container_image",
   "Metadata": {
     "Size": 160082432,
@@ -292,7 +292,7 @@
   },
   "Results": [
     {
-      "Target": "grafana/loki:3.7.8 (debian 13.7)",
+      "Target": "sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193 (debian 13.7)",
       "Class": "os-pkgs",
       "Type": "debian",
       "Packages": [
@@ -1584,7 +1584,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:6b50724bf847db97d58e295b1726ca90a301d765fe297041d61ad3c00d5cc489",
+          "Fingerprint": "sha256:17b9a8dda8d34a1308261cfc695703c5408fb67ce54ec9ae391e36e68c48fa65",
           "Title": "ca-certificates - security update",
           "Description": "Description Not Available",
           "Severity": "UNKNOWN"

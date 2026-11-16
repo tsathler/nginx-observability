@@ -3,10 +3,10 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e51b-6fca-7b0d-ad88-c6085c9ad9d0",
-  "CreatedAt": "2026-11-16T13:05:42.9867243-03:00",
+  "ReportID": "01a1e575-6af0-77c9-9ed6-67862a3db52f",
+  "CreatedAt": "2026-11-16T14:43:59.9845104-03:00",
   "ArtifactID": "sha256:17984e69075930daee7041828955d1b147b9dbd33547db39494c209662427c7d",
-  "ArtifactName": "grafana/alloy:v1.22.0",
+  "ArtifactName": "sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189",
   "ArtifactType": "container_image",
   "Metadata": {
     "Size": 720876032,
@@ -205,7 +205,7 @@
   },
   "Results": [
     {
-      "Target": "grafana/alloy:v1.22.0 (ubuntu 24.04)",
+      "Target": "sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189 (ubuntu 24.04)",
       "Class": "os-pkgs",
       "Type": "ubuntu",
       "Packages": [
@@ -7877,7 +7877,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:4beb30a7286c793d1b0490a8ac637001a34210421ebeca3f7145351955abb1bf",
+          "Fingerprint": "sha256:b26646acb257ad194da2e09124427fae6df33b6234a9550db46525a459dfa9b6",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -7972,7 +7972,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:de311329ea587029d4894233c320cac3b6ddbc5f4d8eb545d6605f4019bb35a0",
+          "Fingerprint": "sha256:469f8702c0fd3290c76a6854be83d444b8ce6ba67533d23834c5c99e690be37d",
           "Title": "dash: dash: Super-polynomial backtracking in pmatch when libc fnmatch is disabled",
           "Description": "A flaw was found in dash. When built without libc fnmatch, the internal pmatch() matcher implements * by unbounded recursion over candidate positions. A local user who can plant filenames, or otherwise feed that matcher, can make a short multi-star pattern such as *.*.*.*.*.tar.gz consume excessive CPU.",
           "Severity": "MEDIUM",
@@ -8019,7 +8019,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:cb598ad5e7282ef1b845aa53cc97cef5c73d618d0df564ae8217a8f9d2f75d5d",
+          "Fingerprint": "sha256:991363ce1c8b3f8a4a2522d606382c2a8574cf1bd24c113cb7405f535555feda",
           "Title": "dash: dash: Heap out-of-bounds write in conv_escape via undersized Unicode escape reservation",
           "Description": "A flaw was found in dash. The printf builtin reserves four bytes before converting a Unicode \\u or \\U escape, but the multi-byte token can need five or six bytes. A local user who can supply such an escape to dash printf or echo %b, including through dash -c and a positional argument, can write one or two bytes past that reservation.",
           "Severity": "MEDIUM",
@@ -8066,7 +8066,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:a3587bdbdf817c56bbebf5c9ac2a60ca8adb867e889ca362114bba3acb4188a7",
+          "Fingerprint": "sha256:22fd81733c37b026d505be646fc039d303faae947e248ceb8f296047e0990654",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -8161,7 +8161,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:e35bd77106b5c57b2f86992dbbb9d987bd95578d1e480917688b7114d3a7642f",
+          "Fingerprint": "sha256:479967b3f128a7c72153ec403c3ffe7ef970b89970c07f8a86ee2dbc5ba78394",
           "Title": "gnutls: gnutls: Information disclosure via contradictory Key Usage and Extended Key Usage extensions",
           "Description": "GnuTLS v3.8.13 does not reject end-entity X.509 certificates that contain a contradictory combination of Key Usage (KU) and Extended Key Usage (EKU). NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy.",
           "Severity": "MEDIUM",
@@ -8208,7 +8208,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:f55dd811fe9542a32a83c798bf83317ffb28997e89b993a454c04928fd937e3a",
+          "Fingerprint": "sha256:3f20313e14bc440db8b7ef0944c2348e35ca032a74d5528986afa56057b01369",
           "Title": "gnutls: gnutls: Information disclosure via hostname verification bypass",
           "Description": "GnuTLS v3.8.13 can perhaps unexpectedly trust a certificate on the basis of Common Name when Subject Alternative Name has an SRV otherName (1.3.6.1.5.5.7.8.7) whose value is an OCTET STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy.",
           "Severity": "MEDIUM",
@@ -8253,7 +8253,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:fa04fc87253d3a2b2bc52b48a922ce0a6500fae151a39fc96fa390ec4b7fb8c5",
+          "Fingerprint": "sha256:84f8dc60dca8552c5a1f230752b8e01441c17cba4d17e8bf127ed67d231d25dc",
           "Title": "gnutls: gnutls: Cross-domain certificate restriction bypass via incomplete X.509 validation",
           "Description": "In GnuTLS v3.8.13, an excluded msUPN/SRV otherName is never checked. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy.",
           "Severity": "MEDIUM",
@@ -8299,7 +8299,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:4732f2158cff44ba53efd0bb5f80d64592146aed5522e8af3ddb9d8c9c6ea17f",
+          "Fingerprint": "sha256:b515dde93d1108a870fd1f25c021ed81a9caf09c0f6abcaeb3473df0252f9771",
           "Title": "gnutls: gnutls: legitimate user certificates incorrectly rejected causing denial of service",
           "Description": "GnuTLS v3.8.13 does not properly enforce name constraints, as demonstrated by a permitted subtree violation for \"EE O=Evil accepted although outside permitted O=Good.\" NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy.",
           "Severity": "MEDIUM",
@@ -8352,7 +8352,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:2b5520b1d57bc3f62d898320256a065a802e6f4b5249d70a43f0cdef494db4ee",
+          "Fingerprint": "sha256:4fa5b231a7d76c6d8835ea9a6a5e7acd76483447e160dd3393a006b22b963afc",
           "Title": "gnutls: gnutls: certificates with invalid extensions incorrectly accepted",
           "Description": "GnuTLS v3.8.13 does not reject a critical keyUsage extension when it cannot be processed, such as when extnValue is an ASN.1 NULL (05 00) instead of a BIT STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy.",
           "Severity": "MEDIUM",
@@ -8397,7 +8397,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:8ef771ed355ab0cbf906c71d72e38cee8066a966fddb1f75eda3969785a54262",
+          "Fingerprint": "sha256:f16846b51810730ae8778460869a7676c3fa9f6d568dffd66bef0f92010449ae",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -8492,7 +8492,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:535e8f0906acdb2cde9de05caa24e0588c03dc152f0aa21790f058c29445acfc",
+          "Fingerprint": "sha256:bca211f5f237647223e735737eecea73ae2d9cd30cebeef2cdd917284342e175",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -8587,7 +8587,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:62b89945c3439fb0e470d17c52a24ad6c32360e6420bb1c573de99fbdfbd30d2",
+          "Fingerprint": "sha256:22c13dc83b2c863468f597defd123838bf1e7955ee25a1c9c1666488db0e065e",
           "Title": "sandboxed-containers: kernel: systemd-gpt-auto-generator: Guest Data Leakage in Confidential Computing (Sandboxed Containers)",
           "Description": "A flaw was found in the interaction between systemd-gpt-auto-generator and \nconfidential computing guest VM images in OpenShift Sandboxed Containers \n(confidential peer pods). systemd-gpt-auto-generator automatically discovers \nand mounts GPT partitions by type GUID at boot with no user confirmation. In \nthe confidential computing threat model, where the host/hypervisor is the \nadversary, a malicious host can inject partitions into the guest's virtual \ndisk. Most critically, injecting a swap partition causes the guest kernel to \npage out TEE-encrypted memory to a host-controlled block device, breaking the \nconfidentiality guarantee of the hardware TEE (AMD SEV-SNP, Intel TDX).\n\nThe PodVM images use a GPT-partitioned disk with dm-verity on the root \npartition. However, the roothash= kernel parameter only disables root \nauto-discovery — non-root partitions (swap, /home, /var, /srv, /var/tmp) are \nstill auto-discovered and mounted. The generator is shipped unmasked in the \nRHEL systemd-udev subpackage, and no kernel command line parameter in the \nmeasured UKI addon disables it. Additionally, the PodVM measurement script \ncaptures PCRs 3, 9, 11, and 12, but not PCR 5 (GPT partition table), so \npartition table modifications are not detected by remote attestation.",
           "Severity": "MEDIUM",
@@ -8634,7 +8634,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:a0e6558784d5473a0015eba872b98a5798a761aec08f956bdc48620b4d018370",
+          "Fingerprint": "sha256:74a0fc97e949680196293efc3ed5276eae2ad09ef528cfe6e1cf289813359d8d",
           "Title": "systemd: systemd-journald: Unintended output to user terminals via logger command",
           "Description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set.",
           "Severity": "LOW",
@@ -8687,7 +8687,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:b62f2c1deaf99307ae1aae8149d7afe6e41c98244d7baeed83cb01f9376030c9",
+          "Fingerprint": "sha256:ebded631b980fad6394c4315c6f490452f864217db4aba0d1e000e80c7ca637c",
           "Title": "sandboxed-containers: kernel: systemd-gpt-auto-generator: Guest Data Leakage in Confidential Computing (Sandboxed Containers)",
           "Description": "A flaw was found in the interaction between systemd-gpt-auto-generator and \nconfidential computing guest VM images in OpenShift Sandboxed Containers \n(confidential peer pods). systemd-gpt-auto-generator automatically discovers \nand mounts GPT partitions by type GUID at boot with no user confirmation. In \nthe confidential computing threat model, where the host/hypervisor is the \nadversary, a malicious host can inject partitions into the guest's virtual \ndisk. Most critically, injecting a swap partition causes the guest kernel to \npage out TEE-encrypted memory to a host-controlled block device, breaking the \nconfidentiality guarantee of the hardware TEE (AMD SEV-SNP, Intel TDX).\n\nThe PodVM images use a GPT-partitioned disk with dm-verity on the root \npartition. However, the roothash= kernel parameter only disables root \nauto-discovery — non-root partitions (swap, /home, /var, /srv, /var/tmp) are \nstill auto-discovered and mounted. The generator is shipped unmasked in the \nRHEL systemd-udev subpackage, and no kernel command line parameter in the \nmeasured UKI addon disables it. Additionally, the PodVM measurement script \ncaptures PCRs 3, 9, 11, and 12, but not PCR 5 (GPT partition table), so \npartition table modifications are not detected by remote attestation.",
           "Severity": "MEDIUM",
@@ -8734,7 +8734,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:2e64879a41a3e6ca164a7144085ab5455116a2e1adc5c490f66b425602b2b418",
+          "Fingerprint": "sha256:7c5e1c3371d405c84a79127c366cbc28a91e0bd35116fc6150623e115353528e",
           "Title": "systemd: systemd-journald: Unintended output to user terminals via logger command",
           "Description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set.",
           "Severity": "LOW",
@@ -8787,7 +8787,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:da4f365410bdbf932984954d7d0ab848621a8fd862732a6951e9047ae0b53f4f",
+          "Fingerprint": "sha256:32f30cca8c37a458fe6c9e4e39fdb2a353d4b9e05fda508b5f8c48fa2a32aab9",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -8882,7 +8882,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:19acdd0bcc32d50d90fcea06dfbc181e10e93d92df6f31f2f9d6825f9c3ea374",
+          "Fingerprint": "sha256:f1b8651ad2e9611fdf1bca53be09dde5ac634f8eb3c79003311f56bf5c7c0582",
           "Title": "shadow-utils: Default subordinate ID configuration in /etc/login.defs could lead to compromise",
           "Description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid.",
           "Severity": "LOW",
@@ -8945,7 +8945,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:47e45c4e1377a66cb2fcfaf004bb4b6b982159d7f79a5fee222509642fcd643f",
+          "Fingerprint": "sha256:c32887df59c80cb1c13acd87da219430e94b65fc2e13446b3a66bda42e9eb472",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",
@@ -9040,7 +9040,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:0e5714a661ed50438046c5d5f6de530b490ef108cee60ea906f4957a2945e841",
+          "Fingerprint": "sha256:2d65f171313787e9ac8a53dd921be35531f3ffc33e573d9ebbc4a7b9aa588c83",
           "Title": "shadow-utils: Default subordinate ID configuration in /etc/login.defs could lead to compromise",
           "Description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid.",
           "Severity": "LOW",
@@ -9103,7 +9103,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:0b241b5371283db8cb364adabd1a94530316138848203e9a171cb6c02d271767",
+          "Fingerprint": "sha256:fd32d0dbc5e9826be7949dc3bcad76ed68fdf6fdd0788d525d4543aa339cfcd0",
           "Title": "tar: tar: TOCTOU in incremental dumpdir 'X' rename handling allows restore path escape",
           "Description": "A TOCTOU (Time-of-Check Time-of-Use) vulnerability in GNU tar's incremental dumpdir 'X' rename handling allows a local attacker with write access to a directory being backed up to influence the restore process if the attacker has access to the system where the restore is being performed. During restoration, files or directories may be created, renamed or overwritten outside the intended extraction directory. This could lead to unauthorized file modification or, in some cases, privilege escalation. Exploitation does not require the attacker to modify or craft the archive, and standard backup and restore workflows—including extracting into a newly created directory without using the -P option do not mitigate the issue.",
           "Severity": "MEDIUM",
@@ -9177,7 +9177,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:11ab402c0764aa1f539d94595a5f00f236f7a8e4654a3704de695a18fdcd0070",
+          "Fingerprint": "sha256:467b1e3ceccc40fe4e495ead22a297d73d9b6adf4cb7cc6cdd865ae3d557ed50",
           "Title": "tar: tar: --one-top-level hardlink targets not confined to top-level directory enabling arbitrary file overwrite",
           "Description": "A flaw was found in GNU tar. When extracting an archive with the --one-top-level option, hardlink targets are not confined to the designated top-level directory and may resolve relative to the extraction working directory. A crafted archive can create hardlinks that escape the intended boundary and, when combined with a preexisting symbolic link under the working directory, may allow writing outside that boundary during a single extraction.",
           "Severity": "MEDIUM",
@@ -9246,7 +9246,7 @@
             "Name": "Ubuntu CVE Tracker",
             "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
           },
-          "Fingerprint": "sha256:94693229fbd689d5fe9ef9b7ea47eb354090e765017bcb8939abdd33bed6fd64",
+          "Fingerprint": "sha256:75bda37f8e7cb8bc654a3ac237e17e9626b563afb2ffd6b08a41d4e8764d4685",
           "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
           "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "MEDIUM",

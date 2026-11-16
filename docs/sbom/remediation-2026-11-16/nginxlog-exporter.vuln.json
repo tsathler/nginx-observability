@@ -3,14 +3,14 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e513-1e0d-73b0-9320-9d9f168d677d",
-  "CreatedAt": "2026-11-16T12:56:37.7732419-03:00",
-  "ArtifactID": "sha256:b93d6ba0b67761575bf53ae056f6a50d36183f332575ff4703f8374442753344",
-  "ArtifactName": "nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3",
+  "ReportID": "01a1e575-29e3-78dc-9677-8af88fa53664",
+  "CreatedAt": "2026-11-16T14:43:43.3315808-03:00",
+  "ArtifactID": "sha256:7639d8f672d3536584f2402d39edb9c58fb17573296462c508a5654650a4c4f8",
+  "ArtifactName": "sha256:727da04a87a9939ee1b93d9bb16fabccefc85ce21479a20a056522adb7fea803",
   "ArtifactType": "container_image",
   "Metadata": {
     "Size": 19580416,
-    "ImageID": "sha256:7155217f44f00ce783d236b2d5c713f678ae025a0bfb74b8598174c3d36abeb2",
+    "ImageID": "sha256:727da04a87a9939ee1b93d9bb16fabccefc85ce21479a20a056522adb7fea803",
     "DiffIDs": [
       "sha256:c48019d0a39fd070d5e25c0589bcd9095336a2caaa7a817bb425bb82a12f5563"
     ],
@@ -18,7 +18,7 @@
       "nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3"
     ],
     "RepoDigests": [
-      "nginx-observability-nginxlog-exporter@sha256:7155217f44f00ce783d236b2d5c713f678ae025a0bfb74b8598174c3d36abeb2"
+      "nginx-observability-nginxlog-exporter@sha256:727da04a87a9939ee1b93d9bb16fabccefc85ce21479a20a056522adb7fea803"
     ],
     "Reference": "nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3",
     "ImageConfig": {
@@ -649,7 +649,7 @@
             "Name": "GitHub Security Advisory Go",
             "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Ago"
           },
-          "Fingerprint": "sha256:b0d6dc387353b50a8fe4da107b766920a25045f82a21e093c0b2d2e1f19081ba",
+          "Fingerprint": "sha256:49ab2b88d24276eba2a39c0bd6c56c6db0f9bafcfd2f0ec026ddcd5f8c8c3513",
           "Title": "google.golang.org/protobuf: golang-protobuf: Denial of Service via infinite loop when unmarshaling invalid JSON",
           "Description": "The protojson.Unmarshal function can enter an infinite loop when unmarshaling certain forms of invalid JSON. This condition can occur when unmarshaling into a message which contains a google.protobuf.Any value, or when the UnmarshalOptions.DiscardUnknown option is set.",
           "Severity": "MEDIUM",
@@ -733,7 +733,7 @@
             "Name": "The Go Vulnerability Database",
             "URL": "https://pkg.go.dev/vuln/"
           },
-          "Fingerprint": "sha256:7b8c33e332c08a5fd67c822493ce7e3ab9e5f7059bc25317ed6b80b2a4799cff",
+          "Fingerprint": "sha256:95c1436048100136ccb6c5e041272e89ae6c619678b9bba64d5e83e02f9808f6",
           "Title": "For HTTP/1 servers, when MaxBytesReader's limit is exceeded, \"Connecti ...",
           "Description": "For HTTP/1 servers, when MaxBytesReader's limit is exceeded, \"Connection: close\" header is automatically set without synchronization, which might race with another header being set explicitly in the server handler. As a result, an HTTP/1 server that utilizes MaxBytesReader or MaxBytesHandler can crash due to runtime panic if its handler reads the request body concurrently with writing the response header.",
           "Severity": "UNKNOWN",

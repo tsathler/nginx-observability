@@ -3,18 +3,18 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e4cb-3919-770a-9325-04eba83ab5ea",
-  "CreatedAt": "2026-11-16T11:38:06.1054615-03:00",
-  "ArtifactID": "sha256:21973fd57e12e100fed11b38a6f8e473439c5d686f5f10a55bc3934cb238327b",
-  "ArtifactName": "nginx:1.30.6-alpine",
+  "ReportID": "01a1e57f-530b-703a-9df1-0b5ab6b3a50d",
+  "CreatedAt": "2026-11-16T14:54:49.2270149-03:00",
+  "ArtifactID": "sha256:48ad4f1496bc0659d4cc5fd2162385643c10f2e083069e1f2b88b0a6cc7c46d1",
+  "ArtifactName": "sha256:e8e5fd94e3a5ec223b8a9c0b695a369e17d9fe96bf9a6da1dc7d06d0cd3f0a4a",
   "ArtifactType": "container_image",
   "Metadata": {
-    "Size": 63698944,
+    "Size": 64140800,
     "OS": {
       "Family": "alpine",
       "Name": "3.24.4"
     },
-    "ImageID": "sha256:901e593c95dc85f5a729f5765516321366ef4ac401821431d408897e95287d0a",
+    "ImageID": "sha256:e8e5fd94e3a5ec223b8a9c0b695a369e17d9fe96bf9a6da1dc7d06d0cd3f0a4a",
     "DiffIDs": [
       "sha256:75f1d9657d880da5f75298e8f40e9928bb6e260c50d26f97af196845307e3064",
       "sha256:495c4fa2cdd4685f4fe4eabd11e86f59285fab926335bba75d4160d5ff3b6154",
@@ -23,18 +23,19 @@
       "sha256:3831075a57f3b915290905a7c4072930c51d329dccead9f41eb439925205711a",
       "sha256:3abae6d8a7fc137a1bd5f4a86932b1b8b7c1da3191b6590d9195f263519b4257",
       "sha256:8f5b99f326f295649f3ca11561d758e897be5cb851fcc0c2497b9214fdcacd64",
-      "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
+      "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e",
+      "sha256:832ba74e6cdaeba1c9dde3cb51118b1a6673629b8b9e07cb8f3f1d5140a5aeff"
     ],
     "RepoTags": [
-      "nginx:1.30.6-alpine"
+      "nginx-observability-nginx:1.30.6-alpine-libxslt-r4"
     ],
     "RepoDigests": [
-      "nginx@sha256:901e593c95dc85f5a729f5765516321366ef4ac401821431d408897e95287d0a"
+      "nginx-observability-nginx@sha256:e8e5fd94e3a5ec223b8a9c0b695a369e17d9fe96bf9a6da1dc7d06d0cd3f0a4a"
     ],
-    "Reference": "nginx:1.30.6-alpine",
+    "Reference": "nginx-observability-nginx:1.30.6-alpine-libxslt-r4",
     "ImageConfig": {
       "architecture": "amd64",
-      "created": "2026-11-05T19:55:28.659872988Z",
+      "created": "2026-11-16T17:52:07.679755187Z",
       "history": [
         {
           "created": "2026-11-05T18:00:28Z",
@@ -147,6 +148,11 @@
           "created": "2026-11-05T19:55:28Z",
           "created_by": "RUN /bin/sh -c set -x     \u0026\u0026 apkArch=\"$(cat /etc/apk/arch)\"     \u0026\u0026 nginxPackages=\"         nginx=${NGINX_VERSION}-r${PKG_RELEASE}         nginx-module-xslt=${NGINX_VERSION}-r${DYNPKG_RELEASE}         nginx-module-geoip=${NGINX_VERSION}-r${DYNPKG_RELEASE}         nginx-module-image-filter=${NGINX_VERSION}-r${DYNPKG_RELEASE}         nginx-module-njs=${NGINX_VERSION}.${NJS_VERSION}-r${NJS_RELEASE}         nginx-module-acme=${NGINX_VERSION}.${ACME_VERSION}-r${PKG_RELEASE}     \"     \u0026\u0026 apk add --no-cache --virtual .checksum-deps         openssl     \u0026\u0026 case \"$apkArch\" in         x86_64|aarch64)             apk add -X \"https://nginx.org/packages/alpine/v$(egrep -o '^[0-9]+\\.[0-9]+' /etc/alpine-release)/main\" --no-cache $nginxPackages             ;;         *)             set -x             \u0026\u0026 tempDir=\"$(mktemp -d)\"             \u0026\u0026 chown nobody:nobody $tempDir             \u0026\u0026 apk add --no-cache --virtual .build-deps                 gcc                 libc-dev                 make                 openssl-dev                 pcre2-dev                 zlib-dev                 linux-headers                 libxslt-dev                 gd-dev                 geoip-dev                 libedit-dev                 bash                 alpine-sdk                 findutils                 curl                 cargo                 clang-libclang             \u0026\u0026 su nobody -s /bin/sh -c \"                 export HOME=${tempDir}                 \u0026\u0026 cd ${tempDir}                 \u0026\u0026 curl -f -L -O https://github.com/nginx/pkg-oss/archive/${NGINX_VERSION}-${PKG_RELEASE}.tar.gz                 \u0026\u0026 PKGOSSCHECKSUM=\\\"c16280934a44f7358992d39bb1d876a58e978c58371b96fd212de3f58c7ba40c31a683c54ee46c85d0844ca18fd7addeafbb29a8e06a9d1e164a8628a4739eee *${NGINX_VERSION}-${PKG_RELEASE}.tar.gz\\\"                 \u0026\u0026 if [ \\\"\\$(openssl sha512 -r ${NGINX_VERSION}-${PKG_RELEASE}.tar.gz)\\\" = \\\"\\$PKGOSSCHECKSUM\\\" ]; then                     echo \\\"pkg-oss tarball checksum verification succeeded!\\\";                 else                     echo \\\"pkg-oss tarball checksum verification failed!\\\";                     exit 1;                 fi                 \u0026\u0026 tar xzvf ${NGINX_VERSION}-${PKG_RELEASE}.tar.gz                 \u0026\u0026 cd pkg-oss-${NGINX_VERSION}-${PKG_RELEASE}                 \u0026\u0026 cd alpine                 \u0026\u0026 export BUILDTARGET=\\\"module-geoip module-image-filter module-njs module-xslt module-acme\\\"                 \u0026\u0026 if [ \\\"\\$(apk --print-arch)\\\" = \\\"armhf\\\" ]; then BUILDTARGET=\\\"\\$( echo \\$BUILDTARGET | sed 's,module-acme,,' )\\\"; fi                 \u0026\u0026 make \\$BUILDTARGET                 \u0026\u0026 apk index --allow-untrusted -o ${tempDir}/packages/alpine/${apkArch}/APKINDEX.tar.gz ${tempDir}/packages/alpine/${apkArch}/*.apk                 \u0026\u0026 abuild-sign -k ${tempDir}/.abuild/abuild-key.rsa ${tempDir}/packages/alpine/${apkArch}/APKINDEX.tar.gz                 \"             \u0026\u0026 cp ${tempDir}/.abuild/abuild-key.rsa.pub /etc/apk/keys/             \u0026\u0026 apk del --no-network .build-deps             \u0026\u0026 if [ \"$apkArch\" = \"armhf\" ]; then nginxPackages=\"$( echo $nginxPackages | sed 's,nginx-module-acme=.*,,')\"; fi             \u0026\u0026 apk add -X ${tempDir}/packages/alpine/ --no-cache $nginxPackages             ;;     esac     \u0026\u0026 apk del --no-network .checksum-deps     \u0026\u0026 if [ -n \"$tempDir\" ]; then rm -rf \"$tempDir\"; fi     \u0026\u0026 if [ -f \"/etc/apk/keys/abuild-key.rsa.pub\" ]; then rm -f /etc/apk/keys/abuild-key.rsa.pub; fi     \u0026\u0026 apk add --no-cache curl ca-certificates # buildkit",
           "comment": "buildkit.dockerfile.v0"
+        },
+        {
+          "created": "2026-11-16T17:52:07Z",
+          "created_by": "RUN /bin/sh -c apk upgrade --no-cache libxslt # buildkit",
+          "comment": "buildkit.dockerfile.v0"
         }
       ],
       "os": "linux",
@@ -160,7 +166,8 @@
           "sha256:3831075a57f3b915290905a7c4072930c51d329dccead9f41eb439925205711a",
           "sha256:3abae6d8a7fc137a1bd5f4a86932b1b8b7c1da3191b6590d9195f263519b4257",
           "sha256:8f5b99f326f295649f3ca11561d758e897be5cb851fcc0c2497b9214fdcacd64",
-          "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
+          "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e",
+          "sha256:832ba74e6cdaeba1c9dde3cb51118b1a6673629b8b9e07cb8f3f1d5140a5aeff"
         ]
       },
       "config": {
@@ -182,6 +189,9 @@
           "ACME_VERSION=0.4.1"
         ],
         "Labels": {
+          "com.docker.compose.project": "nginx-observability",
+          "com.docker.compose.service": "nginx",
+          "com.docker.compose.version": "5.4.0",
           "maintainer": "NGINX Docker Maintainers \u003cdocker-maint@nginx.com\u003e"
         },
         "WorkingDir": "/",
@@ -231,12 +241,17 @@
         "Size": 50201088,
         "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
         "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
+      },
+      {
+        "Size": 441856,
+        "Digest": "sha256:cdedc5aab39bbe3557ef3f6e9673070ec0d933b4da979f13237d330d9fbd6ce9",
+        "DiffID": "sha256:832ba74e6cdaeba1c9dde3cb51118b1a6673629b8b9e07cb8f3f1d5140a5aeff"
       }
     ]
   },
   "Results": [
     {
-      "Target": "nginx:1.30.6-alpine (alpine 3.24.4)",
+      "Target": "sha256:e8e5fd94e3a5ec223b8a9c0b695a369e17d9fe96bf9a6da1dc7d06d0cd3f0a4a (alpine 3.24.4)",
       "Class": "os-pkgs",
       "Type": "alpine",
       "Packages": [
@@ -2286,16 +2301,16 @@
           "AnalyzedBy": "apk"
         },
         {
-          "ID": "libxslt@1.1.43-r3",
+          "ID": "libxslt@1.1.43-r4",
           "Name": "libxslt",
           "Identifier": {
-            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r3?arch=x86_64\u0026distro=3.24.4",
-            "UID": "cc69603e53ffa284"
+            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r4?arch=x86_64\u0026distro=3.24.4",
+            "UID": "7c7bf1df0f313c60"
           },
-          "Version": "1.1.43-r3",
+          "Version": "1.1.43-r4",
           "Arch": "x86_64",
           "SrcName": "libxslt",
-          "SrcVersion": "1.1.43-r3",
+          "SrcVersion": "1.1.43-r4",
           "Licenses": [
             "X-11"
           ],
@@ -2305,10 +2320,10 @@
             "musl@1.2.6-r3"
           ],
           "Layer": {
-            "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
-            "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
+            "Digest": "sha256:cdedc5aab39bbe3557ef3f6e9673070ec0d933b4da979f13237d330d9fbd6ce9",
+            "DiffID": "sha256:832ba74e6cdaeba1c9dde3cb51118b1a6673629b8b9e07cb8f3f1d5140a5aeff"
           },
-          "Digest": "sha1:a78a1c96aa4f4a763ab8d2eeb285734c0387eb31",
+          "Digest": "sha1:73222fcf115248e8266e608cc0864a85acd9091c",
           "InstalledFiles": [
             "usr/bin/xsltproc",
             "usr/lib/libexslt.so.0",
@@ -2743,7 +2758,7 @@
           "Name": "nginx-module-xslt",
           "Identifier": {
             "PURL": "pkg:apk/alpine/nginx-module-xslt@1.30.6-r1?arch=x86_64\u0026distro=3.24.4",
-            "UID": "8f56401218bcce35"
+            "UID": "6b1c56e5dae1f76"
           },
           "Version": "1.30.6-r1",
           "Arch": "x86_64",
@@ -2758,7 +2773,7 @@
           "DependsOn": [
             "busybox-binsh@1.37.0-r31",
             "libxml2@2.13.9-r2",
-            "libxslt@1.1.43-r3",
+            "libxslt@1.1.43-r4",
             "musl@1.2.6-r3",
             "nginx@1.30.6-r1"
           ],
@@ -3617,229 +3632,6 @@
       ],
       "Vulnerabilities": [
         {
-          "VulnerabilityID": "CVE-2026-125350",
-          "PkgID": "libxslt@1.1.43-r3",
-          "PkgName": "libxslt",
-          "PkgIdentifier": {
-            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r3?arch=x86_64\u0026distro=3.24.4",
-            "UID": "cc69603e53ffa284"
-          },
-          "InstalledVersion": "1.1.43-r3",
-          "FixedVersion": "1.1.43-r4",
-          "Status": "fixed",
-          "Layer": {
-            "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
-            "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-125350",
-          "DataSource": {
-            "ID": "alpine",
-            "Name": "Alpine Secdb",
-            "URL": "https://secdb.alpinelinux.org/"
-          },
-          "Fingerprint": "sha256:e1101f6004be1569bbf0cc1d372e05599b73f8ab7ee09841f2ff8b22c1a0820b",
-          "Title": "chromium-browser: Use after free in XML",
-          "Description": "Use after free in XML in Google Chrome prior to 157.0.8103.50 allowed a remote attacker to execute arbitrary code inside the sandbox via a crafted HTML page. (Chromium security severity: High)",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-416"
-          ],
-          "VendorSeverity": {
-            "redhat": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
-              "V3Score": 8.8
-            }
-          },
-          "References": [
-            "https://access.redhat.com/security/cve/CVE-2026-125350",
-            "https://chromereleases.googleblog.com/2026/11/stable-channel-update-for-desktop_018223192.html",
-            "https://issues.chromium.org/issues/582442907",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-125350",
-            "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
-            "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-125350",
-            "https://www.cve.org/CVERecord?id=CVE-2026-125350"
-          ],
-          "PublishedDate": "2026-11-10T18:17:35.237Z",
-          "LastModifiedDate": "2026-11-11T05:19:38.22Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-87636",
-          "PkgID": "libxslt@1.1.43-r3",
-          "PkgName": "libxslt",
-          "PkgIdentifier": {
-            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r3?arch=x86_64\u0026distro=3.24.4",
-            "UID": "cc69603e53ffa284"
-          },
-          "InstalledVersion": "1.1.43-r3",
-          "FixedVersion": "1.1.43-r4",
-          "Status": "fixed",
-          "Layer": {
-            "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
-            "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-87636",
-          "DataSource": {
-            "ID": "alpine",
-            "Name": "Alpine Secdb",
-            "URL": "https://secdb.alpinelinux.org/"
-          },
-          "Fingerprint": "sha256:a6ae7a9cab347bf1f8677f3269bc598d4df69ba3671a3e66a5bd4f5f7b754c08",
-          "Title": "chromium-browser: chromium-browser: Type confusion in XML",
-          "Description": "Type confusion in XML in Google Chrome prior to 153.0.8010.36 allowed a remote attacker to potentially execute arbitrary code inside the sandbox via a crafted HTML page. (Chromium security severity: Medium)",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-843"
-          ],
-          "VendorSeverity": {
-            "redhat": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
-              "V3Score": 8.8
-            }
-          },
-          "References": [
-            "https://access.redhat.com/security/cve/CVE-2026-87636",
-            "https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop_0808145027.html",
-            "https://issues.chromium.org/issues/495541478",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-87636",
-            "https://www.cve.org/CVERecord?id=CVE-2026-87636"
-          ],
-          "PublishedDate": "2026-09-09T01:17:21.99Z",
-          "LastModifiedDate": "2026-09-10T04:18:30.377Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-9947",
-          "PkgID": "libxslt@1.1.43-r3",
-          "PkgName": "libxslt",
-          "PkgIdentifier": {
-            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r3?arch=x86_64\u0026distro=3.24.4",
-            "UID": "cc69603e53ffa284"
-          },
-          "InstalledVersion": "1.1.43-r3",
-          "FixedVersion": "1.1.43-r4",
-          "Status": "fixed",
-          "Layer": {
-            "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
-            "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-9947",
-          "DataSource": {
-            "ID": "alpine",
-            "Name": "Alpine Secdb",
-            "URL": "https://secdb.alpinelinux.org/"
-          },
-          "Fingerprint": "sha256:1adfe36c990112eb05e8a500f8c0f6fa88f148b95a755f18d3eb77b5e0605810",
-          "Title": "chromium-browser: Use after free in XML",
-          "Description": "Use after free in XML in Google Chrome prior to 148.0.7778.216 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted HTML page. (Chromium security severity: High)",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-416"
-          ],
-          "VendorSeverity": {
-            "redhat": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H",
-              "V3Score": 9.6
-            }
-          },
-          "References": [
-            "https://access.redhat.com/security/cve/CVE-2026-9947",
-            "https://chromereleases.googleblog.com/2026/05/stable-channel-update-for-desktop_0877304591.html",
-            "https://issues.chromium.org/issues/503627446",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-9947",
-            "https://www.cve.org/CVERecord?id=CVE-2026-9947"
-          ],
-          "PublishedDate": "2026-05-28T23:16:52.84Z",
-          "LastModifiedDate": "2026-07-21T11:10:00.1Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2025-10911",
-          "PkgID": "libxslt@1.1.43-r3",
-          "PkgName": "libxslt",
-          "PkgIdentifier": {
-            "PURL": "pkg:apk/alpine/libxslt@1.1.43-r3?arch=x86_64\u0026distro=3.24.4",
-            "UID": "cc69603e53ffa284"
-          },
-          "InstalledVersion": "1.1.43-r3",
-          "FixedVersion": "1.1.43-r4",
-          "Status": "fixed",
-          "Layer": {
-            "Digest": "sha256:4fd2a979a136065b9518cac19c8f3d11f2251813831dc2d18a4edb1d1b26374d",
-            "DiffID": "sha256:7249c65f5b3fbe84a1b5dcedaa13a7ce52fee36aeaa1cf590fb04ad689bad31e"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-10911",
-          "DataSource": {
-            "ID": "alpine",
-            "Name": "Alpine Secdb",
-            "URL": "https://secdb.alpinelinux.org/"
-          },
-          "Fingerprint": "sha256:e999a7c6472deefb97f14b0221599705d4eaa400e3bf14ddc4c28d54e9315677",
-          "Title": "libxslt: use-after-free with key data stored cross-RVT",
-          "Description": "A use-after-free vulnerability was found in libxslt while parsing xsl nodes that may lead to the dereference of expired pointers and application crash.",
-          "Severity": "MEDIUM",
-          "CweIDs": [
-            "CWE-825"
-          ],
-          "VendorSeverity": {
-            "alma": 2,
-            "amazon": 2,
-            "bitnami": 2,
-            "oracle-oval": 2,
-            "redhat": 2,
-            "rocky": 2,
-            "ubuntu": 2
-          },
-          "CVSS": {
-            "bitnami": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
-              "V3Score": 5.5
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
-              "V3Score": 5.5
-            }
-          },
-          "References": [
-            "https://access.redhat.com/errata/RHSA-2026:11015",
-            "https://access.redhat.com/errata/RHSA-2026:26355",
-            "https://access.redhat.com/errata/RHSA-2026:28243",
-            "https://access.redhat.com/errata/RHSA-2026:28584",
-            "https://access.redhat.com/errata/RHSA-2026:29807",
-            "https://access.redhat.com/errata/RHSA-2026:29809",
-            "https://access.redhat.com/errata/RHSA-2026:29811",
-            "https://access.redhat.com/errata/RHSA-2026:29814",
-            "https://access.redhat.com/errata/RHSA-2026:29975",
-            "https://access.redhat.com/errata/RHSA-2026:29976",
-            "https://access.redhat.com/errata/RHSA-2026:30847",
-            "https://access.redhat.com/errata/RHSA-2026:33313",
-            "https://access.redhat.com/errata/RHSA-2026:44481",
-            "https://access.redhat.com/errata/RHSA-2026:58981",
-            "https://access.redhat.com/errata/RHSA-2026:74674",
-            "https://access.redhat.com/security/cve/CVE-2025-10911",
-            "https://bugzilla.redhat.com/2397838",
-            "https://bugzilla.redhat.com/show_bug.cgi?id=2397838",
-            "https://creativecommons.org/licenses/by/4.0/",
-            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2025-10911",
-            "https://errata.almalinux.org/9/ALSA-2026-28243.html",
-            "https://errata.rockylinux.org/RLSA-2026:28243",
-            "https://gitlab.gnome.org/GNOME/libxslt/-/issues/144",
-            "https://gitlab.gnome.org/GNOME/libxslt/-/merge_requests/77",
-            "https://linux.oracle.com/cve/CVE-2025-10911.html",
-            "https://linux.oracle.com/errata/ELSA-2026-28584.html",
-            "https://nvd.nist.gov/vuln/detail/CVE-2025-10911",
-            "https://www.cve.org/CVERecord?id=CVE-2025-10911"
-          ],
-          "PublishedDate": "2025-09-25T16:15:31.337Z",
-          "LastModifiedDate": "2026-11-05T15:17:07.64Z"
-        },
-        {
           "VulnerabilityID": "CVE-2026-4738",
           "PkgID": "zlib@1.3.2-r1",
           "PkgName": "zlib",
@@ -3860,7 +3652,7 @@
             "Name": "Alpine Secdb",
             "URL": "https://secdb.alpinelinux.org/"
           },
-          "Fingerprint": "sha256:38478334c077e72af179df2e5e000ef34736e207b7950c2b724def712548c345",
+          "Fingerprint": "sha256:4711cc065da436a0250bec6d636bcf4dabec818bf24c77d339fbacf5a454aa38",
           "Title": "Improper Restriction of Operations within the Bounds of a Memory Buffe ...",
           "Description": "Improper Restriction of Operations within the Bounds of a Memory Buffer vulnerability in OSGeo gdal (frmts/zlib/contrib/infback9 modules). This vulnerability is associated with program files inftree9.C‎.\n\nThis issue affects gdal: before 3.11.0.",
           "Severity": "MEDIUM",

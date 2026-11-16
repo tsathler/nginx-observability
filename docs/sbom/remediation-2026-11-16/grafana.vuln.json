@@ -3,10 +3,10 @@
   "Trivy": {
     "Version": "0.76.2"
   },
-  "ReportID": "01a1e4cb-ea53-7d9c-b128-a5b6181cbb6b",
-  "CreatedAt": "2026-11-16T11:38:51.475892-03:00",
+  "ReportID": "01a1e575-e713-7868-97b9-6a2ad7f2f0c5",
+  "CreatedAt": "2026-11-16T14:44:31.763551-03:00",
   "ArtifactID": "sha256:679ce6474e317e985b4fd4bc82a5c03123f3a03c65f56383c8fa09f35bc6be43",
-  "ArtifactName": "grafana/grafana:12.4.15",
+  "ArtifactName": "sha256:2894082f6cf7081aefdc1389265c04000812309208c190d75e8c65f7a30e4b7e",
   "ArtifactType": "container_image",
   "Metadata": {
     "Size": 858293248,
@@ -286,7 +286,7 @@
   },
   "Results": [
     {
-      "Target": "grafana/grafana:12.4.15 (alpine 3.24.3)",
+      "Target": "sha256:2894082f6cf7081aefdc1389265c04000812309208c190d75e8c65f7a30e4b7e (alpine 3.24.3)",
       "Class": "os-pkgs",
       "Type": "alpine",
       "Packages": [
@@ -2180,7 +2180,7 @@
             "Name": "Alpine Secdb",
             "URL": "https://secdb.alpinelinux.org/"
           },
-          "Fingerprint": "sha256:bfba1396ae2d2e0fbcfe87aa6adf18479e25b633d1dc97fbb2c1ec32be74fba9",
+          "Fingerprint": "sha256:e3c9018852054ba4a609210f4f374e451feb70b666a247fae52160925828e67c",
           "Title": "Improper Restriction of Operations within the Bounds of a Memory Buffe ...",
           "Description": "Improper Restriction of Operations within the Bounds of a Memory Buffer vulnerability in OSGeo gdal (frmts/zlib/contrib/infback9 modules). This vulnerability is associated with program files inftree9.C‎.\n\nThis issue affects gdal: before 3.11.0.",
           "Severity": "MEDIUM",
@@ -2223,7 +2223,7 @@
           "Name": "@grafana-plugins/elasticsearch",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/elasticsearch@12.4.14",
-            "UID": "c67292bd77a8d96"
+            "UID": "77e1e6f969a3c033"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2231,7 +2231,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/elasticsearch/package.json",
-          "Digest": "sha1:284eac5b9997d1b0b0d7a55ca59afc3c5e9ac33f",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2239,7 +2238,7 @@
           "Name": "@grafana-plugins/grafana-azure-monitor-datasource",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/grafana-azure-monitor-datasource@12.4.14",
-            "UID": "f0768eb160a0626"
+            "UID": "d40410e551ec1e87"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2247,7 +2246,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/azuremonitor/package.json",
-          "Digest": "sha1:5353a4baddb2751e904c0108915ddcb14da2ec36",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2255,7 +2253,7 @@
           "Name": "@grafana-plugins/grafana-postgresql-datasource",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/grafana-postgresql-datasource@12.4.14",
-            "UID": "4d8cf0305264741"
+            "UID": "76cbf82909ab028c"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2263,7 +2261,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/grafana-postgresql-datasource/package.json",
-          "Digest": "sha1:3d02f61130533886e721601f448fe9c31d4a59c1",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2271,7 +2268,7 @@
           "Name": "@grafana-plugins/grafana-pyroscope-datasource",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/grafana-pyroscope-datasource@12.4.14",
-            "UID": "21702a477169a10a"
+            "UID": "98e6f25e634da3ca"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2279,7 +2276,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/grafana-pyroscope-datasource/package.json",
-          "Digest": "sha1:e4d4dda86a99ea165bf4f3b3e88de1b6d50cf30d",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2287,7 +2283,7 @@
           "Name": "@grafana-plugins/grafana-testdata-datasource",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/grafana-testdata-datasource@12.4.14",
-            "UID": "bc881a88e9227a3"
+            "UID": "7759de8078b04183"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2295,7 +2291,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/grafana-testdata-datasource/package.json",
-          "Digest": "sha1:2dce5d11b1eee5376247b343a4bf9ba713a7ca89",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2303,7 +2298,7 @@
           "Name": "@grafana-plugins/graphite",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/graphite@12.4.14",
-            "UID": "9f5ce546f252fd64"
+            "UID": "19831f7e4016e8cc"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2311,7 +2306,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/graphite/package.json",
-          "Digest": "sha1:2a6115d259510452845f433dc68d442f009df402",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2319,7 +2313,7 @@
           "Name": "@grafana-plugins/jaeger",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/jaeger@12.4.14",
-            "UID": "d2ed95e29fa02d6d"
+            "UID": "cb2b6a140abf58cc"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2327,7 +2321,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/jaeger/package.json",
-          "Digest": "sha1:789e919f9e4680b0cdd1f56c396f5323e9b0fa36",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2335,7 +2328,7 @@
           "Name": "@grafana-plugins/loki",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/loki@12.4.14",
-            "UID": "353c38df2d12e85e"
+            "UID": "93ef696bb5dbd798"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2343,7 +2336,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/loki/package.json",
-          "Digest": "sha1:3dab6fa339f892a0f2e74d30e0bb3f2b69df4188",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2351,7 +2343,7 @@
           "Name": "@grafana-plugins/mssql",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/mssql@12.4.14",
-            "UID": "16885a1be02b1209"
+            "UID": "54a9620760dcd376"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2359,7 +2351,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/mssql/package.json",
-          "Digest": "sha1:9f2082a12a804850fee0e3b0eab12fb895e0d9da",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2367,7 +2358,7 @@
           "Name": "@grafana-plugins/mysql",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/mysql@12.4.14",
-            "UID": "56d17614795feecc"
+            "UID": "3e6f21cc0e4343f4"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2375,7 +2366,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/mysql/package.json",
-          "Digest": "sha1:633bde4c2ae027fa1c7ffdbe07547a3fd7c7cdb1",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2383,7 +2373,7 @@
           "Name": "@grafana-plugins/opentsdb",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/opentsdb@12.4.14",
-            "UID": "c054e5ae87355606"
+            "UID": "2e048b7a543a4a9"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2391,7 +2381,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/opentsdb/package.json",
-          "Digest": "sha1:80e3b852f522e13a8741edd2da3656eba72424bd",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2399,7 +2388,7 @@
           "Name": "@grafana-plugins/parca",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/parca@12.4.14",
-            "UID": "e5153e388346ef7a"
+            "UID": "97b510b92d7fd69f"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2407,7 +2396,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/parca/package.json",
-          "Digest": "sha1:9641da364c04b48145b528b9b90fe4a947acc016",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2415,7 +2403,7 @@
           "Name": "@grafana-plugins/stackdriver",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/stackdriver@12.4.14",
-            "UID": "597b32dcbf477a35"
+            "UID": "a5a230e571118767"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2423,7 +2411,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/cloud-monitoring/package.json",
-          "Digest": "sha1:c1351cfe29c4da2f80d0724d052dfc512203189b",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2431,7 +2418,7 @@
           "Name": "@grafana-plugins/tempo",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/tempo@12.4.14",
-            "UID": "2524c20616daf9aa"
+            "UID": "8f251edca55e94b1"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2439,7 +2426,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/tempo/package.json",
-          "Digest": "sha1:2d4aeb39f4ed499713eae7a69ea5aea109fbf75a",
           "AnalyzedBy": "node-pkg"
         },
         {
@@ -2447,7 +2433,7 @@
           "Name": "@grafana-plugins/zipkin",
           "Identifier": {
             "PURL": "pkg:npm/%40grafana-plugins/zipkin@12.4.14",
-            "UID": "fd37fc16253618ca"
+            "UID": "d0078204926af308"
           },
           "Version": "12.4.14",
           "Layer": {
@@ -2455,7 +2441,6 @@
             "DiffID": "sha256:5a4ed73de773d558cecba61956413705d976fc1c696eeb6cd063a68762f9d84d"
           },
           "FilePath": "usr/share/grafana/public/app/plugins/datasource/zipkin/package.json",
-          "Digest": "sha1:c60adf6dbba545bc2551473b1ff5eb0ec6e0120e",
           "AnalyzedBy": "node-pkg"
         }
       ]

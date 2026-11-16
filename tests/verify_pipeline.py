@@ -856,7 +856,7 @@ def verify_application_detail(dashboard):
     app_a_paths = loki_instant(path_expr.replace('app=~".*"', 'app=~"app-a"'))
     app_a_path_labels = {item["metric"].get("path", "") for item in app_a_paths}
     assert app_a_paths and any(path.startswith("/app-a/") for path in app_a_path_labels) \
-        and all(path.startswith("/app-a/") or path == "/_unclassified" for path in app_a_path_labels), app_a_paths
+        and all(path.startswith("/app-a/") or path == "/_unclassified" for path in app_a_path_labels), (path_expr, app_a_paths)
     path_frames = grafana_loki_frames(path_expr, query_type="instant", legend_format=paths["targets"][0]["legendFormat"])
     path_names = {field.get("config", {}).get("displayNameFromDS") for frame in path_frames
                   for field in frame["schema"]["fields"] if field["name"] == "Value"}
@@ -1044,7 +1044,15 @@ def verify_queries():
         streams = loki_query(f'{{job="nginx", app="{app}"}}')
         assert streams, f"Loki has no logs for {app}"
         assert all(stream["stream"].get("app") == app for stream in streams), f"Loki filter leaked across apps for {app}"
-        entries = [json.loads(line) for stream in streams for _, line in stream["values"]]
+        entries = []
+        for stream in streams:
+            for timestamp, line in stream["values"]:
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError as error:
+                    raise AssertionError(
+                        f"Non-JSON Loki event for {app} at {timestamp}: {line!r}"
+                    ) from error
         fields = {"time", "app", "method", "path", "status", "request_time", "remote_addr"}
         assert any(fields.issubset(event) for event in entries), f"Access log fields missing for {app}"
         assert all(event.get("app") == app for event in entries), f"Log body app mismatch for {app}"

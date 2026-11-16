@@ -1,9 +1,11 @@
 # Auditoria técnica pré-release v0.1.0
 
-**Data da auditoria:** 2026-11-13
+**Auditoria inicial:** 2026-11-13
+**Reavaliação da remediação:** 2026-11-16
 
 **Escopo:** revisão independente do repositório e do laboratório local Docker Compose, com tráfego sintético. Nenhum sistema corporativo foi acessado. Nenhum volume foi removido, nenhum histórico foi reescrito, nenhuma tag ou publicação foi criada.
-**Decisão:** **NO-GO para publicar a v0.1.0 no estado auditado.** A configuração local reduz a exposição de alguns riscos, mas o Compose reproduz versões com avisos de segurança aplicáveis em certos cenários e não há procedimento de backup/restauração ponta a ponta comprovado. Corrigir e revalidar esses itens antes de publicar uma release como pronta para uso por terceiros.
+**Decisão inicial:** **NO-GO** pelos motivos descritos no relatório.
+**Decisão após remediação técnica:** **NO-GO para publicação por enquanto.** Os bloqueadores técnicos priorizados (versões de Nginx/Grafana e persistência futura de dados sensíveis nos access logs) foram corrigidos e verificados no laboratório. A confirmação do titular dos direitos autorais/MIT continua pendente; Application Detail e Live Logs também não receberam revisão visual real nesta rodada. Não declarar essas etapas concluídas sem evidência.
 
 ## Resumo executivo
 
@@ -176,3 +178,44 @@ Executado em 2026-11-13, sem parada ou alteração de serviços:
 ## Conclusão
 
 **NO-GO para a v0.1.0 no estado atual deste audit.** A configuração é adequada como laboratório local sintético com limites bem descritos, mas o repositório ainda fixa versões de Nginx/Grafana com avisos oficiais aplicáveis sob condições e não apresenta confirmação de copyright. O processo de release precisa atualizar ou justificar tecnicamente essas versões e confirmar a titularidade MIT. A ausência de restore validado, redaction e limites físicos continua impedindo qualquer posicionamento operacional; para uma release educacional, essas lacunas podem ser publicadas como limitações explícitas e itens da v0.2.0.
+
+## Reavaliação após remediação — 2026-11-16
+
+As observações acima descrevem o estado de 2026-11-13. As imagens foram atualizadas e os access logs minimizados para eventos novos; A1–A3 estão tecnicamente remediados no laboratório. A decisão permanece **NO-GO para publicar**: o titular do copyright/MIT ainda não confirmou os direitos, e Application Detail e Live Logs não receberam revisão visual real nesta rodada. Consultas via API não substituem inspeção visual.
+
+### Remediações e evidências atuais
+
+| Achado | Estado atual | Evidência |
+|---|---|---|
+| A1 — Nginx em faixa sinalizada por advisories | Remediado no laboratório | `compose.yaml` fixa `nginx:1.30.6-alpine`, release estável atual consultada na fonte oficial. `nginx -t`, parsing/exporter e pipeline foram exercitados após atualização. |
+| A2 — Grafana em minor sem suporte/patch aplicável | Remediado no laboratório | `compose.yaml` fixa `grafana/grafana:12.4.15`. Migração preservou o volume existente; autenticação, fontes e dashboards passaram. |
+| A3 — persistência futura de request/query e headers | Remediado para novas requisições | Nginx grava app, IP de origem, método, rota permitida ou `/_unclassified`, status, duração e bytes. O formato textual para exporter substitui usuário/referer/UA por `-`. `tests/verify_log_privacy.py` enviou marcador sintético em path/query, Cookie, Authorization, Referer e User-Agent; não o encontrou nos logs ativos/rotacionados nem no Loki e confirmou métrica sem labels de IP/path. |
+| A4 — lacunas durante indisponibilidade do exporter | Limitação mantida e comprovada | `python tests/verify_pipeline.py --verify-reliability` observou `exporter_outage_events_backfilled=False`; logs permaneceram no Loki, mas não houve reconstrução retroativa dos counters. |
+| A5 — restore integral | Limitação mantida | Persistência após restart foi testada, mas nenhum restore de backup coordenado foi executado. Não alegar capacidade de recuperação de backup. |
+| A10 — revisão visual incompleta | Pendente | Não houve sessão de navegador nesta remediação. Application Detail e Live Logs continuam sem validação visual confirmada; nenhuma captura foi criada. |
+| A11 — titularidade MIT | Pendente e bloqueador de publicação | O arquivo de licença existe, mas não há confirmação do titular. Identidade de commit não prova titularidade. |
+
+Os logs/eventos históricos anteriores à sanitização não foram purgados para preservar os volumes e arquivos existentes. O teste valida ausência do novo canário e o formato dos novos eventos; não prova remoção de todo conteúdo histórico. O laboratório testado usou tráfego sintético. Não houve limpeza de volume.
+
+### Verificações executadas em 2026-11-16
+
+| Verificação | Resultado |
+|---|---|
+| `python tests/verify_log_privacy.py` | Passou: canário em path/query/Cookie/Authorization/Referer/User-Agent ausente dos logs ativos/rotacionados e do Loki; rota sanitizada, exporter e labels verificados. |
+| `python tests/verify_pipeline.py --verify-scenarios --verify-persistence` | Passou: três aplicações, 31 consultas PromQL, 7 LogQL, quatro dashboards, filtros, cenários, controles de autenticação/portas, retenção e persistência após restart. |
+| `python tests/verify_pipeline.py --verify-reliability` | Passou: 21 eventos isolados (7/app), dois ciclos de rotação e recuperação do pipeline; limitação do exporter observada. |
+| `python tests/verify_alerting.py` | Passou: saúde/ausência de tráfego, indisponibilidade, 5xx, P95, recuperação e entrega ao webhook local. |
+| `docker compose config --quiet` | Passou após atualização e sanitização. |
+| `python tests/audit_repository_history.py` | Passou na auditoria inicial do histórico alcançável. O scanner cobre padrões conhecidos, não garante ausência de todo segredo. |
+| `git diff --check` | Passou após alterações/commits finais. |
+
+Não foi executado scanner de CVEs/SBOM do conteúdo integral das imagens. Versões corrigidas e testes runtime não demonstram ausência de vulnerabilidades em todas as camadas/transitivas. As referências de versão são [NGINX Security Advisories](https://nginx.org/en/security_advisories.html), [NGINX downloads/releases](https://nginx.org/en/download.html), [Grafana v12.4.15](https://github.com/grafana/grafana/releases/tag/v12.4.15) e [Grafana support policy](https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/). Nenhuma conexão corporativa, push, tag ou operação destrutiva foi realizada.
+
+### Critérios restantes para GO
+
+- [ ] Obter confirmação explícita do titular dos direitos de aplicar MIT ao conteúdo próprio e revisar atribuições de terceiros.
+- [ ] Fazer revisão visual real de Application Detail e Live Logs; manter a pendência explícita se não houver captura/revisão.
+- [ ] Revisar/stagear o diff final e repetir verificações no commit candidato.
+- [ ] Para alegar ausência ampla de CVEs, produzir inventário/SBOM e scan de imagens com ferramenta, data e limites identificados.
+
+Backup/restore, métricas perdidas durante indisponibilidade do exporter, monitoramento de espaço livre e autenticação/TLS das APIs continuam limitações corporativas. Podem ser apresentadas numa release educacional como limitações explícitas, mas não como homologação para produção.

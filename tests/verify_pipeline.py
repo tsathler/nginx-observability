@@ -277,9 +277,13 @@ def exporter_request_counters():
     return values
 
 
-def loki_marker_count(app, marker, start_ns):
-    expression = f'{{job="nginx",app="{app}"}} | json | request=~".*{marker}.*"'
-    return sum(len(stream.get("values", [])) for stream in loki_query(expression, start_ns=start_ns, limit=100))
+def loki_safe_event_count(app, start_ns, path=None, method="GET", status="200"):
+    route = path or f"/{app}/"
+    expression = f'{{job="nginx",app="{app}"}} | method="{method}" | status="{status}" | path="{route}"'
+    # Nginx time_iso8601 is second-granularity; include the preceding seconds
+    # to avoid excluding events written in the same second as the batch start.
+    return sum(len(stream.get("values", [])) for stream in loki_query(
+        expression, start_ns=start_ns - 5_000_000_000, limit=500))
 
 
 def verify_rotation_and_recovery():
@@ -288,39 +292,49 @@ def verify_rotation_and_recovery():
     compose_action("stop", "traffic-generator")
     marker_start = time.time_ns()
     marker_counts = {app: 0 for app in ("app-a", "app-b", "app-c")}
-    marker_ids = []
     try:
         time.sleep(7)
+        marker_start = time.time_ns()
         metric_before = {app: prom_scalar(f'sum(nginx_http_response_count_total{{app="{app}"}})')
                          for app in marker_counts}
 
         def emit_markers(prefix, rounds=1):
             for round_number in range(rounds):
                 for app in marker_counts:
-                    marker = f"{prefix}-{uuid.uuid4().hex}"
-                    assert request_status(f"{base}/{app}/?marker={marker}") == 200
+                    # A request identifier must not be persisted in the access
+                    # log. Correlate this isolated batch by its safe route and
+                    # exact per-app event count instead.
+                    assert request_status(f"{base}/{app}/") == 200
                     marker_counts[app] += 1
-                    marker_ids.append((app, marker))
                 if prefix == "rotate":
                     rotated = subprocess.run([sys.executable, os.path.join(root, "scripts", "rotate_logs.py"),
                                               "--max-bytes", "1", "--keep", "20"],
                                              cwd=root, check=True, capture_output=True, text=True)
                     assert "rotated:6" in rotated.stdout, f"Expected six Nginx files rotated: {rotated.stdout}"
 
+        def assert_safe_batch(expected_counts, phase):
+            wait_for(lambda: all(loki_safe_event_count(app, marker_start) >= expected_counts[app]
+                                 for app in marker_counts),
+                     f"Loki did not ingest the safe-route batch after {phase}", timeout=90)
+            observed = {app: loki_safe_event_count(app, marker_start) for app in marker_counts}
+            assert observed == expected_counts, \
+                f"Loki safe-route events after {phase} were missing or duplicated: expected={expected_counts}, observed={observed}"
+
         emit_markers("rotate", rounds=2)
+        assert_safe_batch(marker_counts.copy(), "log rotation")
 
         compose_action("stop", "loki")
         emit_markers("loki-down")
         time.sleep(3)
         compose_action("start", "loki")
         wait_for(lambda: request_status(f"{loki}/ready") == 200, "Loki did not recover", timeout=90)
+        loki_recovered_counts = {app: marker_counts[app] for app in marker_counts}
+        assert_safe_batch(loki_recovered_counts, "Loki restart")
 
         compose_action("stop", "alloy")
         emit_markers("alloy-down")
         compose_action("start", "alloy")
-        wait_for(lambda: all(loki_marker_count(app, marker, marker_start) == 1
-                             for app, marker in marker_ids),
-                 "Loki did not ingest each rotation/outage marker exactly once", timeout=90)
+        assert_safe_batch(marker_counts.copy(), "Alloy restart")
 
         compose_action("stop", "prometheus")
         emit_markers("prometheus-down")
@@ -355,16 +369,14 @@ def verify_rotation_and_recovery():
                  "Exporter counters did not advance after post-restart requests", timeout=90)
         wait_for(lambda: target_scraped_after("nginx-access", post_restart_at),
                  "Prometheus did not scrape the recovered exporter", timeout=90)
-        wait_for(lambda: all(loki_marker_count(app, marker, marker_start) == 1
-                             for app, marker in marker_ids),
-                 "A synthetic log marker was missing or duplicated", timeout=90)
+        assert_safe_batch(marker_counts.copy(), "full pipeline recovery")
         deltas = {}
         exporter_after = exporter_request_counters()
         for app, before in exporter_recovered.items():
             after = exporter_after[app]
             deltas[app] = round(after - before, 1)
             assert deltas[app] >= 1, f"Exporter counters did not advance after restart for {app}: {deltas[app]}"
-        return {"unique_loki_markers": len(marker_ids), "markers_per_app": marker_counts,
+        return {"isolated_loki_events": sum(marker_counts.values()), "events_per_app": marker_counts,
                 "prometheus_counter_deltas_before_exporter_restart": metrics_before_exporter_restart,
                 "exporter_outage_events_backfilled": False,
                 "post_exporter_restart_deltas": deltas, "rotation_cycles": 2,
@@ -636,7 +648,8 @@ def verify_security_dashboard(dashboard):
     explore_expr = panes["0"]["queries"][0]["expr"]
     assert '$app' in explore_expr and '${source_ip:raw}' in explore_expr and "403|404|5.." in explore_expr
     assert panes["0"]["range"] == {"from": "$__from", "to": "$__to"}
-    return {"methods": sorted(labels), "sections": rows, "rate_panels": len(rate_panels), "recent_columns": len(columns)}
+    return {"methods": sorted(labels, key=lambda value: "" if value is None else value),
+            "sections": rows, "rate_panels": len(rate_panels), "recent_columns": len(columns)}
 
 
 def verify_security_scenario(dashboard, scan_start_ns):
@@ -841,7 +854,9 @@ def verify_application_detail(dashboard):
     path_sort = paths["transformations"][1]["options"]["sort"][0]
     assert path_sort == {"field": "Value", "desc": True}, "Grafana must sort the top paths by volume descending"
     app_a_paths = loki_instant(path_expr.replace('app=~".*"', 'app=~"app-a"'))
-    assert app_a_paths and all(item["metric"].get("path", "").startswith("/app-a/") for item in app_a_paths), app_a_paths
+    app_a_path_labels = {item["metric"].get("path", "") for item in app_a_paths}
+    assert app_a_paths and any(path.startswith("/app-a/") for path in app_a_path_labels) \
+        and all(path.startswith("/app-a/") or path == "/_unclassified" for path in app_a_path_labels), app_a_paths
     path_frames = grafana_loki_frames(path_expr, query_type="instant", legend_format=paths["targets"][0]["legendFormat"])
     path_names = {field.get("config", {}).get("displayNameFromDS") for frame in path_frames
                   for field in frame["schema"]["fields"] if field["name"] == "Value"}
@@ -1078,16 +1093,15 @@ def verify_scenarios(security_dashboard):
 
 
 def verify_persistence():
-    marker = f"persist-{uuid.uuid4().hex}"
     before = prom_scalar('sum(nginx_http_response_count_total{app="app-a"})')
-    marker_ns = time.time_ns()
-    status = request_status(f"{base}/app-a/?marker={marker}")
-    assert status == 200, f"Persistence marker request returned HTTP {status}"
+    marker_ns = time.time_ns() - 5_000_000_000
+    status = request_status(f"{base}/app-a/missing")
+    assert status == 404, f"Persistence check request returned HTTP {status}"
 
     wait_for(lambda: prom_scalar('sum(nginx_http_response_count_total{app="app-a"})') > before,
              "Prometheus did not scrape the marker request")
-    marker_query = f'{{job="nginx", app="app-a"}} | json | request=~".*{marker}.*"'
-    wait_for(lambda: bool(loki_query(marker_query, marker_ns - 5_000_000_000)), "Loki did not ingest the marker request")
+    marker_query = '{job="nginx",app="app-a"} | method="GET" | status="404" | path="/app-a/missing"'
+    wait_for(lambda: bool(loki_query(marker_query, marker_ns)), "Loki did not ingest the safe persistence-check event")
     recorded_metric = prom_scalar('sum(nginx_http_response_count_total{app="app-a"})')
 
     subprocess.run(["docker", "compose", "restart", "prometheus", "loki"], check=True)

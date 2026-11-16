@@ -2,7 +2,7 @@
 
 All notable changes to Nginx Observability are documented here.
 
-## [0.1.0] - Prepared, not tagged
+## [0.1.0] - Prepared locally, not tagged (NO-GO)
 
 ### Added
 
@@ -12,7 +12,7 @@ All notable changes to Nginx Observability are documented here.
 - Bounded synthetic scenarios for normal traffic, degradation, scanning patterns, traffic peaks, and latency.
 - Configurable retention, access-log rotation, recovery checks, and operational alert rules.
 - Local alert webhook receiver and automated integration, reliability, alerting, and repository-history checks.
-- MIT license for project-authored files; third-party components retain their own licenses.
+- Root MIT license text added for project-authored files; rights-holder confirmation is pending, so publication remains blocked. Third-party components retain their own licenses.
 
 ### Validated
 
@@ -22,6 +22,8 @@ All notable changes to Nginx Observability are documented here.
 
 ### Known limitations
 
+- Trivy 0.76.2 found unresolved CRITICAL/HIGH image-package findings across the exporter, Loki, Alloy, and locally built Python images; some HIGH findings also appear in Nginx, Prometheus, and Grafana. See `docs/pre-release-audit.md` and the SPDX SBOMs under `docs/sbom/`.
+- The copyright holder for the root MIT license has not been explicitly confirmed.
 - Application Detail and Live Logs still need a visual browser review; no screenshots are included in this prepared release.
 - The exporter does not backfill Prometheus counters for requests made while it is unavailable.
 - Loki filesystem storage has no reliable free-space metric or byte quota in this lab.

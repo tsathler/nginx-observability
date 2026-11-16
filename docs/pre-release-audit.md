@@ -5,34 +5,35 @@
 
 **Escopo:** revisão independente do repositório e do laboratório local Docker Compose, com tráfego sintético. Nenhum sistema corporativo foi acessado. Nenhum volume foi removido, nenhum histórico foi reescrito, nenhuma tag ou publicação foi criada.
 **Decisão inicial:** **NO-GO** pelos motivos descritos no relatório.
-**Decisão após remediação técnica:** **NO-GO para publicação por enquanto.** Os bloqueadores técnicos priorizados (versões de Nginx/Grafana e persistência futura de dados sensíveis nos access logs) foram corrigidos e verificados no laboratório. A confirmação do titular dos direitos autorais/MIT continua pendente; Application Detail e Live Logs também não receberam revisão visual real nesta rodada. Não declarar essas etapas concluídas sem evidência.
+**Decisão final — 2026-11-16:** **NO-GO para publicação.** A varredura de todas as imagens utilizadas encontrou candidatos CRITICAL/HIGH sem triagem de alcançabilidade, falsos positivos ou VEX. Também permanecem pendentes a titularidade MIT e a revisão visual de Application Detail/Live Logs. A remediação anterior de versões Nginx/Grafana e a sanitização de logs novos continuam registradas, mas não bastam para aprovar a release.
 
 ## Resumo executivo
 
 A arquitetura demonstra um pipeline funcional e testado para três aplicações sintéticas. O estado observado tinha os 11 containers em execução; Grafana, aplicações e Nginx indicavam estado saudável no `docker compose ps`. Os testes anteriormente registrados em `docs/final-audit.md`, `docs/reliability-audit.md` e `docs/alerting-audit.md` comprovam consultas de métricas e logs, isolamento por aplicação, rotação, recuperação de reinícios, estados de alertas e entrega ao receptor local. Esses testes não cobrem recuperação de backup, integridade histórica completa, exame de vulnerabilidades das imagens nem revisão visual recente de todos os painéis.
 
-Há dois achados concretos de segurança de dependências: `nginx:1.29.4-alpine` está no intervalo vulnerável indicado pelo projeto NGINX para CVE-2026-42926 e CVE-2026-1642; `grafana/grafana:12.3.1` está no intervalo afetado por CVE-2026-27877. A configuração atual não habilita HTTP/2 no Nginx e não usa dashboards públicos no Grafana, o que reduz a aplicabilidade demonstrada desses dois cenários específicos. Ainda assim, a release distribui por padrão versões com avisos aplicáveis em determinadas condições, sem varredura reproduzível de imagens ou pin por digest.
+Na auditoria inicial, Nginx e Grafana tinham avisos que motivaram as atualizações anteriores. A varredura de imagem nesta validação final descobriu dependências adicionais CRITICAL/HIGH nas versões efetivamente usadas; resultados e SBOMs estão em [`docs/sbom/`](sbom/). O número reportado é package-finding, pode contar o mesmo CVE em vários pacotes e repete a mesma base em cinco imagens Python. A ferramenta não avaliou execução/alcançabilidade e não confirmou nem descartou falsos positivos.
 
-Os access logs incluem IP de origem, referer, user-agent e a linha HTTP bruta, que contém potencialmente query string. Isso é aceitável apenas para o laboratório sintético; coletar tráfego real sem minimização pode expor identificadores, dados pessoais ou tokens. O exporter perde os incrementos de métricas correspondentes a requests ocorridos durante sua indisponibilidade, embora os logs possam continuar pesquisáveis no Loki. Não há estratégia de backup/restauração integral testada para Prometheus, Loki, Grafana e estado do Alloy. São limitações documentadas, mas impedem tratar a stack como resiliente ou adequada para dados operacionais reais.
+Na auditoria inicial os access logs incluíam IP, referer, user-agent e linha HTTP bruta com query string. A remediação de 2026-11-16 sanitizou eventos novos; volumes podem conservar eventos históricos anteriores à mudança. O exporter perde incrementos de métricas durante indisponibilidade, embora logs correspondentes possam continuar pesquisáveis no Loki. Não há restore integral testado para Prometheus, Loki, Grafana e estado Alloy. Essas limitações impedem alegar resiliência/adequação a dados operacionais reais.
 
 ## Matriz de achados
 
 | ID | Severidade | Área | Achado e evidência resumida | Bloqueia v0.1.0? |
 |---|---|---|---|---|
-| A1 | **Média** | Segurança / dependências | Nginx 1.29.4 está em intervalos vulneráveis de avisos oficiais; há uso de `proxy_pass`. A configuração não habilita HTTP/2 na entrada e o risco prático de CVE-2026-42926 não foi demonstrado. | **Sim**, atualizar ou documentar e justificar a versão de forma explícita antes da release. |
-| A2 | **Média** | Segurança / dependências | Grafana 12.3.1 é afetado por CVE-2026-27877 quando são usados dashboards públicos com data sources direct mode. O projeto não provisiona dashboards públicos, portanto a condição de exploração descrita não foi observada. | **Sim**, atualizar para patch corrigido ou registrar análise de não aplicabilidade e executar scan de imagem antes de publicar. |
-| A3 | **Média** | Privacidade / logs | O campo `$request` JSON registra a linha HTTP original com query string; logs também contêm IP, referer e user-agent. | **Sim** para divulgar como apropriado a dados reais; pode publicar apenas com aviso destacado de laboratório sintético e sem dados reais. |
+| A1 | **Média (histórico; mitigado)** | Segurança / dependências | O snapshot inicial usava Nginx 1.29.4. A versão atual 1.30.6 mitigou os avisos auditados; o scan Trivy atual ainda reporta 3 HIGH/2 MEDIUM em pacotes da imagem (A13). | A1 mitigado; **A13 ainda bloqueia** até triagem dos findings atuais. |
+| A2 | **Média (histórico; mitigado)** | Segurança / dependências | O snapshot inicial usava Grafana 12.3.1. A versão atual 12.4.15 mitigou o advisory inicial; Trivy ainda reporta 2 HIGH, 4 MEDIUM e 4 UNKNOWN (A13). | A2 mitigado; **A13 ainda bloqueia** até triagem dos findings atuais. |
+| A3 | **Média (mitigado para eventos novos)** | Privacidade / logs | Antes da correção, `$request`, referer e user-agent podiam persistir dados sensíveis. Nginx agora permite rotas, remove query strings e exclui cabeçalhos/usuário do log; IP continua registrado e é dado pessoal. | Não para publicar somente fontes/configs, desde que volumes Docker não sejam incluídos. Tráfego real segue bloqueado sem decisão de retenção/acesso e tratamento dos dados históricos. |
 | A4 | **Média** | Integridade / métricas | O exporter não reconstrói counters durante indisponibilidade; requests ausentes em Prometheus permanecem apenas nos logs/Loki. Counter em memória reinicia com o processo. | **Não** para laboratório/portfólio, desde que a limitação seja proeminente; sim para alegar contagem completa ou usar como fonte de faturamento/SLO. |
 | A5 | **Média** | Backup / restauração | Não há backup automatizado nem restore completo testado. Testes existentes reiniciam serviços e comprovam persistência de alguns marcadores, não recuperação de cópia restaurada. | **Sim** se a release alegar recuperação/backup; caso contrário, remover qualquer ambiguidade e declarar ausência de backup. Para release de laboratório, aceitável com aviso claro. |
 | A6 | **Média** | Segurança / fronteira local | Grafana exige autenticação, mas Prometheus e Loki não têm autenticação própria; Loki está com `auth_enabled: false`. Portas são loopback, porém APIs sem autenticação ficam acessíveis a processos do host e a membros de redes Docker autorizadas. | **Não** para lab explicitamente local; **sim** para deployment compartilhado, remoto ou produção. |
 | A7 | **Média** | Capacidade / desempenho | Não há limite de CPU/memória por serviço, filesystem read-only geral nem monitoramento confiável do espaço livre dos volumes. Loki filesystem não tem cap por bytes; o limite de Prometheus cobre blocos e não todo o volume. | **Não** para demo, mas deve constar como limitação. Bloqueia alegação de capacidade ou uso compartilhado/produção. |
-| A8 | **Baixa** | Supply chain / reprodutibilidade | Imagens são fixadas por tags, não por digest; não foi encontrado CI, SBOM ou scan automatizado de CVE na árvore rastreada. Tags nomeadas não garantem os mesmos bytes em toda reprodução. | **Recomendado antes da release**, especialmente por A1/A2; não é isoladamente bloqueador para um projeto de portfólio. |
+| A8 | **Baixa** | Supply chain / reprodutibilidade | Imagens são fixadas por tags, não por digest; não há CI nem lock Python. A validação final gerou SBOM SPDX e relatório Trivy para as 11 referências/digests locais; tags ainda não garantem bytes estáveis entre reproduções. | **Sim** em conjunto com A13 enquanto CVEs não forem triadas/remediadas. |
+| A13 | **Alta** | Segurança / imagens | Trivy 0.76.2 (DB atualizada em 2026-11-16) encontrou CRITICAL/HIGH em exporter, Loki, Alloy e cinco imagens Python; Grafana, Nginx e Prometheus também têm findings. Ex.: exporter com Go stdlib 1.13.15, cinco CRITICAL; Python base Debian 12.10 com 9 CRITICAL/80 HIGH por imagem; Loki e Alloy com dois CRITICAL cada. | **Sim.** Atualizar/reconstruir imagens ou apresentar triagem reproduzível e VEX justificada para cada candidato CRITICAL/HIGH antes da release. |
 | A9 | **Baixa** | Alertas | Regras e entrega firing/resolved ao webhook local foram testadas. O receptor é efêmero, não autenticado, sem TLS, persistência ou retry durável; alerta de espaço livre real não existe. | Não para laboratório. Deve ser informado como mecanismo exclusivamente demonstrativo. |
 | A10 | **Baixa** | Dashboards | Consultas e quatro JSONs são cobertos por testes/API; Overview e Security têm registros de inspeção visual; Application Detail e Live Logs permanecem sem validação visual confirmada. | Não para publicação do código se isso estiver explicitado; não alegar validação visual completa. |
 | A11 | **Baixa** | Repositório / licença | Histórico verificado para padrões conhecidos sem achados. `LICENSE` MIT cobre conteúdo próprio; componentes AGPL e demais dependências mantêm suas licenças. Titularidade indicada no MIT baseia-se na identidade de commit e carece de confirmação explícita. | **Sim** até confirmar o titular dos direitos e manter avisos/licenças de terceiros corretos. |
 | A12 | **Baixa** | Prometheus TSDB | O volume apresentou avisos mmap/out-of-sequence no Prometheus 3.8.1. Após upgrade para 3.16.0 não houve recorrência nos restarts testados; lacunas históricas eventuais não podem ser confirmadas sem fonte independente. | Não para lab, desde que a integridade histórica não seja alegada. Preservar o volume sem reparo destrutivo. |
 
-Nenhum achado foi classificado como Crítico ou Alto: as APIs administrativas publicadas estão vinculadas ao loopback, não há conexão corporativa configurada, as credenciais locais são ignoradas pelo Git e não foi demonstrado acesso remoto não autorizado. A classificação não equivale a uma afirmação de ausência de risco.
+Na auditoria de 2026-11-13, nenhum achado foi então classificado como Crítico ou Alto. Essa observação precedeu a varredura final e foi supersedida por A13. As APIs administrativas continuam vinculadas ao loopback, não há conexão corporativa configurada e credenciais locais são ignoradas pelo Git; isso não reduz as ocorrências identificadas em dependências de imagens.
 
 ## Evidências e reprodução
 
@@ -54,7 +55,7 @@ Nenhum achado foi classificado como Crítico ou Alto: as APIs administrativas pu
 
 **Privilégios:** `no-new-privileges` é aplicado globalmente e `cap_drop: ALL` em vários containers. As aplicações demo usam UID não-root. O Compose não define `read_only`, limites `mem_limit`/`cpus` nem restrições de escrita para todos os serviços; Nginx e Alloy permanecem exceções a UID não-root. Não há `privileged: true` observado. A falta de limites permite que tráfego, consultas ou crescimento de dados consumam recursos do Docker Engine/host.
 
-**Logs sensíveis:** `config/nginx/default.conf` grava `remote_addr`, `remote_user`, `$request`, `$http_referer` e `$http_user_agent`. `$request` pode carregar query strings; além disso, o request aparece no access log textual consumido pelo exporter. Os dashboards evitam indexar IP/caminho como labels de alta cardinalidade, mas isso não remove os dados do conteúdo do log nem impede que um usuário autorizado os consulte/exporte. OWASP recomenda excluir, mascarar, sanitizar, hashear ou proteger tokens, senhas, session IDs e PII sensível em logs. Antes de tráfego real, é preciso definir minimização, finalidade, acesso, retenção e procedimento de resposta.
+**Logs sensíveis (snapshot inicial de 2026-11-13):** à época, `config/nginx/default.conf` gravava `remote_addr`, `remote_user`, `$request`, `$http_referer` e `$http_user_agent`. `$request` podia carregar query strings. A implementação atual foi alterada e testes de canário passaram; novos dados estão minimizados, mas os volumes ainda podem conter eventos antigos. Os dashboards evitam indexar IP/caminho como labels de alta cardinalidade, mas usuário autorizado ainda pode consultar/exportar dados de evento. OWASP recomenda excluir, mascarar, sanitizar, hashear ou proteger tokens, senhas, session IDs e PII sensível em logs. Consulte a reavaliação abaixo antes de tráfego real.
 
 **Git:** `.gitignore` exclui `.env`, variantes (mantendo `.env.example`), logs, arquivos rotacionados e cache Python. `python tests/audit_repository_history.py` foi executado nesta auditoria e terminou com `OK: scanned all reachable Git commits; no matching secrets, corporate markers, or sensitive artifact paths found`. O scanner cobre padrões conhecidos específicos e nomes de artefatos, não todos os formatos de segredo, valores aleatórios ou conteúdo local ignorado; não substitui secret scanning contínuo. O `git status` inicial não tinha arquivos rastreados modificados; havia apenas o arquivo de notas de pesquisa desta auditoria, que foi removido antes do commit.
 
@@ -83,7 +84,7 @@ Prometheus mantém retenção 7d e 1GB em blocos; Loki mantém 168h e armazename
 
 ### 6. Qualidade, dependências e cadeia de suprimentos
 
-As imagens têm versões explicitadas (`nginx:1.29.4-alpine`, exporter `v1.9.2`, Prometheus `v3.16.0`, Loki `3.5.7`, Alloy `v1.12.2`, Grafana `12.3.1`; os serviços Python usam `python:3.13.2-slim`). Tags não fixam digest/bytes. Não há workflow de CI, arquivo de lock Python (demos usam bibliotecas padrão), SBOM completo ou scan de imagem na árvore rastreada. A auditoria de licença inventorya projetos principais em `docs/license-audit.md`, porém não inventaria cada pacote OS/library embutido em cada imagem.
+No snapshot inicial as imagens eram (`nginx:1.29.4-alpine`, exporter `v1.9.2`, Prometheus `v3.16.0`, Loki `3.5.7`, Alloy `v1.12.2`, Grafana `12.3.1`; serviços Python usam `python:3.13.2-slim`). Nginx e Grafana foram atualizados para as tags atuais documentadas no Compose. Tags não fixam digest/bytes. Não há workflow CI nem lock Python. SBOMs/SPDX e scan por digest foram gerados nesta validação final; ver os resultados em A13 e `docs/sbom/`.
 
 Foi consultada documentação/avisos oficiais em 2026-11-13. A página oficial NGINX lista CVE-2026-42926 como vulnerável em 1.29.4–1.30.0 e CVE-2026-1642 como vulnerável até 1.29.4; releases corrigidas listadas incluem versões posteriores. CVE-2026-42926 trata de request injection HTTP/2 no módulo proxy; a configuração encontrada usa `proxy_pass`, mas não habilita HTTP/2 no listener, então a exposição da condição completa não foi provada. CVE-2026-1642 trata de upstream SSL; os upstreams desta configuração são HTTP locais, então também não se comprovou caminho afetado. Apesar desses qualificadores, a imagem permanece numa faixa oficialmente vulnerável e deve ser atualizada/avaliada antes de se tornar default de release.
 
@@ -112,14 +113,14 @@ Antes de publicar: confirmar formalmente o titular indicado no copyright MIT; co
 - Prometheus foi atualizado para 3.16.0 após os avisos mmap da versão anterior; testes de reinício registrados não reproduziram o aviso.
 - Scan local do histórico Git não encontrou correspondências para os padrões de segredo e artefatos sensíveis cobertos pelo script.
 
-## Recomendações obrigatórias antes da publicação
+## Recomendações do snapshot inicial (2026-11-13; reavaliadas abaixo)
 
-1. Atualizar Nginx para release corrigida/atual suportada e executar o pipeline completo de regressão; registrar exatamente os módulos/protocolos habilitados e o resultado de scan da imagem.
-2. Atualizar Grafana para patch suportado que inclua correções aplicáveis ao ramo escolhido; testar os quatro dashboards, alertas, auth e Explore após upgrade.
+1. Atualizar Nginx para release corrigida/atual suportada — concluído na versão 1.30.6; a varredura final ainda encontrou findings em dependências transitivas, tratados em A13.
+2. Atualizar Grafana para patch suportado — concluído na versão 12.4.15; a varredura final ainda encontrou findings em dependências, tratados em A13.
 3. Confirmar titularidade/copyright em `LICENSE`; verificar avisos/licenças dos artefatos e registrar o escopo do inventário.
-4. Tornar explícito no README e na release que logs contêm IP e request bruto com query string, que só dados sintéticos foram usados e que não se devem enviar segredos/PII sem minimização prévia. Caso o projeto pretenda incentivar tráfego real no laboratório, implementar redaction primeiro em etapa posterior autorizada.
+4. Descrever a sanitização nova e o IP retido no README/release; manter a orientação de que só dados sintéticos devem ser usados até concluir tratamento de logs históricos e política de dados reais — texto atualizado no README.
 5. Atualizar notas da release para distinguir persistência após restart de backup/restauração. Não alegar backup recuperável; declarar ausência de procedimento restore validado.
-6. Executar suite completa após atualizações de imagens e verificar `docker compose config --quiet`, pipeline, confiabilidade, alertas, scan de histórico e `git diff --check`. Isso não substitui backup/restore nem avaliação de vulnerabilidades.
+6. Executar suíte completa após atualizações — resultados desta reavaliação estão na seção final. Isso não substitui backup/restore nem avaliação de vulnerabilidades.
 
 Essas recomendações são conclusões da auditoria, não autorização para implementar alterações. Nenhuma correção foi iniciada nesta etapa.
 
@@ -177,7 +178,7 @@ Executado em 2026-11-13, sem parada ou alteração de serviços:
 
 ## Conclusão
 
-**NO-GO para a v0.1.0 no estado atual deste audit.** A configuração é adequada como laboratório local sintético com limites bem descritos, mas o repositório ainda fixa versões de Nginx/Grafana com avisos oficiais aplicáveis sob condições e não apresenta confirmação de copyright. O processo de release precisa atualizar ou justificar tecnicamente essas versões e confirmar a titularidade MIT. A ausência de restore validado, redaction e limites físicos continua impedindo qualquer posicionamento operacional; para uma release educacional, essas lacunas podem ser publicadas como limitações explícitas e itens da v0.2.0.
+**Decisão inicial: NO-GO em 2026-11-13.** A causa naquela data incluía versões Nginx/Grafana depois atualizadas e ausência de minimização de logs. O estado atual e os novos bloqueadores são descritos na seção “Validação final da release — 2026-11-16” ao fim deste arquivo.
 
 ## Reavaliação após remediação — 2026-11-16
 
@@ -209,7 +210,7 @@ Os logs/eventos históricos anteriores à sanitização não foram purgados para
 | `python tests/audit_repository_history.py` | Passou na auditoria inicial do histórico alcançável. O scanner cobre padrões conhecidos, não garante ausência de todo segredo. |
 | `git diff --check` | Passou após alterações/commits finais. |
 
-Não foi executado scanner de CVEs/SBOM do conteúdo integral das imagens. Versões corrigidas e testes runtime não demonstram ausência de vulnerabilidades em todas as camadas/transitivas. As referências de versão são [NGINX Security Advisories](https://nginx.org/en/security_advisories.html), [NGINX downloads/releases](https://nginx.org/en/download.html), [Grafana v12.4.15](https://github.com/grafana/grafana/releases/tag/v12.4.15) e [Grafana support policy](https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/). Nenhuma conexão corporativa, push, tag ou operação destrutiva foi realizada.
+Na reavaliação de 2026-11-16, o scan e SBOM completos por digest foram executados; resultados constam na seção final abaixo. O parágrafo anterior descrevia o estado até a primeira remediação. Versões atuais foram comparadas com [NGINX Security Advisories](https://nginx.org/en/security_advisories.html), [NGINX downloads/releases](https://nginx.org/en/download.html), [Grafana v12.4.15](https://github.com/grafana/grafana/releases/tag/v12.4.15) e [Grafana support policy](https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/). Nenhuma conexão corporativa, push, tag ou operação destrutiva foi realizada.
 
 ### Critérios restantes para GO
 
@@ -219,3 +220,60 @@ Não foi executado scanner de CVEs/SBOM do conteúdo integral das imagens. Vers�
 - [ ] Para alegar ausência ampla de CVEs, produzir inventário/SBOM e scan de imagens com ferramenta, data e limites identificados.
 
 Backup/restore, métricas perdidas durante indisponibilidade do exporter, monitoramento de espaço livre e autenticação/TLS das APIs continuam limitações corporativas. Podem ser apresentadas numa release educacional como limitações explícitas, mas não como homologação para produção.
+
+## Validação final da release — 2026-11-16
+
+### Varredura de imagens e SBOM
+
+O Docker Scout CLI instalado no Docker Desktop exigiu autenticação; não foi feito login nem criada credencial. Como alternativa local foi utilizado Trivy `0.76.2` da [release oficial](https://github.com/aquasecurity/trivy/releases/tag/v0.76.2); o SHA-256 do ZIP Windows foi comparado com o checksum publicado pelo projeto. A base de vulnerabilidades foi atualizada em 2026-11-16. Cada digest local identificado no Compose foi escaneado no Docker Engine. Foram gerados SBOMs SPDX completos e um resumo JSON em [`docs/sbom/`](sbom/). A correspondência entre artefatos e digests está nos SBOMs e `trivy-vulnerability-summary.json`.
+
+| Referência/imagem no Compose | Sistema/base detectada | Findings CRITICAL / HIGH / MEDIUM / LOW / UNKNOWN | Observação |
+|---|---|---:|---|
+| `nginx:1.30.6-alpine` | Alpine 3.24.4 | 0 / 3 / 2 / 0 / 0 | HIGH reportados em `libxslt`; atualização de Nginx não eliminou risco transitivo. |
+| `prom/prometheus:v3.16.0` | Go image | 0 / 2 / 2 / 0 / 4 | Inclui `golang.org/x/net` 0.61.0 com HIGH `CVE-2026-78661`; outros status aparecem UNKNOWN no feed. |
+| `grafana/grafana:12.4.15` | Alpine 3.24.3 | 0 / 2 / 4 / 0 / 4 | HIGH associados ao pacote Go `github.com/grafana/tempo`; presença no artefato confirmada, função atingível não determinada. |
+| `grafana/loki:3.5.7` | Debian 12.12 + Go | 2 / 54 / 47 / 3 / 6 | HIGH/CRITICAL em bibliotecas Go e pacotes OS. Dois CRITICAL: Go stdlib `CVE-2025-68121`, gRPC `CVE-2026-33186`. |
+| `grafana/alloy:v1.12.2` | Ubuntu 24.04 + Go | 2 / 71 / 245 / 85 / 3 | Dois CRITICAL: Go stdlib `CVE-2025-68121`, gRPC `CVE-2026-33186`. |
+| `quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2` | Go image | 5 / 69 / 69 / 5 / 2 | Inclui Go stdlib 1.13.15; cinco IDs CRITICAL reportados, incluindo CVE-2023-24538, CVE-2023-24540, CVE-2024-24790 e CVE-2025-68121. |
+| `nginx-observability-app-a:latest` | `python:3.13.2-slim`, Debian 12.10 | 9 / 80 / 195 / 143 / 12 | Findings de pacote-base iguais nas cinco imagens Python. |
+| `nginx-observability-app-b:latest` | `python:3.13.2-slim`, Debian 12.10 | 9 / 80 / 195 / 143 / 12 | Contagem por finding, não CVEs únicos. |
+| `nginx-observability-app-c:latest` | `python:3.13.2-slim`, Debian 12.10 | 9 / 80 / 195 / 143 / 12 | Contagem por finding, não CVEs únicos. |
+| `nginx-observability-traffic-generator:latest` | `python:3.13.2-slim`, Debian 12.10 | 9 / 80 / 195 / 143 / 12 | Contagem por finding, não CVEs únicos. |
+| `nginx-observability-alert-receiver:latest` | `python:3.13.2-slim`, Debian 12.10 | 9 / 80 / 195 / 143 / 12 | Contagem por finding, não CVEs únicos. |
+
+**Interpretação e aplicabilidade.** O scanner confirmou a presença das versões de pacotes/binaries listadas, não a exploração de um caminho. Os totais são achados pacote-CVE (um CVE pode ser contado em vários pacotes) e as ocorrências Debian se repetem em cada imagem Python. A varredura não faz teste dinâmico, não avalia reachability por código ou exposição de cada endpoint e não decide falsos positivos. Não há VEX aprovada nem CVE classificada como falso positivo confirmado. Portanto: (a) “pacote e versão encontrados” é comprovado; (b) explorabilidade concreta permanece não demonstrada; (c) não aplicabilidade só pode ser afirmada após validar pré-condições e chamadas disponíveis; (d) falso positivo não foi estabelecido.
+
+Exemplo condicional: a descrição de [CVE-2026-33186 no tracker Debian](https://security-tracker.debian.org/tracker/CVE-2026-33186) exige servidores gRPC com interceptor de autorização por caminho e política específica de fallback. Esses elementos não aparecem em `compose.yaml`/configurações provisionadas, mas não foi auditado cada caminho interno dos binários de Loki/Alloy; fica **condicional e sem resolução**, não falso positivo. [CVE-2025-7458 no upstream SQLite](https://www.sqlite.org/cves.html) refere-se a uma chamada C API específica; o scanner atesta a biblioteca instalada, porém a rota de código demo não usa SQLite diretamente. Também não foi emitida exceção de aplicabilidade.
+
+Os resultados bloqueiam a release: exporter `v1.9.2` contém runtime Go antigo com múltiplos CRITICAL; Loki/Alloy e imagens Python têm candidatos CRITICAL/HIGH; existem correções indicadas em feeds para vários achados. Mitigar atualizando/reconstruindo componentes compatíveis, repetir varredura por digest e registrar VEX/justificativa para cada candidato restante. O resumo contém findings, severidades, pacotes, versões instaladas/fixas, links e digests; os SBOMs SPDX contêm o inventário por imagem. Consulte a [release oficial do Trivy 0.76.2](https://github.com/aquasecurity/trivy/releases/tag/v0.76.2) e a [documentação de severidade do scanner](https://trivy.dev/docs/v0.76/guide/scanner/vulnerability/).
+
+### Revisão visual, integridade e publicação
+
+- **Visual:** a CUA não encontrou navegador nem host de automação (`Browsers: []`; erro de conexão do browser host). Não foi possível abrir dashboards nem capturar screenshots. Validação visual permanece pendente para os quatro nesta execução, com prioridade Application Detail e Live Logs. A validação de API anterior não substitui isso. Live tail segue sem evidência de sessão interativa observada.
+- **Arquivos sensíveis:** `git ls-files` não contém `.env`, logs `.log`, volumes Docker, screenshots ou dumps operacionais. `.gitignore` exclui `.env` e variantes, logs ativos/rotacionados e bytecode, preservando `.env.example`. O teste de histórico cobre padrões/caminhos conhecidos. Os volumes locais não foram lidos, limpos ou anexados: podem manter eventos anteriores à sanitização, mas não fazem parte do checkout Git verificado.
+- **README:** havia texto desatualizado dizendo que eventos novos persistiam request/query, referer e user-agent. Foi corrigido para refletir a minimização atual, indicar risco de volumes históricos e incluir teste de privacidade e evidências SBOM.
+- **Licença e backup:** titularidade MIT continua sem confirmação explícita; autoria Git não prova direitos. Licenças dos componentes externos não são alteradas pela raiz MIT. SBOM auxilia inventário, mas não substitui revisão legal de notices. Backup/restore completo continua sem procedimento/teste; persistência após restart não é prova de restauração.
+- **Dashboards:** os quatro arquivos continuam no Git e seus JSONs serão validados; não houve redesign nem inspeção visual. Overview/Security têm registros visuais anteriores; Application Detail/Live Logs seguem pendentes.
+
+### Critérios objetivos para reavaliar GO
+
+1. Atualizar/reconstruir componentes CRITICAL/HIGH, incluindo exporter/base Python, e rever Loki/Alloy/Grafana/Nginx/Prometheus. Gerar novos SBOMs e varrer todos os digests usados; para findings restantes, registrar advisory do fornecedor e VEX com precondições, reachability e rationale revisados.
+2. Completar inspeção visual real de quatro dashboards, especialmente filtros/tabelas em Application Detail/Live Logs, e observar sessão Live tail com evento sintético. Armazenar screenshots genuínas sem dados sensíveis ou registrar aceite explícito do mantenedor para omiti-las.
+3. Confirmar explicitamente titularidade/direito de licenciar MIT e corrigir `LICENSE` se necessário.
+4. Validar staging, testes e diffs; garantir que credenciais, logs e volumes não sejam incluídos. Não usar logs históricos do Docker como screenshot/artefato/dado da release.
+
+### Testes executados nesta validação
+
+| Verificação | Resultado em 2026-11-16 |
+|---|---|
+| `python tests/verify_pipeline.py --verify-scenarios --verify-persistence` | Passou. As três apps retornaram 200/301/403/404/500 e GET/POST; 31 PromQL, 7 LogQL e quatro dashboards verificados; cenários degradação/scan/pico; Grafana Live endpoint 101; auth 401 sem credencial; retenção/persistência após reiniciar Prometheus e Loki. |
+| `python tests/verify_pipeline.py --verify-reliability` | Passou. 21 eventos únicos Loki (7/app), duas rotações, recuperação Loki/Alloy/Prometheus/exporter; `exporter_outage_events_backfilled=False`. |
+| `python tests/verify_alerting.py` | Passou. Health/idle, outages app/exporter/Loki, 5xx, P95, recuperação e entrega local webhook. |
+| `python tests/verify_log_privacy.py` | Passou. Canários de query/path/Cookie/Authorization/Referer/User-Agent ausentes de logs ativos/rotacionados e Loki; rota sanitizada, métrica/exporter verificados. |
+| `python tests/audit_repository_history.py` | Passou para padrões e caminhos conhecidos em todos os commits alcançáveis; não substitui secret scanning universal. |
+| `docker compose config --quiet` | Passou. |
+| JSON dos quatro dashboards, 11 SBOM SPDX e resumo Trivy | Todos parseados com `python -m json.tool`. |
+| `git diff --check` | Passou; Git emitiu somente avisos de conversão local LF→CRLF para Markdown, sem whitespace errors. |
+| Inspeção visual real | Não executada: inventário CUA retornou `Browsers: []` e erro de host de automação indisponível. Sem screenshots ou alegação de validação visual nesta sessão. |
+
+**Decisão final: NO-GO.** Os critérios 1–3 permanecem incompletos; não criar tag ou release até remediação/justificativa, conclusão visual ou aceite documentado, e confirmação da licença.

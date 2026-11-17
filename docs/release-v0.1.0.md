@@ -132,4 +132,5 @@ Visual review of Application Detail, Live Logs and Live tail is now **done**; de
 ## Maintainer decisions — 2026-11-17
 
 - **CVE-2026-97054 (Loki Go stdlib):** risk **accepted by the maintainer for the local lab only**; see [CVE triage](cve-triage.md#aceitação-de-risco-do-mantenedor--cve-2026-97054--2026-11-17). The exception does not cover any deployment where Loki accepts connections from another machine ([Marco 04 gate](marco04-architecture.md)).
-- Remaining before GO: MIT rights-holder confirmation and the off-host backup scope decision. Push and tag were authorized by the maintainer, to run after those items are settled.
+- **MIT license:** the maintainer confirmed on 2026-11-17 that the copyright holder named in `LICENSE` (`Thiago Sathler`) is correct and holds the authority to license the project-owned files under MIT. Third-party components keep their own licenses ([license audit](license-audit.md)).
+- Remaining before GO: the off-host backup scope decision. Push and tag were authorized by the maintainer, to run after those items are settled.

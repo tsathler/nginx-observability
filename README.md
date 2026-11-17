@@ -38,7 +38,7 @@ Prometheus coleta métricas HTTP com labels de baixa cardinalidade, como `app`, 
 
 ## Release
 
-A preparação local da release `v0.1.0` está **NO-GO** e não foi tagueada nem publicada. A varredura encontrou CVEs CRITICAL/HIGH ainda sem triagem; também permanecem pendentes a titularidade MIT e a revisão visual de dois dashboards. Consulte o [changelog](CHANGELOG.md) e o [checklist/notas da release](docs/release-v0.1.0.md).
+A release `v0.1.0` é um laboratório local/portfólio, **sem homologação para produção**. O risco do CVE do Go no Loki `3.7.10` foi aceito apenas para uso local; o Loki não deve receber conexões de outras máquinas até a adoção de imagem corrigida. Consulte o [changelog](CHANGELOG.md) e as [notas da release](docs/release-v0.1.0.md).
 
 ## Executar
 
@@ -128,7 +128,7 @@ O arquivo [LICENSE](LICENSE) propõe MIT para o conteúdo próprio, mas a titula
 
 Auditorias técnicas e evidências: [arquitetura](docs/architecture-research.md), [segurança](docs/security-audit.md), [dashboards](docs/dashboard-audit.md), [alertas](docs/alerting-audit.md), [retenção e recuperação](docs/reliability-audit.md) e [auditoria final](docs/final-audit.md).
 
-A varredura Trivy da release e os SBOMs SPDX das 11 imagens examinadas estão em [`docs/sbom/`](docs/sbom/). A varredura atual encontrou CVEs CRITICAL/HIGH ainda sem avaliação completa de explorabilidade; por isso a v0.1.0 permanece **NO-GO**. Esses relatórios não são certificação de segurança nem substituem uma triagem de VEX e alcance do código.
+A varredura Trivy da release e os SBOMs SPDX das 11 imagens examinadas estão em [`docs/sbom/`](docs/sbom/). A triagem dos findings restantes, com pré-condições e decisões, está em [`docs/cve-triage.md`](docs/cve-triage.md). Esses relatórios não são certificação de segurança nem substituem uma triagem de VEX e alcance do código.
 
 ## Encerrar
 

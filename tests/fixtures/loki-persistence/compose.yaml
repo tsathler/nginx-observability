@@ -1,0 +1,17 @@
+services:
+  loki:
+    image: grafana/loki:3.7.10
+    command: ["-config.file=/etc/loki/config.yml"]
+    stop_grace_period: 2m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    ports:
+      - "127.0.0.1:${LOKI_PERSISTENCE_TEST_PORT:-13100}:3100"
+    volumes:
+      - ./config.yml:/etc/loki/config.yml:ro
+      - loki-regression-data:/loki
+
+volumes:
+  loki-regression-data:
+    name: nginx-observability_loki-persistence-regression-data

@@ -207,7 +207,7 @@ def application_detail():
     metric_filters = f'{app},method=~"${{method:regex}}",status=~"${{status:raw}}"'
     # Alloy stores these parsed fields as structured metadata, so filters avoid reparsing
     # every JSON key and keep metric queries within Loki's per-query series limit.
-    event_filter = ' | method=~"${method:regex}" | status=~"${status:raw}" | path=~".*${path:regex}.*"'
+    event_filter = ' | method=~"${method:regex}" | status=~"${status:raw}" | path=~`.*${path:regex}.*`'
     panel_vars = [app_variable(), custom_variable("method", "Method", ["All : .*", "GET", "POST"]),
                   custom_variable("status", "Status class / code", ["All : .*", "2xx : 2..", "3xx : 3..", "4xx : 4..", "5xx : 5..", "403", "404", "429", "500"]),
                   textbox_variable("path", "Path contains (Loki only)", "")]
@@ -263,7 +263,7 @@ def live_logs():
                 description="Dashboard logs refresh every 2 seconds; this is not streaming. Open the Explore link above and click Live for Loki websocket tail.",
                 options={"mode": "markdown", "content": "**Dashboard refresh:** up to 2s after ingestion. **Live tail:** use the Explore link in this dashboard, then click **Live** in Grafana Explore. Explore provides the native Loki websocket stream."})
     logs = panel(2, "HTTP access events", "logs", 0, 4, 24, 20,
-                 [loki_target('{job="nginx",app=~"$app"} | json | method=~"${method:regex}" | status=~"${status:raw}" | path=~".*${path:regex}.*" | remote_addr=~"${source_ip:raw}"')],
+                 [loki_target('{job="nginx",app=~"$app"} | json | method=~"${method:regex}" | status=~"${status:raw}" | path=~`.*${path:regex}.*` | remote_addr=~"${source_ip:raw}"')],
                  description="The line remains the original JSON event; expand a row for parsed fields. IP is an event field, not an indexed label.",
                  options={"showTime": True, "showLabels": True, "showCommonLabels": False, "wrapLogMessage": True,
                           "prettifyLogMessage": True, "enableLogDetails": True, "sortOrder": "Descending", "maxLines": 500})

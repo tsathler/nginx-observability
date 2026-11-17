@@ -503,6 +503,11 @@ def verify_live_logs(dashboard):
     # Produce a deterministic local event to exercise each filter and their combination.
     status_code = request_status(f"{base}/app-a/forbidden")
     assert status_code == 403, f"Expected controlled 403 event, got {status_code}"
+    # A dotted path exercises Grafana's regex escaping (\.) inside the LogQL path filter.
+    dotted_status = request_status(f"{base}/app-a/.env")
+    assert dotted_status == 404, f"Expected controlled dotted-path 404 event, got {dotted_status}"
+    wait_for(lambda: bool(loki_query('{job="nginx",app="app-a"} | path=~`.*[.]env.*`')),
+             "Synthetic dotted-path request was not ingested by Loki")
     wait_for(lambda: bool(loki_query('{job="nginx",app="app-a"} | method="GET" | status="403" | path=~".*forbidden.*"')),
              "Synthetic 403 request was not ingested by Loki")
     raw_streams = loki_query('{job="nginx",app="app-a"} | method="GET" | status="403" | path=~".*forbidden.*"')
@@ -516,6 +521,7 @@ def verify_live_logs(dashboard):
         "Method": (resolve_live_logs_expression(expression, method="GET"), lambda e: e["method"] == "GET"),
         "Status": (resolve_live_logs_expression(expression, status="4.."), lambda e: str(e["status"]).startswith("4")),
         "Path": (resolve_live_logs_expression(expression, path="forbidden"), lambda e: "forbidden" in e["path"]),
+        "Path with dot": (resolve_live_logs_expression(expression, path=".env"), lambda e: ".env" in e["path"]),
         "Source IP": (resolve_live_logs_expression(expression, source_ip=source_ip_regex), lambda e: re.fullmatch(source_ip_regex, e["remote_addr"]) is not None),
         "Combined": (resolve_live_logs_expression(expression, app="app-a", method="GET", status="403",
                                                     path="forbidden", source_ip=source_ip_regex),
@@ -935,7 +941,7 @@ def verify_application_detail(dashboard):
     assert any(all(part in name for part in ("app-a", "GET", "/app-a/slower")) for name in slow_names), slow_names
     filtered_slow_expr = (slow_expr.replace('app=~".*"', 'app=~"app-a"')
                           .replace('method=~".*"', 'method=~"GET"').replace('status=~".*"', 'status=~"2.."')
-                          .replace('path=~".*.*.*"', 'path=~".*slower.*"'))
+                          .replace('path=~`.*.*.*`', 'path=~`.*slower.*`'))
     filtered_slow = loki_instant(filtered_slow_expr)
     assert filtered_slow and all(item["metric"].get("app") == "app-a" and
                                  item["metric"].get("method") == "GET" and
@@ -988,7 +994,7 @@ def verify_application_detail(dashboard):
     assert all(event.get("app") == "app-b" for event in other_events), other_events
     filtered_paths = (path_expr.replace('app=~".*"', 'app=~"app-a"')
                       .replace('method=~".*"', 'method=~"GET"').replace('status=~".*"', 'status=~"2.."')
-                      .replace('path=~".*.*.*"', 'path=~".*slower.*"'))
+                      .replace('path=~`.*.*.*`', 'path=~`.*slower.*`'))
     path_filter_results = loki_instant(filtered_paths)
     assert path_filter_results and all(item["metric"].get("path", "").endswith("/slower") for item in path_filter_results), path_filter_results
 

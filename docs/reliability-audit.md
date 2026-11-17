@@ -55,7 +55,7 @@ Resultado validado nesta execução:
 - As duas rotações reabriram os seis arquivos. Antes da interrupção do exporter, os counters Prometheus avançaram ao menos os cinco requests por aplicação gerados nesse período. O exporter reabriu arquivos renomeados durante sua execução.
 - O target do exporter voltou a `up` após reiniciar Prometheus e exporter; novas requisições voltaram a incrementar os counters após a recuperação.
 - **Limitação observada:** um request por aplicação foi produzido enquanto o exporter estava parado. Após reiniciá-lo, a versão `v1.9.2` fez seek para o fim dos arquivos ativos e não fez backfill desses requests nas métricas. Esses requests continuaram consultáveis como logs via Alloy/Loki. Durante restart do exporter, os counters em memória também resetam; Prometheus trata o reset como reinício de counter, mas a contagem anterior não é reconstruída.
-- Marcadores Prometheus e Loki sobreviveram ao restart persistente coberto por `--verify-persistence`. Isso comprova reinício curto, não retenção histórica de sete dias nem HA.
+- O ensaio histórico verificou a persistência Prometheus, mas a asserção Loki usava rota fixa e janela aberta. A revisão do Marco 03.5 concluiu que esse resultado não identificava a mesma linha após restart; a regressão Loki corrigida e isolada está descrita abaixo.
 - As verificações de segurança continuaram passando: endpoints publicados só em loopback, API Grafana 401 sem autenticação, redes segmentadas, e os quatro dashboards provisionados e consultados por API.
 
 ### Recuperação do pipeline e garantias
@@ -83,3 +83,23 @@ O teste integrado também valida consultas PromQL/LogQL e os quatro dashboards. 
 - [Grafana Alloy: `loki.source.file`, offsets persistidos e recuperação](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.file/).
 - [Nginx: sinal USR1 para reabrir arquivos de log](https://nginx.org/en/docs/control.html).
 - [Exporter: leitura contínua de access logs](https://github.com/martin-helmich/prometheus-nginxlog-exporter/).
+
+## Marco 03.5 — Persistência do Loki
+
+### Causa e escopo
+
+O teste anterior usava sempre `/app-a/missing` e aceitava qualquer evento correspondente em uma janela aberta até o presente. Um evento antigo ou posterior podia satisfazer a asserção sem provar a persistência da requisição criada pelo teste. `verify_persistence()` agora delega a persistência do Loki para `tests/verify_loki_persistence_isolated.py`, que usa um path sintético aleatório, captura o timestamp e o JSON exatos, e exige a mesma única linha antes e depois do restart.
+
+O Loki `3.7.10` usado nesta stack ainda tem a sequência de remoção/recriação de streams descrita em [grafana/loki#25118](https://github.com/grafana/loki/issues/25118): o estado do stream removido não conserva o contador WAL para a recuperação. O [commit upstream 9cf0657](https://github.com/grafana/loki/commit/9cf0657) adiciona essa preservação. Este marco não troca a imagem nem afirma que o commit esteja incluído na `3.7.10`.
+
+### Mitigação e cobertura
+
+- `config/loki/config.yml` agora declara explicitamente WAL habilitado em `/loki/wal`, checkpoint de cinco minutos e `flush_on_shutdown: true`.
+- O serviço principal Loki declara `stop_grace_period: 2m`, permitindo ao Compose enviar SIGTERM e aguardar o flush configurado antes de SIGKILL.
+- O fixture isolado testa Loki `3.7.10` com o mesmo ajuste de shutdown e configura chunk idle curto para flush, remoção e recriação do mesmo stream antes do checkpoint. Envia dois eventos sintéticos com labels de stream estáveis e `status`, `method` e `path` como structured metadata. A consulta LogQL filtra os metadados e a asserção compara corpo JSON e timestamp exatos.
+- O fixture usa somente `nginx-observability_loki-persistence-regression-data`, projeto Compose próprio e porta loopback 13100. O teste para somente esse Loki isolado; mantém o volume ao final. Não usa build e não executa comandos de limpeza de volume.
+- Resultado em 2026-11-17: `python tests/verify_loki_persistence_isolated.py` passou em Loki `3.7.10`; ambos os eventos sobreviveram ao flush/remoção/recriação do stream e ao restart gracioso, com timestamps exatos e filtros de structured metadata. O verificador confirmou que IDs e horários de início dos containers do projeto principal não mudaram.
+
+### Limitação residual
+
+`flush_on_shutdown` protege o encerramento gracioso quando o Loki consegue concluir o flush dentro dos dois minutos. Não garante recuperação após SIGKILL, falha do host, perda do disco ou término do grace period antes do flush. O teste não força esses cenários e não simula falha do volume. A regressão demonstra a mitigação no caminho gracioso; não substitui atualizar para uma release oficial que incorpore a correção upstream de WAL, nem valida a cópia histórica do volume principal.

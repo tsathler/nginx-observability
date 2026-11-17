@@ -99,6 +99,7 @@ services:
     cap_drop: [ALL]
     image: grafana/loki:3.7.10
     command: ["-config.file=/etc/loki/config.yml", "-config.expand-env=true"]
+    stop_grace_period: 2m
     environment:
       LOKI_RETENTION_PERIOD: ${LOKI_RETENTION_PERIOD:-168h}
     ports:

@@ -583,7 +583,8 @@
           "expr": "sum by (method) (increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{method}}"
+          "legendFormat": "{{method}}",
+          "format": "table"
         }
       ],
       "fieldConfig": {
@@ -610,14 +611,9 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "Metric"
+        "xField": "method"
       },
-      "transformations": [
-        {
-          "id": "seriesToRows",
-          "options": {}
-        }
-      ],
+      "transformations": [],
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count."
     },
     {

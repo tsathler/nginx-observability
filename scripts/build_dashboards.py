@@ -116,11 +116,17 @@ def bar_panel(panel_id, title, expr, x, y, w, h, datasource=LOKI, legend="{{path
         options["xField"] = category_field
     result = panel(panel_id, title, "barchart", x, y, w, h, [target], "short", description, options)
     if category_field:
-        # Explicit instant-vector series names become one Metric row per series;
-        # this avoids treating the 2026 Time field as the app category.
-        result["transformations"] = [{"id": "seriesToRows", "options": {}}]
-        if sort_descending:
-            result["transformations"].append({"id": "sortBy", "options": {"sort": [{"field": "Value", "desc": True}]}})
+        # The category is a label column, not the Time field. seriesToRows passes a
+        # single frame through unchanged, so one-series results rendered "No numeric
+        # fields found". Prometheus table format always returns one frame with a
+        # column per label; Loki instant frames are merged into the same shape.
+        if datasource == LOKI:
+            result["transformations"] = [{"id": "merge", "options": {}}]
+            if sort_descending:
+                result["transformations"].append({"id": "sortBy", "options": {"sort": [{"field": "Value", "desc": True}]}})
+        else:
+            target["format"] = "table"
+            result["transformations"] = []
     if decimals is not None:
         result["fieldConfig"]["defaults"]["decimals"] = decimals
     return result
@@ -194,10 +200,10 @@ def overview():
             {"matcher": {"id": "byRegexp", "options": "4.."}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]},
             {"matcher": {"id": "byRegexp", "options": "5.."}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]},
         ]),
-        bar_panel(8, "Requests by application (period total)", 'sum by (app) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 4, 12, 8, PROM, "{{app}}", INCREASE_NOTE, category_field="Metric", decimals=0),
+        bar_panel(8, "Requests by application (period total)", 'sum by (app) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 4, 12, 8, PROM, "{{app}}", INCREASE_NOTE, category_field="app", decimals=0),
         series_panel(9, "P95 by application", 'histogram_quantile(0.95,sum by (app,le) (rate(nginx_http_response_time_seconds_hist_bucket{app=~"$app"}[$__rate_interval])))', 0, 12, 12, 8, "s", "{{app}}"),
         series_panel(10, "Error rate over time by application", 'sum by (app) (rate(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__rate_interval]))', 12, 12, 12, 8, "reqps", "{{app}}"),
-        bar_panel(11, "Applications with the most errors (period total)", 'topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~"$app"})))', 0, 20, 24, 5, PROM, "{{app}}", INCREASE_NOTE, category_field="Metric", decimals=0),
+        bar_panel(11, "Applications with the most errors (period total)", 'topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~"$app"})))', 0, 20, 24, 5, PROM, "{{app}}", INCREASE_NOTE, category_field="app", decimals=0),
     ]
     return base_dashboard("nginx-overview", "Nginx | Overview", "Traffic, reliability, latency, and cross-application comparison.", "10s", [app_variable()], panels)
 
@@ -220,13 +226,15 @@ def application_detail():
         stat(6, "429 responses", f'sum(increase(nginx_http_response_count_total{{{metric_filters},status="429"}}[$__range])) or vector(0)', 20, "orange", "short", "No 429s are synthesized by the current Nginx demo."),
         series_panel(7, "Request rate by HTTP status", f'sum by (status) (rate(nginx_http_response_count_total{{{metric_filters}}}[$__rate_interval]))', 0, 5, 12, 8, "reqps", "{{status}}"),
         series_panel(8, "4xx and 5xx over time", f'sum by (status) (rate(nginx_http_response_count_total{{{metric_filters},status=~"4..|5.."}}[$__rate_interval]))', 12, 5, 12, 8, "reqps", "{{status}}"),
-        bar_panel(9, "Methods (estimated period total)", f'sum by (method) (increase(nginx_http_response_count_total{{{metric_filters}}}[$__range]))', 0, 13, 8, 8, PROM, "{{method}}", INCREASE_NOTE, category_field="Metric", decimals=0),
-        bar_panel(10, "Most requested paths (event count)", f'topk(10,sum by (path) (count_over_time({{job="nginx",app=~"$app"}}{event_filter} [$__range])))', 8, 13, 8, 8, LOKI, "{{path}}", "Exact Loki event count in the selected period. Top 10 paths, ordered by request volume; app, method, status, and path filters apply. Path is structured metadata, not an indexed stream label.", category_field="Metric", decimals=0, sort_descending=True),
+        bar_panel(9, "Methods (estimated period total)", f'sum by (method) (increase(nginx_http_response_count_total{{{metric_filters}}}[$__range]))', 0, 13, 8, 8, PROM, "{{method}}", INCREASE_NOTE, category_field="method", decimals=0),
+        bar_panel(10, "Most requested paths (event count)", f'topk(10,sum by (path) (count_over_time({{job="nginx",app=~"$app"}}{event_filter} [$__range])))', 8, 13, 8, 8, LOKI, "{{path}}", "Exact Loki event count in the selected period. Top 10 paths, ordered by request volume; app, method, status, and path filters apply. Path is structured metadata, not an indexed stream label.", category_field="path", decimals=0, sort_descending=True),
         table_panel(11, "Slowest by app/method/status/path", f'topk(10,1000 * max by (app,method,status,path) (max_over_time({{job="nginx",app=~"$app"}}{event_filter} | unwrap request_time | __error__="" [$__range])))', 16, 13, 8, 8, LOKI, "Maximum request time in milliseconds for each app, method, status, and path group within the selected range. Results are limited to the top 10 and sorted by duration descending.", unit="ms", decimals=0, legend="{{app}} / {{method}} / {{status}} / {{path}}", sort_by="Max duration (ms)", transformations=[
-            {"id": "seriesToRows", "options": {}},
+            {"id": "merge", "options": {}},
             {"id": "sortBy", "options": {"sort": [{"field": "Value", "desc": True}]}},
             {"id": "organize", "options": {
-                "renameByName": {"Metric": "App / Method / Status / Path", "Value": "Max duration (ms)"},
+                "excludeByName": {"Time": True},
+                "indexByName": {"app": 0, "method": 1, "status": 2, "path": 3, "Value": 4},
+                "renameByName": {"app": "App", "method": "Method", "status": "Status", "path": "Path", "Value": "Max duration (ms)"},
             }},
         ]),
         panel(12, "Recent requests for selected app", "table", 0, 21, 24, 11,
@@ -285,7 +293,7 @@ def security():
         stat(5, "Requests / second", 'sum(rate(nginx_http_response_count_total{app=~"$app"}[$__rate_interval]))', 16, "blue", "reqps"),
         stat(6, "Exporter parse errors", 'sum(nginx_parse_errors_total{app=~"$app"}) or vector(0)', 20, "green", "short"),
         series_panel(7, "403 / 404 / 429 trends", 'sum by (status,app) (rate(nginx_http_response_count_total{app=~"$app",status=~"403|404|429"}[$__rate_interval]))', 0, 5, 12, 8, "reqps", "{{app}} / {{status}}", "Anomalies are signals for investigation; isolated 404s are not classified as attacks."),
-        bar_panel(8, "HTTP methods", 'sum by (method) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 5, 12, 8, PROM, "{{method}}"),
+        bar_panel(8, "HTTP methods", 'sum by (method) (increase(nginx_http_response_count_total{app=~"$app"}[$__range]))', 12, 5, 12, 8, PROM, "{{method}}", category_field="method", decimals=0),
         bar_panel(9, "Common scanner-like paths (observed)", f'sum by (app,path) (count_over_time({app_stream} | path=~".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*" [5m]))', 0, 13, 12, 9, LOKI, "{{app}} {{path}}", "Finite synthetic probes only; these paths indicate a pattern worth checking, not proof of malicious intent."),
         bar_panel(10, "Origins with repeated 4xx / 5xx", f'topk(10,sum by (remote_addr) (count_over_time({app_stream} | status=~"4..|5.." | remote_addr=~"${{source_ip:raw}}" [5m])))', 12, 13, 12, 9, LOKI, "{{remote_addr}}", "The source is the synthetic traffic-generator container in this lab. IP remains parsed event metadata, never a Loki stream or Prometheus label."),
         series_panel(11, "Error concentration by application", 'sum by (app) (rate(nginx_http_response_count_total{app=~"$app",status=~"4..|5.."}[$__rate_interval]))', 0, 22, 12, 8, "reqps", "{{app}}"),

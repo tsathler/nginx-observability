@@ -677,7 +677,8 @@
           "expr": "sum by (method) (increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range]))",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{method}}"
+          "legendFormat": "{{method}}",
+          "format": "table"
         }
       ],
       "fieldConfig": {
@@ -704,15 +705,10 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "Metric"
+        "xField": "method"
       },
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
-      "transformations": [
-        {
-          "id": "seriesToRows",
-          "options": {}
-        }
-      ]
+      "transformations": []
     },
     {
       "id": 10,
@@ -765,12 +761,12 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "Metric"
+        "xField": "path"
       },
       "description": "Exact Loki event count in the selected period. Top 10 paths, ordered by request volume; app, method, status, and path filters apply. Path is structured metadata, not an indexed stream label.",
       "transformations": [
         {
-          "id": "seriesToRows",
+          "id": "merge",
           "options": {}
         },
         {
@@ -840,7 +836,7 @@
       "description": "Maximum request time in milliseconds for each app, method, status, and path group within the selected range. Results are limited to the top 10 and sorted by duration descending.",
       "transformations": [
         {
-          "id": "seriesToRows",
+          "id": "merge",
           "options": {}
         },
         {
@@ -857,8 +853,21 @@
         {
           "id": "organize",
           "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "app": 0,
+              "method": 1,
+              "status": 2,
+              "path": 3,
+              "Value": 4
+            },
             "renameByName": {
-              "Metric": "App / Method / Status / Path",
+              "app": "App",
+              "method": "Method",
+              "status": "Status",
+              "path": "Path",
               "Value": "Max duration (ms)"
             }
           }

@@ -1,5 +1,7 @@
 # Release image inventory and CVE scan
 
+> **Superseded initial scan.** The SBOMs listed in the table below describe the images used before remediation (Loki `3.5.7`, Alloy `v1.12.2`, exporter `v1.9.2`) and are kept as historical evidence. The current Compose images (Loki `3.7.10`, Alloy `v1.22.0`, exporter rebuilt from upstream `v1.11.0`) are covered by [`remediation-2026-11-16/`](remediation-2026-11-16/README.md) and, for Loki, by [`loki-v3.7.10.spdx.json`](loki-v3.7.10.spdx.json) and [`loki-v3.7.10.vuln.json`](loki-v3.7.10.vuln.json).
+
 Audit date: **2026-11-16**. This directory contains SPDX SBOMs and the Trivy package-finding summary for the image digests used by the local Compose environment on that date.
 
 The scan used Trivy `0.76.2`, downloaded from the official [Trivy v0.76.2 GitHub release](https://github.com/aquasecurity/trivy/releases/tag/v0.76.2). The Windows ZIP SHA-256 was verified against the release checksum file: `691f737a7e5566a673c3a74dab9160552ec32101e953b659e5c77443d16dddb6`. The vulnerability DB was refreshed on 2026-11-16. Docker Scout CLI was also checked, but it required a Docker account login; no login was performed.

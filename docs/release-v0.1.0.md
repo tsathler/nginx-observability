@@ -103,3 +103,28 @@ Browser automation again could not access any browser. No screenshots exist. The
 - [ ] Confirm the actual rights holder for the MIT attribution.
 - [ ] Complete visual review of Application Detail and Live Logs, or leave clearly marked as pending.
 - [ ] Review staged release contents; create a tag only after separate authorization.
+
+## Visual review — 2026-11-17 (afternoon)
+
+The built-in browser of the Claude desktop app reached the local Grafana (`127.0.0.1:3000`, local lab credentials). The four screenshots in [`screenshots/`](screenshots/) are genuine captures from this session, at an emulated 1440×900 viewport, and contain only synthetic lab traffic.
+
+| Area | Result |
+|---|---|
+| Application Detail, all filters | Stats, latency percentiles, status/error series, method and path bars, slowest table and recent-requests table render with data ([screenshot](screenshots/application-detail-overview.jpg)). |
+| Application Detail, app + path filter | `app-b` + `env` narrows the recent-requests table to the four matching `/app-b/.env` 404 events ([screenshot](screenshots/application-detail-path-filter-env.jpg)). |
+| Live Logs table | Events render newest first with app, method, status, path, duration and source IP ([screenshot](screenshots/live-logs-table.jpg)). |
+| Explore Live tail | The dashboard link opened Explore with the current filters; **Live** streamed events, and a controlled `GET /app-c/forbidden` (403) appeared in the stream within seconds ([screenshot](screenshots/explore-live-tail.jpg)). |
+
+### Defects found
+
+1. **Fixed — path filter with regex metacharacters.** Grafana's `${path:regex}` escapes `.` as `\.`; inside a double-quoted LogQL string that is an invalid escape, so typing `.env` or `app-b/.` turned every Loki panel of Application Detail and Live Logs into `parse error ... invalid char escape`. Commit `9bb66ba` uses backtick raw strings for the path filter (both dashboards, the Explore link and the builder) and adds a dotted-path case to the Live Logs filter test. Loki returned `400` for the old form and `200` for the new one; `python tests/verify_pipeline.py` passed with the new case (`Path with dot: 3`) and the patched dashboards were confirmed visually.
+2. **Open — bar/table panels with a single series.** `seriesToRows` only converts when more than one frame arrives. When filters leave exactly one series (for example Application Detail with `app-b` + path `env`), "Most requested paths" shows "No numeric fields found". The same transform is used by six panels across Application Detail, Overview and Security. A `reduce`-based replacement was tried and reverted because it broke the multi-series case; the fix needs a dedicated change and visual re-test.
+3. **Open, cosmetic.** "Slowest by app/method/status/path" shows label columns (`Time`, `app`, `method`, …) that overflow the 8-column panel instead of the renamed `App / Method / Status / Path` and `Max duration (ms)` columns; recent-request tables also show the raw `time` field next to the parsed `Time`. Stat titles truncate at narrow widths with the sidebar docked.
+
+### Operational note
+
+Grafana did not pick up the edited dashboard JSON from the bind mount on its own; `POST /api/admin/provisioning/dashboards/reload` applied it without restarting the container.
+
+### Release status
+
+Visual review of Application Detail, Live Logs and Live tail is now **done**, with defect 2 open. The release remains **NO-GO**: Loki `v3.7.10` is still the latest official release (checked 2026-11-17; Go 1.26.11 fix and grafana/loki#25118 still pending), and MIT rights-holder confirmation and the backup-scope decision are still with the maintainer.

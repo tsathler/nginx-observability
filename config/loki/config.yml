@@ -20,6 +20,12 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+ingester:
+  wal:
+    enabled: true
+    dir: /loki/wal
+    checkpoint_duration: 5m
+    flush_on_shutdown: true
 limits_config:
   allow_structured_metadata: true
   volume_enabled: true

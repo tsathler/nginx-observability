@@ -13,6 +13,7 @@ Levar a stack para um servidor Linux central que recebe logs e métricas de vár
 | Acesso ao Grafana | Somente pela rede interna ou VPN, com HTTPS e login. Nunca publicado na internet: sem porta pública, domínio público ou proxy reverso exposto. |
 | Conectividade | Os servidores Nginx monitorados alcançam o central por **rede privada** (IPs internos). |
 | Coleta | **Alloy** como agente em cada servidor Nginx, mais um **segundo access log em JSON sanitizado**. O log original de cada servidor permanece intacto. |
+| Implantação | O código chega aos servidores por **git** (`git clone` / `git pull`). A configuração específica de cada servidor — IPs, nomes, certificados, credenciais de agentes e do Grafana — é feita **no próprio servidor**, em arquivos fora do controle de versão (como o `.env`), e nunca é commitada. O repositório GitHub é público; o que está nele deve permanecer genérico. |
 
 ## Topologia
 

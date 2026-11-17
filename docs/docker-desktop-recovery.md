@@ -36,3 +36,33 @@ Nenhum volume foi removido, limpo, reparado ou recriado. Não foram executados f
 2. Ao voltar, verificar `docker info`, `docker volume ls`, IDs dos containers/imagens e `docker compose ps` antes de subir a stack. Se qualquer volume esperado faltar ou houver erro de montagem/TSDB, parar e preservar o estado para avaliação, sem recriar volume.
 3. Subir sem build e testar primeiro health endpoints; então repetir integração/persistência e investigar a linha NUL. Não executar rebuild do Loki nesta etapa.
 4. Se o erro `WSL_E_USER_VHD_ALREADY_ATTACHED` persistir, coletar logs do Desktop/WSL e buscar suporte do Docker/Microsoft antes de qualquer reparo do disco de dados.
+
+## Retomada de 2026-11-17 (tarde)
+
+### Backup do disco de dados
+
+Existe uma cópia consistente do disco de dados do Docker Desktop em `C:\Docker-Backup\docker_data-backup-consistente.vhdx` (22.630.367.232 bytes, gravada em 2026-11-17 às 10:11 -03). Ela deve ser preservada. O disco ativo `%LOCALAPPDATA%\Docker\wsl\disk\docker_data.vhdx` voltou a ser gravado depois disso, portanto o backup **não** contém o estado mais recente dos volumes.
+
+### Nova falha de inicialização do engine
+
+- Às 12:53 -03, `docker desktop start --timeout 300` terminou com `context deadline exceeded`. O log do backend registrou `wsl-bootstrap run ... --data-disk ...` com `Wsl/Service/ERROR_OPERATION_ABORTED`, seguido de `wsl --unmount docker_data.vhdx` com `DetachDisk/ERROR_FILE_NOT_FOUND`. A recuperação automática do Desktop também falhou e a interface exibiu o erro de WSL com as opções Quit/Restart.
+- A distro `docker-desktop` permaneceu `Stopped`, com o processo `vmmem` ativo. Versões: Docker Desktop 4.87.0, WSL 3.0.5, kernel 6.18.58.1.
+- Nenhuma ação foi tomada sobre o WSL ou os discos: sem nova tentativa, sem `wsl --shutdown`, sem reparo de VHDX, `--unregister` ou reset.
+
+### Recuperação
+
+- O Windows foi reiniciado pelo mantenedor às 13:03 -03. O Docker Desktop iniciou normalmente, o engine permaneceu estável e o inventário confirmou os cinco volumes do projeto.
+- Os containers do projeto já estavam em execução logo após o boot, reutilizando os containers existentes (ver [Marco 03.6](reliability-audit.md#marco-036--aplicação-controlada-da-mitigação-do-loki)).
+- A falha da manhã com `WSL_E_USER_VHD_ALREADY_ATTACHED` e a desta tarde apontam para inconsistência na montagem do disco de dados entre o Docker Desktop e o WSL. A causa raiz continua não estabelecida.
+
+### Linhas com bytes NUL
+
+- Uma consulta de 7 dias encontrou 13 linhas `job="nginx"` com bytes NUL (4/4/5 por aplicação). Todas falham no parse JSON e terminam em um evento JSON válido após o bloco de NULs.
+- Os timestamps se concentram em 2026-11-13 19:13, 2026-11-16 14:04, 15:56 e 17:03, e 2026-11-17 12:19 e 12:52 (UTC), instantes que coincidem com quedas ou paradas abruptas do Docker Desktop.
+- Em várias linhas, o timestamp atribuído pelo Loki é anterior ao campo `time` do evento. Como o Alloy só pode enviar a linha depois que os bytes existem no arquivo, isso é compatível com um trecho do arquivo de log do Nginx preenchido com zeros após uma falha (tamanho do arquivo persistido antes dos dados) e completado depois. O Alloy apenas repassou o conteúdo lido.
+- **Hipótese não confirmada:** os arquivos do Nginx com esses trechos não foram inspecionados byte a byte. Não há evidência de corrupção dos chunks do Loki.
+- Efeito colateral observado: `docker logs` sem `--tail` do container Loki anterior parava em 2026-11-17 12:19:36 UTC, mesmo instante de uma das quedas; `--tail` lia o restante. O container foi substituído no Marco 03.6.
+
+### Regra operacional mantida
+
+Antes de qualquer operação, verificar `docker desktop status`, `docker info`, `docker volume ls` e `docker compose ps -a`. Se o engine falhar, parar e coletar logs; não tentar em laço nem reparar o disco sem autorização.

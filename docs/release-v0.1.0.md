@@ -1,8 +1,8 @@
 # Release preparation: v0.1.0
 
-**Status:** **NO-GO**; prepared locally, no tag or publication created.
+**Status:** **GO for the portfolio/lab scope** (maintainer decisions of 2026-11-17, see the end of this document). Tagged `v0.1.0`.
 
-**Reavaliação técnica:** dependências Nginx/Grafana e minimização de logs remediadas e testadas em 2026-11-16, mas a varredura de todas as imagens encontrou candidatos CRITICAL/HIGH adicionais sem adjudicação completa. **Release NO-GO:** titularidade MIT permanece pendente e não foi possível fazer revisão visual de Application Detail e Live Logs nesta sessão. Esta release não está homologada para produção.
+**Histórico (superado pela decisão final abaixo):** dependências Nginx/Grafana e minimização de logs remediadas e testadas em 2026-11-16, mas a varredura de todas as imagens encontrou candidatos CRITICAL/HIGH adicionais sem adjudicação completa. **Release NO-GO:** titularidade MIT permanece pendente e não foi possível fazer revisão visual de Application Detail e Live Logs nesta sessão. Esta release não está homologada para produção.
 
 **Target:** `v0.1.0`
 **Scope:** portfolio/demo release only. This project has not been homologated for production use.
@@ -133,4 +133,9 @@ Visual review of Application Detail, Live Logs and Live tail is now **done**; de
 
 - **CVE-2026-97054 (Loki Go stdlib):** risk **accepted by the maintainer for the local lab only**; see [CVE triage](cve-triage.md#aceitação-de-risco-do-mantenedor--cve-2026-97054--2026-11-17). The exception does not cover any deployment where Loki accepts connections from another machine ([Marco 04 gate](marco04-architecture.md)).
 - **MIT license:** the maintainer confirmed on 2026-11-17 that the copyright holder named in `LICENSE` (`Thiago Sathler`) is correct and holds the authority to license the project-owned files under MIT. Third-party components keep their own licenses ([license audit](license-audit.md)).
-- Remaining before GO: the off-host backup scope decision. Push and tag were authorized by the maintainer, to run after those items are settled.
+- **Off-host backup:** the maintainer moved scheduled off-host backup to Marco 04, where real, non-regenerable data starts. The lab holds only synthetic traffic; the isolated restore drill (`tests/verify_backup_restore.py`) remains the v0.1.0 evidence. Marco 04 lists off-host backup as an entry requirement ([plan](marco04-architecture.md)).
+- **Visual review:** done; the two functional defects found were fixed (`9bb66ba`, `732720b`); only cosmetic items remain.
+
+### Final decision
+
+**GO for v0.1.0 as a local laboratory/portfolio release.** Not homologated for production. Known limitations are listed in the [changelog](../CHANGELOG.md). The maintainer authorized the `v0.1.0` tag and the push to GitHub.

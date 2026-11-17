@@ -2,7 +2,7 @@
 
 All notable changes to Nginx Observability are documented here.
 
-## [0.1.0] - Prepared locally, not tagged (NO-GO)
+## [0.1.0] - 2026-11-17
 
 ### Added
 
@@ -22,8 +22,10 @@ All notable changes to Nginx Observability are documented here.
 
 ### Known limitations
 
-- Trivy 0.76.2 found unresolved CRITICAL/HIGH image-package findings across the exporter, Loki, Alloy, and locally built Python images; some HIGH findings also appear in Nginx, Prometheus, and Grafana. See `docs/pre-release-audit.md` and the SPDX SBOMs under `docs/sbom/`.
-- Application Detail and Live Logs still need a visual browser review; no screenshots are included in this prepared release.
+- Loki `3.7.10` is built with Go `1.26.10` (CVE-2026-97054, possible process panic). Risk accepted by the maintainer for the local lab only; Loki must not accept connections from other machines until an image built with Go `1.26.11`+ is adopted. See `docs/cve-triage.md`.
+- Remaining HIGH package findings (Debian base of the Python images, Grafana, Prometheus) have no CRITICAL counterpart and are triaged with their preconditions in `docs/cve-triage.md`; SBOMs are under `docs/sbom/`.
+- Off-host backup is not scheduled; it is a Marco 04 requirement.
+- Cosmetic dashboard items: path bars are not reordered by value, recent-request tables show the raw `time` field, some stat titles truncate on narrow screens.
 - The exporter does not backfill Prometheus counters for requests made while it is unavailable.
 - Loki filesystem storage has no reliable free-space metric or byte quota in this lab.
 - Historical completeness of the Prometheus TSDB volume is not independently proven.

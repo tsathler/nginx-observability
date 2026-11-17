@@ -403,14 +403,16 @@ def verify_dashboard_and_datasources():
         assert dashboard["title"] == title, dashboard["title"]
         panels = dashboard["panels"]
         assert len(panels) >= minimum_panels, f"{uid}: expected >= {minimum_panels} panels, got {len(panels)}"
+        # seriesToRows passes a single frame through unchanged, so a filter that leaves one
+        # series made category bars render "No numeric fields found".
+        assert not any(item.get("id") == "seriesToRows" for panel in panels for item in panel.get("transformations", [])),             f"{uid} uses seriesToRows, which breaks single-series results"
         if uid == "nginx-overview":
             by_title = {panel["title"]: panel for panel in panels}
             for title in ("Requests by application (period total)", "Applications with the most errors (period total)"):
                 bar = by_title[title]
                 assert bar.get("type") == "barchart", f"{title} is not a bar chart"
-                assert bar.get("options", {}).get("xField") == "Metric", f"{title} does not use series Metric as category"
-                assert any(item.get("id") == "seriesToRows"
-                           for item in bar.get("transformations", [])), f"{title} does not extract app labels into fields"
+                assert bar.get("options", {}).get("xField") == "app", f"{title} does not use the app label as category"
+                assert bar["targets"][0].get("format") == "table", f"{title} must return one table frame with an app column"
                 assert " by (app) " in bar["targets"][0]["expr"], f"{title} query does not group by app"
                 assert "increase(" in bar["targets"][0]["expr"], f"{title} no longer uses the counter increase estimate"
                 assert bar["fieldConfig"]["defaults"].get("decimals") == 0, f"{title} should display whole estimated requests"
@@ -591,8 +593,8 @@ def verify_security_dashboard(dashboard):
     methods = panels["HTTP methods (estimated period total)"]
     method_expr = methods["targets"][0]["expr"]
     assert "increase(" in method_expr and methods["fieldConfig"]["defaults"].get("decimals") == 0
-    assert methods["options"].get("xField") == "Metric"
-    assert [item.get("id") for item in methods.get("transformations", [])] == ["seriesToRows"]
+    assert methods["options"].get("xField") == "method"
+    assert methods["targets"][0].get("format") == "table" and not methods.get("transformations")
     assert "extrapolates" in methods["description"] and "rounded" in methods["description"]
     frames = grafana_prom_frames(grafana_query_expression(method_expr), methods["targets"][0]["legendFormat"])
     labels = {field.get("labels", {}).get("method") for frame in frames
@@ -833,8 +835,8 @@ def verify_application_detail(dashboard):
     assert "increase(" in method_target["expr"] and "round(" not in method_target["expr"]
     assert methods["fieldConfig"]["defaults"].get("decimals") == 0
     assert "extrapolates" in methods.get("description", "") and "not an exact" in methods.get("description", "")
-    assert methods.get("options", {}).get("xField") == "Metric", "Methods category must be the method series name"
-    assert any(item.get("id") == "seriesToRows" for item in methods.get("transformations", [])), "Methods must expose GET/POST as category rows"
+    assert methods.get("options", {}).get("xField") == "method", "Methods category must be the method label column"
+    assert method_target.get("format") == "table", "Methods must return one table frame with a method column"
     assert method_target.get("legendFormat") == "{{method}}"
     method_frames = grafana_prom_frames(grafana_query_expression(method_target["expr"]), method_target["legendFormat"])
     method_labels = {field.get("labels", {}).get("method") for frame in method_frames
@@ -846,9 +848,9 @@ def verify_application_detail(dashboard):
     assert "topk(10," in paths["targets"][0]["expr"]
     assert paths["fieldConfig"]["defaults"].get("decimals") == 0
     assert "Exact Loki event count" in paths.get("description", "")
-    assert paths.get("options", {}).get("xField") == "Metric", "Path category must use the path series name"
+    assert paths.get("options", {}).get("xField") == "path", "Path category must use the path label column"
     path_transform_ids = [item.get("id") for item in paths.get("transformations", [])]
-    assert path_transform_ids == ["seriesToRows", "sortBy"], f"Path bars must sort the transformed values: {path_transform_ids}"
+    assert path_transform_ids == ["merge", "sortBy"], f"Path bars must merge per-path frames and sort values: {path_transform_ids}"
     sort_options = paths["transformations"][1]["options"]["sort"][0]
     assert sort_options == {"field": "Value", "desc": True}, sort_options
     assert paths["targets"][0].get("legendFormat") == "{{path}}"
@@ -903,7 +905,7 @@ def verify_application_detail(dashboard):
     assert slow["fieldConfig"]["defaults"].get("unit") == "ms" and slow["fieldConfig"]["defaults"].get("decimals") == 0
     assert "top 10" in slow.get("description", "") and "descending" in slow.get("description", "")
     slow_transform_ids = [item.get("id") for item in slow.get("transformations", [])]
-    assert slow_transform_ids == ["seriesToRows", "sortBy", "organize"], slow_transform_ids
+    assert slow_transform_ids == ["merge", "sortBy", "organize"], slow_transform_ids
     assert slow["transformations"][1]["options"]["sort"] == [{"field": "Value", "desc": True}]
     assert slow["transformations"][2]["options"]["renameByName"].get("Value") == "Max duration (ms)"
     assert "$__range" in slow["targets"][0]["expr"], "Slow request lookup should use the selected dashboard range"

@@ -659,7 +659,8 @@
           "expr": "sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{app}}"
+          "legendFormat": "{{app}}",
+          "format": "table"
         }
       ],
       "fieldConfig": {
@@ -686,15 +687,10 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "Metric"
+        "xField": "app"
       },
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
-      "transformations": [
-        {
-          "id": "seriesToRows",
-          "options": {}
-        }
-      ]
+      "transformations": []
     },
     {
       "id": 9,
@@ -820,7 +816,8 @@
           "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\",status=~\"4..|5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~\"$app\"})))",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{app}}"
+          "legendFormat": "{{app}}",
+          "format": "table"
         }
       ],
       "fieldConfig": {
@@ -847,15 +844,10 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "Metric"
+        "xField": "app"
       },
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
-      "transformations": [
-        {
-          "id": "seriesToRows",
-          "options": {}
-        }
-      ]
+      "transformations": []
     }
   ],
   "annotations": {

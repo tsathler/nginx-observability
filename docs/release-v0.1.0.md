@@ -128,3 +128,8 @@ Grafana did not pick up the edited dashboard JSON from the bind mount on its own
 ### Release status
 
 Visual review of Application Detail, Live Logs and Live tail is now **done**; defects 1 and 2 are fixed and only cosmetic items remain. The release remains **NO-GO**: Loki `v3.7.10` is still the latest official release (checked 2026-11-17; Go 1.26.11 fix and grafana/loki#25118 still pending), and MIT rights-holder confirmation and the backup-scope decision are still with the maintainer.
+
+## Maintainer decisions — 2026-11-17
+
+- **CVE-2026-97054 (Loki Go stdlib):** risk **accepted by the maintainer for the local lab only**; see [CVE triage](cve-triage.md#aceitação-de-risco-do-mantenedor--cve-2026-97054--2026-11-17). The exception does not cover any deployment where Loki accepts connections from another machine ([Marco 04 gate](marco04-architecture.md)).
+- Remaining before GO: MIT rights-holder confirmation and the off-host backup scope decision. Push and tag were authorized by the maintainer, to run after those items are settled.

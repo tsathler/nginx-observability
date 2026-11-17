@@ -354,3 +354,43 @@ Esta seção supersede o estado “dois indeterminados no Loki” informado acim
 - **Classificação atual:** os seis High IDs anteriormente reportados na imagem Loki 3.7.8 estão ausentes da imagem 3.7.10; módulos verificados incluem Go `1.26.10`, `x/net v0.62.0` e `go-jose/v4 v4.1.7`. `CVE-2026-78661` ainda tem finding de versão separado no Prometheus, **Não aplicável ao binário Prometheus analisado**. O scan Loki 3.7.10 tem zero High e um finding `UNKNOWN` (`CVE-2026-97054`). No conjunto histórico de 27 IDs, contagem: **13 Corrigidos, 14 Não aplicáveis ao runtime/configuração examinados, zero Indeterminados**. Isso não equivale a ausência geral de vulnerabilidades.
 
 **Decisão de release: NO-GO.** A incerteza específica dos dois CVEs Loki foi encerrada com versão corrigida e scan do digest executado. A publicação permanece bloqueada pelos outros findings de dependências (incluindo o finding `UNKNOWN` recém-identificado), pela confirmação pendente da titularidade MIT, pela validação visual incompleta e pela ausência de restore integral testado. Nenhum push ou tag foi realizado.
+
+### Reavaliação de fechamento — 2026-11-17
+
+#### CVE-2026-97054 no Loki 3.7.10
+
+- O relatório Trivy associado ao digest `sha256:b43c257ccfc925d4a50b8717cac61a3b51df8c48d01847936057e5c4075a24a7` classifica `CVE-2026-97054` como `UNKNOWN`, no pacote Go `stdlib` `1.26.10`. `GO-2026-6859`, publicado pelo Go Security Team, descreve panic em servidores HTTP/1 quando o limite de `MaxBytesReader`/`MaxBytesHandler` é excedido e a escrita de headers concorre com a leitura do corpo. A faixa afetada inclui Go anterior a `1.26.11`; a versão corrigida indicada é `1.26.11` ([Go Vulnerability Database](https://pkg.go.dev/vuln/GO-2026-6859), [issue upstream](https://github.com/golang/go/issues/82563), consultados em 2026-11-17).
+- Inspeção do código oficial da tag Loki `v3.7.10` encontrou três chamadas de `http.MaxBytesReader`: `pkg/logqlanalyzer/http.go:37`, `pkg/lokifrontend/frontend/transport/handler.go:133` e `pkg/ruler/base/api.go:593`. As duas primeiras e a rota do ruler consomem o corpo depois do wrapper. No frontend, a leitura passa por `RoundTrip` e sua eventual concorrência com o envio da resposta exige confirmação adicional; o repositório e o binário não foram submetidos a uma reprodução do panic. Portanto, a biblioteca e código de consumo estão presentes, mas a exploração da corrida não foi demonstrada. Não emito VEX de não aplicabilidade.
+- No corte desta auditoria, o [release upstream do Loki](https://github.com/grafana/loki/releases) ainda marca `v3.7.10` como Latest; seu binário permanece compilado com Go `1.26.10`. Não há imagem oficial Loki corrigida disponível para adotar. Não foi feito rebuild próprio: isso substituiria o artefato upstream por um build local sem testes de conformidade equivalentes. Estado: **finding aplicável à versão, explorabilidade condicional não confirmada, correção upstream pendente**. O Loki publica a API apenas em loopback e em redes internas, o que limita a origem do ataque, mas não remove a condição para processos locais autorizados a alcançar a porta. **Bloqueia GO** até imagem corrigida do upstream ou build próprio validado/revisado.
+
+#### Ensaio de backup e restauração integral
+
+- Criado `tests/verify_backup_restore.py`. O ensaio para graciosamente apenas Prometheus, Loki e Grafana para formar arquivos consistentes dos volumes originais (`prometheus-data`, `loki-data`, `grafana-data`) em diretório temporário; reinicia os serviços originais antes de restaurar. A cópia usa mount de origem somente leitura. O ensaio monta os três arquivos em volumes com prefixo aleatório `nginx-restore-*`, sobe os mesmos componentes/imagens/configuração, expõe apenas portas loopback efêmeras e verifica readiness, dados históricos Prometheus, streams Loki, autenticação Grafana, quatro dashboards e datasources Prometheus/Loki.
+- **Resultado:** passou em 2026-11-17. O restore retornou séries históricas de `nginx_http_response_count_total`, streams para `app-a`/`app-b`/`app-c`, quatro dashboards e duas fontes de dados com login válido. Os nomes, Mountpoints e datas de criação dos volumes originais foram comparados antes/depois e permaneceram iguais. Os arquivos de backup e os volumes do clone foram removidos ao final; os volumes originais não foram removidos, restaurados por cima ou reparados. Um ensaio posterior das suítes também usou outro projeto e volumes temporários, removidos pelo nome de projeto isolado.
+- Os arquivos temporários desta execução mediram 26,000,070 bytes (Prometheus), 3,471,309 bytes (Loki) e 21,256,667 bytes (Grafana). SHA-256 durante o teste: `1b4000f8115caab17b4827bb27d397fef5a06b96da800a1f6389569bee390eab`, `f6dd210bcf4a007f3d46fe0009323a25882d9428c0a7bbb0e8559f1805eb73ed` e `18910fb56b737571cb51575b461225ef59a77c771e6c6647d1d9d75ae7f13a58`, respectivamente. São evidências de integridade da cópia temporária; os arquivos foram removidos ao encerrar o ensaio e não são cópias de backup retidas.
+- Isso comprova um restore de teste do conteúdo existente, não uma rotina periódica, cópia off-host, retenção de backups nem recuperação após perda do host. O backup/restore é deliberadamente interrompido e não é atômico entre serviços quanto ao instante lógico; nesta configuração single-node não há snapshot distribuído. A publicação precisa descrever essa fronteira e não alegar alta disponibilidade.
+
+#### Navegador e licença
+
+- Foi tentada a inventariação via ferramenta de navegador: o host de automação reportou indisponibilidade e lista de browsers vazia; nenhuma interação visual ou captura foi possível. Os testes de API continuam aprovados, mas **Application Detail e Live Logs permanecem pendentes de revisão visual**, inclusive filtros/tabelas e Live tail real. Não há screenshots nesta auditoria.
+- A atribuição MIT do projeto ainda consta no arquivo LICENSE com base na identidade Git, sem confirmação explícita do mantenedor de titularidade ou autoridade para licenciar todas as contribuições. A análise de atribuições upstream segue em [`license-audit.md`](license-audit.md); **a confirmação do titular permanece bloqueadora**.
+
+#### Suítes e decisão
+
+Para preservar volumes originais, as suítes de escrita foram executadas com `COMPOSE_PROJECT_NAME=nginx-observability-release-test`, depois de parar a stack original. O projeto de teste criou seus próprios volumes; foram removidos somente após os testes. A stack original foi iniciada novamente. Resultados em 2026-11-17:
+
+| Verificação | Resultado |
+|---|---|
+| `python tests/verify_backup_restore.py` | Passou: restauração completa de Prometheus/Loki/Grafana em volumes isolados; consulta real de dados e verificação da identidade dos volumes originais. |
+| `python tests/verify_pipeline.py --verify-scenarios --verify-persistence` | Passou: 3 apps; status/métodos/latência, 31 PromQL, 7 LogQL, 4 dashboards; filtros, auth/loopback, WebSocket 101 e persistência após restart. |
+| `python tests/verify_pipeline.py --verify-reliability` | Passou: eventos identificados por aplicação, duas rotações, recuperação de coletores; ausência de backfill de métricas durante parada do exporter confirmada. |
+| `python tests/verify_alerting.py` | Passou: idle/health, indisponibilidade, 5xx, P95, recuperação e entrega ao receptor local. |
+| `python tests/verify_log_privacy.py` | Passou: valores-canário de query/header/path ausentes de logs Nginx ativos/rotacionados e Loki. |
+| `python tests/audit_repository_history.py` | Passou: todos os commits alcançáveis verificados, sem padrões detectados de segredos, marcadores corporativos ou paths sensíveis. |
+| `docker compose config --quiet` | Passou; repetido após os testes. |
+| JSON dos dashboards, validações Python e `git diff --check` | Passaram. |
+| Revisão visual | Não realizada: host CUA indisponível; registrada como pendência. |
+
+O primeiro início do clone de testes teve tentativa da API Grafana antes de a conexão estar pronta. Após aguardar os healthchecks, a execução integral passou. Essa tentativa inicial não altera o resultado da execução final aprovada.
+
+**Decisão atual: NO-GO.** O restore foi demonstrado, mas continuam bloqueadores verificáveis: CVE Go `1.26.10` aplicável à versão Loki, sem release upstream corrigida no momento; revisão visual de dois dashboards não realizada; confirmação explícita do titular MIT pendente. A restauração demonstrada não substitui política de backup off-host. Não foi criado commit, tag, release ou push durante esta auditoria.

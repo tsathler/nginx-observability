@@ -12,7 +12,6 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-import uuid
 
 def load_local_env():
     """Read ignored Compose .env values without printing them or overriding process env."""
@@ -1101,28 +1100,16 @@ def verify_scenarios(security_dashboard):
 
 
 def verify_persistence():
-    before = prom_scalar('sum(nginx_http_response_count_total{app="app-a"})')
-    marker_ns = time.time_ns() - 5_000_000_000
-    status = request_status(f"{base}/app-a/missing")
-    assert status == 404, f"Persistence check request returned HTTP {status}"
+    """Run persistence coverage in its own Loki project and named volume."""
+    from verify_loki_persistence_isolated import verify_isolated_persistence
 
-    wait_for(lambda: prom_scalar('sum(nginx_http_response_count_total{app="app-a"})') > before,
-             "Prometheus did not scrape the marker request")
-    marker_query = '{job="nginx",app="app-a"} | method="GET" | status="404" | path="/app-a/missing"'
-    wait_for(lambda: bool(loki_query(marker_query, marker_ns)), "Loki did not ingest the safe persistence-check event")
-    recorded_metric = prom_scalar('sum(nginx_http_response_count_total{app="app-a"})')
-
-    subprocess.run(["docker", "compose", "restart", "prometheus", "loki"], check=True)
-    wait_for(lambda: bool(prom_query('up{job="nginx-access"}')) and
-             prom_scalar('sum(nginx_http_response_count_total{app="app-a"})') >= recorded_metric,
-             "Prometheus data did not survive restart", timeout=120)
-    wait_for(lambda: bool(loki_query(marker_query, marker_ns - 5_000_000_000)),
-             "Loki marker did not survive restart", timeout=120)
+    verify_isolated_persistence()
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--verify-persistence", action="store_true", help="restart Prometheus and Loki and verify retained data")
+    parser.add_argument("--verify-persistence", action="store_true",
+                        help="verify Loki event persistence across a graceful restart in an isolated Compose project")
     parser.add_argument("--verify-scenarios", action="store_true", help="run bounded degradation, scan, and peak scenarios")
     parser.add_argument("--verify-reliability", action="store_true", help="verify log rotation, retention, and recovery from temporary service interruptions")
     args = parser.parse_args()
@@ -1163,7 +1150,7 @@ def main():
     reliability_result = verify_rotation_and_recovery() if args.verify_reliability else None
     for app, result in report.items():
         print(f"{app}: status={','.join(result['statuses'])}; methods={','.join(result['methods'])}; p95={result['p95_seconds']}s; Loki entries={result['log_entries']}")
-    suffix = "; persistence survived Prometheus/Loki restart" if args.verify_persistence else ""
+    suffix = "; isolated Loki persistence regression passed" if args.verify_persistence else ""
     print(f"OK: Prometheus target up, zero exporter parse errors; Grafana sources={','.join(sources)}, panels={panel_counts}, verified panel queries={query_counts}, Overview app category/filter checks={category_checks}, Application Detail checks={application_detail_checks}, Live Logs checks={live_logs_checks}, Grafana Live websocket={live_websocket}; security={security_result}; retention={retention_result}{suffix}")
     if scenario_result:
         print(f"OK: bounded scenarios produced scan_events={scenario_result['scan_events']}, request increase={scenario_result['request_increase']}; no-traffic zero checks={scenario_result['idle_apps']}")

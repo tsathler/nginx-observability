@@ -78,6 +78,16 @@ The browser visual review for Application Detail and Live Logs was not completed
 - [ ] Review the final staged repository for private data and approve the release checklist.
 - [ ] Obtain separate authorization before creating local `v0.1.0` tag, pushing, or publishing.
 
+## Blocker closeout attempt — 2026-11-17
+
+The official [`/releases/latest`](https://github.com/grafana/loki/releases/latest) page still points to Loki `v3.7.10`, built with Go `1.26.10`; the [Go advisory](https://pkg.go.dev/vuln/GO-2026-6859) says the fix is Go `1.26.11`. A same-source Loki rebuild using the official patched Go toolchain and pinned official runtime base was evaluated and attempted twice. Both builds reached `go build` and then the Docker Engine returned EOF/HTTP 500; the second attempt limited Go parallelism and GC. No final candidate image was produced or inspected, so no Trivy-by-digest, SBOM, or candidate regression result exists. Experimental Compose build wiring was reverted; Compose continues to name the official Loki 3.7.10 image.
+
+The Docker Engine then remained in `stopping` state and its managed WSL distro was stopped. The original containers exited with 255. No volume removal or repair was run; the last successful volume inventory still showed the original project volumes. Engine recovery and a fresh volume inventory are outstanding. Do not treat the earlier restore drill as a test of this unbuilt image.
+
+Browser automation again could not access any browser. No screenshots exist. The maintainer’s manual dashboard and Live tail checklist is recorded in [`pre-release-audit.md`](pre-release-audit.md) and [`cve-triage.md`](cve-triage.md). MIT rights-holder authority is still pending explicit maintainer confirmation.
+
+**Decision remains NO-GO.** The Go finding has not been remediated or cleared; visual verification, artifact scan/tests, Docker Engine recovery, and MIT ownership confirmation remain release blockers. Off-host backup scheduling is a documented operational improvement for deployments that need durable recovery, not a claim made by this lab release.
+
 ## Security remediation record — 2026-11-16
 
 - Updated pinned images to `nginx:1.30.6-alpine` and `grafana/grafana:12.4.15`; startup/migration and integration, security, alert, persistence, and reliability suites passed. See [pre-release audit](pre-release-audit.md) for advisory references and evidence. No complete image CVE/SBOM scan was run.

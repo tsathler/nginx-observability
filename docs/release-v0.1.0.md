@@ -59,6 +59,25 @@ The browser visual review for Application Detail and Live Logs was not completed
 - The MIT copyright attribution comes from the current Git author identity and has not been independently confirmed by the rights holder.
 - Do not market this Compose configuration as production-ready, secure for shared hosting, or homologated for corporate operation.
 
+## Final gate reassessment — 2026-11-17
+
+**Decision: NO-GO.** This is a laboratory/portfolio release and has not been homologated for production.
+
+- The full Prometheus/Loki/Grafana restore drill now passes with archives copied from stopped, consistent service volumes and restored into a disposable isolated Compose project. It verified historical Prometheus series, Loki application streams, Grafana authentication, four dashboards, and both datasources. Original volume names and identities were preserved. The drill does not provide a scheduled or off-host backup policy; backups created for the test are temporary and are deleted after verification.
+- Trivy's `UNKNOWN` finding `CVE-2026-97054` is in the Loki image's Go standard library `1.26.10`. Go's official advisory says versions before `1.26.11` are affected. Loki `v3.7.10` source uses `http.MaxBytesReader` in three handlers, including its frontend transport; exploitability of the required concurrent header-write race was not reproduced. No newer corrected official Loki release was available on 2026-11-17. Keep the CVE open; do not treat loopback exposure as proof of non-applicability. See [pre-release audit](pre-release-audit.md).
+- Integration, scenario/persistence, reliability, alerting, privacy, and reachable Git-history audit passed in a disposable Compose project. A first cold-start API probe ran before Grafana was ready; the rerun after service readiness passed.
+- Application Detail and Live Logs visual review remains pending. Browser automation reported an unavailable host and no browser inventory; no screenshots were captured. API tests are not presented as visual evidence.
+- The MIT rights-holder/authority remains unconfirmed by the maintainer. Do not publish until explicit confirmation. Upstream license and attribution boundaries remain in [license audit](license-audit.md).
+
+### Remaining release blockers
+
+- [ ] Adopt a patched official Loki image, or complete an independently reviewed and regression-tested rebuild with Go `1.26.11` or later.
+- [ ] Review Application Detail and Live Logs in a real browser, including filters, tables, Explore, and Live tail; capture genuine screenshots.
+- [ ] Obtain explicit maintainer confirmation of the MIT copyright holder and licensing authority.
+- [ ] Define and test a protected, off-host backup destination and recovery point expectations before claiming operational backup readiness.
+- [ ] Review the final staged repository for private data and approve the release checklist.
+- [ ] Obtain separate authorization before creating local `v0.1.0` tag, pushing, or publishing.
+
 ## Security remediation record — 2026-11-16
 
 - Updated pinned images to `nginx:1.30.6-alpine` and `grafana/grafana:12.4.15`; startup/migration and integration, security, alert, persistence, and reliability suites passed. See [pre-release audit](pre-release-audit.md) for advisory references and evidence. No complete image CVE/SBOM scan was run.

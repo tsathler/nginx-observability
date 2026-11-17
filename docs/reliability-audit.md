@@ -103,3 +103,38 @@ O Loki `3.7.10` usado nesta stack ainda tem a sequência de remoção/recriaçã
 ### Limitação residual
 
 `flush_on_shutdown` protege o encerramento gracioso quando o Loki consegue concluir o flush dentro dos dois minutos. Não garante recuperação após SIGKILL, falha do host, perda do disco ou término do grace period antes do flush. O teste não força esses cenários e não simula falha do volume. A regressão demonstra a mitigação no caminho gracioso; não substitui atualizar para uma release oficial que incorpore a correção upstream de WAL, nem valida a cópia histórica do volume principal.
+
+## Marco 03.6 — Aplicação controlada da mitigação do Loki
+
+**Data:** 2026-11-17, stack principal (`nginx-observability`). Nenhum volume foi removido, limpo ou recriado; não houve build nem push. A execução foi dividida em fases com autorização explícita para cada uma.
+
+### Linha de base (Fase A)
+
+- Após o reboot do Windows, o Docker Desktop iniciou normalmente (engine 29.7.2, kernel WSL2 6.18.58.1). Os cinco volumes do projeto estavam presentes e todos os endpoints responderam (Prometheus, Grafana, Nginx `200`; Loki `ready`; todos os targets `up=1`).
+- Os 11 containers principais já estavam em execução, iniciados cerca de dois minutos após o boot, embora o Compose não declare política de restart. A ordem de dependências foi respeitada e os containers antigos foram reutilizados, o que é compatível com `docker compose start`, não com `up`. Nenhuma tarefa agendada ou item de inicialização foi encontrado; a origem do start não foi identificada.
+- O container Loki em execução havia sido criado em 2026-11-16, antes do commit `0887f29`: `StopTimeout` padrão (10 s) e hash de configuração do Compose diferente do atual. Como `config/loki/config.yml` é montado do host, o `/config` efetivo já mostrava `flush_on_shutdown: true`. Esse estado híbrido (flush ativo, prazo de 10 s) foi o motivo para antecipar a recriação.
+- O encerramento anterior do Loki (após 1h59m de execução) foi gracioso por SIGTERM, mas sem flush, porque esse processo havia iniciado antes da mudança de configuração. O replay do WAL no start seguinte terminou com `errors=false`.
+- Contagens consultáveis registradas: 24 h — app-a 13.374, app-b 13.522, app-c 13.543; 7 dias — 55.757, 56.315 e 56.170.
+
+### Aplicação (Fases C e D)
+
+- Rollback preparado: branch local `marco-03.6` a partir de `0887f29`; reverter com `git revert 0887f29` seguido de `docker compose up -d --no-deps loki`. O volume `loki-data` não foi arquivado, para não acrescentar uma parada extra.
+- Antes da troca, três marcadores únicos (um por aplicação) foram enviados diretamente à API de push do Loki com o label `job="marco036-marker"`, fora do escopo `job="nginx"` usado pelos dashboards. Também foram congeladas as contagens `job="nginx"` de 30 min e 24 h em um instante fixo já ingerido.
+- `docker compose up -d --no-deps loki` levou 4,0 s e não tocou os outros dez serviços. O container antigo recebeu SIGTERM, executou flush imediato de seis streams (três de Nginx e três de marcadores) e encerrou em cerca de 0,5 s. O Alloy recebeu um `500` em um push durante o encerramento e reenviou o lote sem erros posteriores.
+- Container novo: `StopTimeout=120`, hash igual ao do Compose atual, mesmo volume `nginx-observability_loki-data`, `flush_on_shutdown: true` no `/config` e recuperação do WAL com `errors=false`.
+- Os três marcadores foram recuperados com timestamp e linha exatos, e as contagens congeladas de 30 min e 24 h ficaram idênticas.
+
+### Validação do encerramento (Fase E)
+
+- Três novos marcadores e novas contagens congeladas. `docker compose stop loki` levou 2,18 s: SIGTERM, flush imediato de seis streams em cerca de 17 ms, `Loki stopped` em 0,5 s, `exit 0`, sem OOM. O prazo de 120 s não chegou perto de ser consumido com o volume atual de dados em memória.
+- O Loki ficou cerca de 10 s parado; `docker compose start loki` voltou a `ready` em cerca de 18 s, com recuperação do WAL em `errors=false`.
+- Os seis marcadores (Fases D e E) e as quatro janelas congeladas foram preservados.
+- Linhas reais produzidas durante a parada: a comparação por minuto do campo `time` entre os arquivos JSON do Nginx e o Loki bateu exatamente (16:13 UTC: 33/43/44 em ambos; 16:14 UTC: 41/36/43 em ambos), sem perda nem duplicação.
+- `python tests/verify_pipeline.py --verify-scenarios --verify-persistence` passou: 31 consultas PromQL e 7 LogQL, quatro dashboards, Live Logs e websocket do Grafana Live, cenários de degradação, scan e pico, e a regressão isolada. O Loki isolado terminou parado, com seu volume preservado.
+
+### Limites e pendências
+
+- A validação cobre o encerramento gracioso com pouco dado em memória e a configuração padrão de chunks. Não cobre SIGKILL, término do prazo de 120 s, falha do host ou perda do disco.
+- O defeito de replay do WAL descrito em [grafana/loki#25118](https://github.com/grafana/loki/issues/25118) continua na imagem `3.7.10`. A mitigação reduz a dependência do replay em paradas graciosas, mas não substitui a atualização para uma release oficial com a correção.
+- Linhas com bytes NUL (13 em 7 dias, 4/4/5 por aplicação) coincidem com as quedas do Docker Desktop. A análise está em [Docker Desktop recovery](docker-desktop-recovery.md#retomada-de-2026-11-17-tarde); a origem nos arquivos do Nginx ainda é hipótese.
+- Os marcadores sintéticos `job="marco036-marker"` permanecem no `loki-data` até a expiração pela retenção de 168 h.

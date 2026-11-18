@@ -2,6 +2,15 @@
 
 All notable changes to Nginx Observability are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Health stats no longer turn missing data into a healthy-looking zero: `or vector(0)` was removed, and zero is shown only while the traffic counter has samples. Exporter parse errors now count the selected period instead of a lifetime total.
+- Stat and graph colors follow the alert limits (5xx share 5% / 15%, P95 0.5 s / 1 s); values without an alert limit use a neutral color.
+- Error views show the 5xx share in percent, per application, and rank applications by 5xx only; 4xx no longer inflate "errors". Application Detail replaces the always-zero 429 stat with the 5xx share.
+- Overview starts with a service and collection health strip (applications, Nginx, exporter, Alloy, Loki) and an active-alerts list; HTTP and availability alert rules link to their Overview panels.
+
 ## [0.1.0] - 2026-11-17
 
 ### Added

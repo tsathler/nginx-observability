@@ -85,12 +85,124 @@
   },
   "panels": [
     {
+      "id": 13,
+      "type": "stat",
+      "title": "Service and collection health",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 14,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Scrape state of each application health check and of the collection pipeline (nginx-health, nginx-access exporter, Alloy, Loki). DOWN means the metrics on this dashboard may be incomplete or stale; No samples means Prometheus itself is not answering.",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(up{job=\"app-health\"}, \"component\", \"$1\", \"app\", \"(.*)\") or label_replace(up{job=~\"nginx-health|nginx-access|alloy|loki\"}, \"component\", \"$1\", \"job\", \"(.*)\")",
+          "refId": "A",
+          "instant": true,
+          "legendFormat": "{{component}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "No samples in selected range",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "vertical",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 14,
+      "type": "alertlist",
+      "title": "Active alerts",
+      "gridPos": {
+        "x": 14,
+        "y": 0,
+        "w": 10,
+        "h": 4
+      },
+      "description": "Grafana alert rules currently firing or pending. Empty means no rule is active.",
+      "options": {
+        "viewMode": "list",
+        "groupMode": "default",
+        "groupBy": [],
+        "maxItems": 10,
+        "sortOrder": 1,
+        "dashboardAlerts": false,
+        "alertName": "",
+        "alertInstanceLabelFilter": "",
+        "stateFilter": {
+          "firing": true,
+          "pending": true,
+          "noData": true,
+          "error": true,
+          "normal": false
+        }
+      }
+    },
+    {
       "id": 1,
       "title": "Current request rate",
       "type": "stat",
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 4,
         "w": 4,
         "h": 4
       },
@@ -113,7 +225,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "reqps",
@@ -122,7 +235,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "text",
                 "value": null
               }
             ]
@@ -152,7 +265,7 @@
       "type": "stat",
       "gridPos": {
         "x": 4,
-        "y": 0,
+        "y": 4,
         "w": 4,
         "h": 4
       },
@@ -167,7 +280,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])) or vector(0)",
+          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": false
         }
@@ -175,7 +288,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "short",
@@ -184,7 +298,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "text",
                 "value": null
               }
             ]
@@ -212,11 +326,11 @@
     },
     {
       "id": 3,
-      "title": "Current 4xx rate",
+      "title": "4xx share (current)",
       "type": "stat",
       "gridPos": {
         "x": 8,
-        "y": 0,
+        "y": 4,
         "w": 4,
         "h": 4
       },
@@ -231,7 +345,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__rate_interval])) or vector(0)",
+          "expr": "(sum (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -239,20 +353,22 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
-          "unit": "reqps",
+          "unit": "percentunit",
           "noValue": "No samples in selected range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
+                "color": "text",
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -270,7 +386,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "Share of current requests answered with 4xx. Client errors are informational; no alert uses this value."
     },
     {
       "id": 4,
@@ -278,7 +395,7 @@
       "type": "stat",
       "gridPos": {
         "x": 12,
-        "y": 0,
+        "y": 4,
         "w": 3,
         "h": 4
       },
@@ -293,7 +410,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__range])) or vector(0)",
+          "expr": "(sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": false
         }
@@ -301,7 +418,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "short",
@@ -310,7 +428,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
+                "color": "text",
                 "value": null
               }
             ]
@@ -338,11 +456,11 @@
     },
     {
       "id": 5,
-      "title": "Current 5xx rate",
+      "title": "5xx share (current)",
       "type": "stat",
       "gridPos": {
         "x": 15,
-        "y": 0,
+        "y": 4,
         "w": 3,
         "h": 4
       },
@@ -357,7 +475,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or vector(0)",
+          "expr": "(sum (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -365,20 +483,29 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "mappings": [],
-          "unit": "reqps",
+          "unit": "percentunit",
           "noValue": "No samples in selected range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.15
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -396,7 +523,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "Share of current requests answered with 5xx. Colors use the same warning/critical limits as the Grafana alert rules. Alerts also require a minimum request volume per app."
     },
     {
       "id": 6,
@@ -404,7 +532,7 @@
       "type": "stat",
       "gridPos": {
         "x": 18,
-        "y": 0,
+        "y": 4,
         "w": 3,
         "h": 4
       },
@@ -419,7 +547,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__range])) or vector(0)",
+          "expr": "(sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": false
         }
@@ -427,7 +555,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "short",
@@ -436,7 +565,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "text",
                 "value": null
               }
             ]
@@ -468,7 +597,7 @@
       "type": "stat",
       "gridPos": {
         "x": 21,
-        "y": 0,
+        "y": 4,
         "w": 3,
         "h": 4
       },
@@ -491,7 +620,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "mappings": [],
           "unit": "s",
@@ -502,6 +631,14 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1
               }
             ]
           }
@@ -522,7 +659,8 @@
         },
         "showPercentChange": false,
         "textMode": "value"
-      }
+      },
+      "description": "P95 across the selected applications. Colors use the same warning/critical limits as the Grafana alert rules. Alerts evaluate each app separately; see P95 by application."
     },
     {
       "id": 7,
@@ -530,7 +668,7 @@
       "type": "timeseries",
       "gridPos": {
         "x": 0,
-        "y": 4,
+        "y": 8,
         "w": 12,
         "h": 8
       },
@@ -641,7 +779,7 @@
       "type": "barchart",
       "gridPos": {
         "x": 12,
-        "y": 4,
+        "y": 8,
         "w": 12,
         "h": 8
       },
@@ -698,7 +836,7 @@
       "type": "timeseries",
       "gridPos": {
         "x": 0,
-        "y": 12,
+        "y": 16,
         "w": 12,
         "h": 8
       },
@@ -725,7 +863,29 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "s"
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          }
         },
         "overrides": []
       },
@@ -740,15 +900,16 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "description": "Dashed lines mark the warning and critical P95 limits used by the alert rules."
     },
     {
       "id": 10,
-      "title": "Error rate over time by application",
+      "title": "5xx share by application",
       "type": "timeseries",
       "gridPos": {
         "x": 12,
-        "y": 12,
+        "y": 16,
         "w": 12,
         "h": 8
       },
@@ -763,7 +924,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
+          "expr": "(sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or on (app) (0 * sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{app}}"
@@ -775,7 +936,32 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "reqps"
+          "unit": "percentunit",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.15
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "dashed"
+            },
+            "axisSoftMin": 0,
+            "axisSoftMax": 0.2
+          }
         },
         "overrides": []
       },
@@ -790,15 +976,16 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "description": "Share of requests answered with 5xx, per application. Dashed lines mark the alert limits. 4xx are excluded: client errors and scans would otherwise mask server failures."
     },
     {
       "id": 11,
-      "title": "Applications with the most errors (period total)",
+      "title": "Applications with the most 5xx (period total)",
       "type": "barchart",
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 24,
         "w": 24,
         "h": 5
       },
@@ -813,7 +1000,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\",status=~\"4..|5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~\"$app\"})))",
+          "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~\"$app\"})))",
           "refId": "A",
           "instant": true,
           "legendFormat": "{{app}}",

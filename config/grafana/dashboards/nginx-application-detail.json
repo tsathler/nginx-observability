@@ -206,7 +206,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "reqps",
@@ -215,7 +216,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "text",
                 "value": null
               }
             ]
@@ -260,7 +261,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range])) or vector(0)",
+          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range]))",
           "refId": "A",
           "instant": false
         }
@@ -268,7 +269,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "short",
@@ -277,7 +279,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "text",
                 "value": null
               }
             ]
@@ -331,7 +333,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "s",
@@ -340,7 +343,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "text",
                 "value": null
               }
             ]
@@ -394,7 +397,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "mappings": [],
           "unit": "s",
@@ -403,8 +406,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "yellow",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1
               }
             ]
           }
@@ -425,7 +436,8 @@
         },
         "showPercentChange": false,
         "textMode": "value_and_name"
-      }
+      },
+      "description": "P95 per application. Colors use the same warning/critical limits as the Grafana alert rules."
     },
     {
       "id": 5,
@@ -457,7 +469,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "unit": "s",
@@ -466,7 +479,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
+                "color": "text",
                 "value": null
               }
             ]
@@ -492,7 +505,7 @@
     },
     {
       "id": 6,
-      "title": "429 responses",
+      "title": "5xx share (current)",
       "type": "stat",
       "gridPos": {
         "x": 20,
@@ -511,28 +524,37 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\",status=\"429\"}[$__range])) or vector(0)",
           "refId": "A",
-          "instant": false
+          "instant": false,
+          "expr": "(sum (rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{app=~\"$app\",method=~\"${method:regex}\"}[$__rate_interval]))"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "mappings": [],
-          "unit": "short",
+          "unit": "percentunit",
           "noValue": "No samples in selected range",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.15
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -551,7 +573,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "No 429s are synthesized by the current Nginx demo."
+      "description": "Share of current requests answered with 5xx for the selected app and method; the status filter does not apply here. Colors use the same warning/critical limits as the Grafana alert rules."
     },
     {
       "id": 7,

@@ -69,6 +69,8 @@ groups:
         for: 20s
         labels: {severity: critical, component: application}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
           summary: '{{ $labels.app }} health endpoint is not responding through Nginx'
           description: 'Prometheus cannot scrape the app health endpoint while Nginx remains reachable. No request traffic is required for this signal.'
           cause: 'The app process is stopped, unhealthy, or its route is broken.'
@@ -100,6 +102,8 @@ groups:
         for: 20s
         labels: {severity: critical, component: nginx}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
           summary: Nginx health endpoint is unavailable
           description: 'The Nginx metrics endpoint cannot be scraped.'
           cause: 'Nginx is stopped, unreachable, or its internal health route is misconfigured.'
@@ -131,6 +135,8 @@ groups:
         for: 20s
         labels: {severity: critical, component: exporter}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
           summary: Nginx log exporter scrape failed
           description: 'Prometheus cannot scrape the log exporter. Requests during this outage may remain in Loki without being backfilled into Prometheus counters.'
           cause: 'The exporter is stopped, cannot read the access logs, or is unreachable on the metrics network.'
@@ -162,6 +168,8 @@ groups:
         for: 20s
         labels: {severity: critical, component: alloy}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
           summary: Alloy metrics endpoint is unavailable
           description: 'Log collection health cannot be confirmed while Alloy metrics are not scrapeable.'
           cause: 'Alloy is stopped or its internal metrics endpoint is unreachable.'
@@ -193,6 +201,8 @@ groups:
         for: 20s
         labels: {severity: critical, component: loki}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
           summary: Loki metrics endpoint is unavailable
           description: 'Loki availability cannot be confirmed from its metrics endpoint.'
           cause: 'Loki is stopped or unreachable from the internal monitoring network.'
@@ -348,6 +358,8 @@ groups:
         for: 30s
         labels: {severity: warning, component: http}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '10'
           summary: 'HTTP 5xx ratio is elevated for {{ $labels.app }}'
           description: 'The 5xx share exceeded the per-app warning limit and the minimum request volume over one minute.'
           cause: 'The application or an upstream dependency may be failing.'
@@ -379,6 +391,8 @@ groups:
         for: 15s
         labels: {severity: critical, component: http}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '10'
           summary: 'Critical HTTP 5xx ratio for {{ $labels.app }}'
           description: 'The 5xx share exceeded the per-app critical limit with at least the configured minimum request volume over one minute.'
           cause: 'The application is likely experiencing a sustained failure.'
@@ -410,6 +424,8 @@ groups:
         for: 2m
         labels: {severity: warning, component: http}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '9'
           summary: 'HTTP P95 latency is elevated for {{ $labels.app }}'
           description: 'P95 latency exceeded the configurable per-app warning threshold with sufficient recent request volume.'
           cause: 'The application, Nginx upstream, or a dependency may be slow.'
@@ -441,6 +457,8 @@ groups:
         for: 1m
         labels: {severity: critical, component: http}
         annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '9'
           summary: 'Critical HTTP P95 latency for {{ $labels.app }}'
           description: 'P95 latency exceeded the configurable per-app critical threshold with sufficient recent request volume.'
           cause: 'The app is severely delayed or a dependency is degraded.'

@@ -17,6 +17,10 @@ All notable changes to Nginx Observability are documented here.
 - Every Prometheus target and Loki stream carries a `server` label (`lab` in this lab), and all four dashboards have a Server variable applied to every query and Explore link.
 - Alert limits are defaults applied to every (server, app) pair with traffic, with optional per-pair overrides; a new application or server gets 5xx and latency alerts without editing the rules. HTTP alerts group by server and app.
 
+### Added
+
+- GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run. Not yet run; Compose still uses the official image.
+
 ### Removed
 
 - `scripts/build_dashboards.py`: it had diverged from the provisioned dashboards. The JSON files under `config/grafana/dashboards/` are the source of truth.

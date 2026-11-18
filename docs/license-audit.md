@@ -39,3 +39,7 @@ The root `LICENSE` still says `Copyright (c) 2026 Thiago Sathler`. This attribut
 ## Current component version check — 2026-11-17
 
 The table above was reconciled with the current `compose.yaml` and local Dockerfiles for the v0.1.0 closeout: exporter source v1.11.0 at the pinned commit, Loki 3.7.10, Alloy 1.22.0, Grafana 12.4.15, Prometheus 3.16.0, Nginx 1.30.6-alpine, and Python 3.13.18-slim-trixie for the five local builds. The exporter is compiled from upstream under its Apache-2.0 license; the local Dockerfile does not modify or vendor an exported dashboard. Root MIT applies only to project-owned work and remains unapproved pending explicit rights-holder confirmation. Package-level notices in the OCI images remain the respective upstream distributors' responsibility unless this repository begins redistributing image archives.
+
+## Imagem Loki reconstruída — 2026-11-18
+
+O workflow `.github/workflows/loki-image.yml` gera uma versão **modificada** do Grafana Loki (AGPL-3.0-only): Go `1.26.11` e as mudanças em `pkg/` do commit upstream `9cf0657`. Ao publicar a imagem, o código-fonte correspondente é o commit upstream `c792f58` mais esse commit, ambos públicos; a imagem traz rótulos OCI com a licença, o commit de origem, o commit aplicado e o link do workflow. Se uma instância modificada for oferecida a usuários por rede, a seção 13 da AGPL exige oferecer a esses usuários o acesso a esse código-fonte. A licença MIT da raiz deste repositório não se aplica à imagem.

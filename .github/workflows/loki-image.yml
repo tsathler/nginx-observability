@@ -1,0 +1,148 @@
+# Rebuilds the official Grafana Loki v3.7.10 image with a patched Go toolchain.
+#
+# Why: grafana/loki:3.7.10 is built with Go 1.26.10 (CVE-2026-97054 / GO-2026-6859, fixed in
+# Go 1.26.11) and still has the WAL replay defect grafana/loki#25118. No official release fixes
+# either yet. This workflow uses Loki's own cmd/loki/Dockerfile at the pinned v3.7.10 commit,
+# only changing GO_VERSION, and applies the Go source changes of upstream commit 9cf0657.
+#
+# Every run builds, tests the patch, checks the Go version and scans the image.
+# Publishing to GHCR happens only on a manual run with publish=true.
+#
+# Retire this workflow and return compose.yaml to an official image as soon as Grafana ships a
+# release built with Go >= 1.26.11 (and, ideally, including the WAL fix).
+#
+# License: Grafana Loki is AGPL-3.0-only. The published image is a modified version; its
+# corresponding source is the upstream commit LOKI_REF plus the pkg/ changes of WAL_FIX_REF,
+# both public on github.com/grafana/loki, as recorded in the image labels and this file.
+name: loki-image
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Push the image to GHCR after all checks pass"
+        type: boolean
+        default: false
+  pull_request:
+    paths: [".github/workflows/loki-image.yml"]
+  push:
+    branches: [main]
+    paths: [".github/workflows/loki-image.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: loki-image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LOKI_REF: c792f58577a46c64b0a8e808d7c643ed0e8c5e83 # tag v3.7.10
+  WAL_FIX_REF: 9cf0657212438f968facc96a34202f992b23ac49 # fix(ingester): preserve WAL counters across stream recreation
+  GO_IMAGE: "1.26.11@sha256:4165ee6bf3b7811fd7b40373290405c83d0167dcb87ee5f29c427cdcef45ff8f"
+  GO_EXPECTED: go1.26.11
+  TRIVY_IMAGE: aquasec/trivy:0.76.2
+  IMAGE_NAME: loki
+  IMAGE_TAG: 3.7.10-go1.26.11-walfix
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write # used only by the publish step
+    steps:
+      - name: Check out Loki at the pinned v3.7.10 commit
+        uses: actions/checkout@v4
+        with:
+          repository: grafana/loki
+          ref: ${{ env.LOKI_REF }}
+          path: loki
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Apply the upstream WAL fix (Go sources only)
+        working-directory: loki
+        run: |
+          git fetch --no-tags --depth=2 origin "$WAL_FIX_REF"
+          # The documentation hunk of the commit does not apply to v3.7.10 and is not needed.
+          git diff "${WAL_FIX_REF}^" "$WAL_FIX_REF" -- pkg/ > ../wal-fix.patch
+          git apply --verbose ../wal-fix.patch
+          git diff --stat
+
+      - name: Set up Go for the patch test
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.11"
+          cache: false
+
+      - name: Run the WAL regression test shipped with the fix
+        working-directory: loki
+        run: go test ./pkg/ingester/ -run '^TestWALReplayAfterStreamRecreation$' -count=1 -v
+
+      - name: Build with Loki's own Dockerfile and the patched Go image
+        working-directory: loki
+        run: |
+          docker build \
+            --file cmd/loki/Dockerfile \
+            --build-arg GO_VERSION="$GO_IMAGE" \
+            --build-arg IMAGE_TAG="$IMAGE_TAG" \
+            --label org.opencontainers.image.title="Grafana Loki (patched rebuild)" \
+            --label org.opencontainers.image.version="$IMAGE_TAG" \
+            --label org.opencontainers.image.licenses="AGPL-3.0-only" \
+            --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/.github/workflows/loki-image.yml" \
+            --label org.opencontainers.image.revision="$LOKI_REF" \
+            --label io.github.nginx-observability.upstream="https://github.com/grafana/loki/tree/${LOKI_REF}" \
+            --label io.github.nginx-observability.patch="https://github.com/grafana/loki/commit/${WAL_FIX_REF}" \
+            --tag "local/loki:${IMAGE_TAG}" .
+
+      - name: Check the binary's Go version and that it starts
+        run: |
+          version="$(docker run --rm "local/loki:${IMAGE_TAG}" -version)"
+          echo "$version"
+          echo "$version" | grep -Eq "go version:[[:space:]]+${GO_EXPECTED}([^.0-9]|$)" \
+            || { echo "Expected ${GO_EXPECTED} in the Loki binary"; exit 1; }
+
+      - name: Scan the image (fail on CRITICAL/HIGH or on CVE-2026-97054)
+        run: |
+          mkdir -p reports
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/reports:/reports" "$TRIVY_IMAGE" \
+            image --format json --output /reports/trivy.json "local/loki:${IMAGE_TAG}"
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/reports:/reports" "$TRIVY_IMAGE" \
+            image --format spdx-json --output /reports/sbom.spdx.json "local/loki:${IMAGE_TAG}"
+          python3 - <<'EOF'
+          import json, sys
+          report = json.load(open("reports/trivy.json"))
+          findings = [v for r in report.get("Results", []) for v in (r.get("Vulnerabilities") or [])]
+          blocking = [f"{v['VulnerabilityID']} {v['PkgName']} {v.get('InstalledVersion')} {v['Severity']}"
+                      for v in findings if v["Severity"] in ("CRITICAL", "HIGH") or v["VulnerabilityID"] == "CVE-2026-97054"]
+          counts = {}
+          for v in findings:
+              counts[v["Severity"]] = counts.get(v["Severity"], 0) + 1
+          print("Findings by severity:", counts)
+          if blocking:
+              print("Blocking findings:", *blocking, sep="\n  ")
+              sys.exit(1)
+          EOF
+
+      - name: Keep scan report and SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loki-${{ env.IMAGE_TAG }}-reports
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Publish to GHCR
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          owner="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          target="ghcr.io/${owner}/${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag "local/loki:${IMAGE_TAG}" "$target"
+          docker push "$target"
+          digest="$(docker inspect --format '{{index .RepoDigests 0}}' "$target")"
+          echo "Published $digest" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -60,6 +60,29 @@
   "templating": {
     "list": [
       {
+        "name": "server",
+        "label": "Server",
+        "type": "query",
+        "description": "Monitored host that produced the metrics and events. All includes data recorded before the server label existed.",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nginx_http_response_count_total, server)",
+          "refId": "Prometheus-server"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
         "name": "app",
         "label": "Application",
         "type": "query",
@@ -68,7 +91,7 @@
           "uid": "prometheus"
         },
         "query": {
-          "query": "label_values(nginx_http_response_count_total, app)",
+          "query": "label_values(nginx_http_response_count_total{server=~\"$server\"}, app)",
           "refId": "Prometheus-app"
         },
         "refresh": 2,
@@ -106,10 +129,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "label_replace(up{job=\"app-health\"}, \"component\", \"$1\", \"app\", \"(.*)\") or label_replace(up{job=~\"nginx-health|nginx-access|alloy|loki\"}, \"component\", \"$1\", \"job\", \"(.*)\")",
+          "expr": "label_replace(up{server=~\"$server\",job=\"app-health\"}, \"component\", \"$1\", \"app\", \"(.*)\") or label_replace(up{server=~\"$server\",job=~\"nginx-health|nginx-access|alloy|loki\"}, \"component\", \"$1\", \"job\", \"(.*)\")",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{component}}"
+          "legendFormat": "{{component}} ({{server}})"
         }
       ],
       "fieldConfig": {
@@ -217,7 +240,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -280,7 +303,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": false
         }
@@ -345,7 +368,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "(sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -410,7 +433,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"4..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])))",
+          "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": false
         }
@@ -475,7 +498,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "(sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -547,7 +570,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])))",
+          "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": false
         }
@@ -612,7 +635,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95,sum by (le) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95,sum by (le) (rate(nginx_http_response_time_seconds_hist_bucket{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
           "instant": false
         }
@@ -683,7 +706,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "sum by (status) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{status}}"
@@ -794,7 +817,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum by (app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": true,
           "legendFormat": "{{app}}",
@@ -851,7 +874,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95,sum by (app,le) (rate(nginx_http_response_time_seconds_hist_bucket{app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95,sum by (app,le) (rate(nginx_http_response_time_seconds_hist_bucket{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{app}}"
@@ -924,7 +947,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or on (app) (0 * sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval])))) / sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "(sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or on (app) (0 * sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{app}}"
@@ -1000,7 +1023,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{app=~\"$app\"})))",
+          "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"})))",
           "refId": "A",
           "instant": true,
           "legendFormat": "{{app}}",

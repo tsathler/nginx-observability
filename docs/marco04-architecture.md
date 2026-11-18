@@ -56,6 +56,12 @@ Nenhuma porta do Loki ou do Prometheus pode ser aberta para outra máquina antes
 
 Os logs das aplicações publicadas contêm IPs de usuários reais. A minimização na origem (formato sanitizado), a retenção de 7 dias e o acesso restrito ao Grafana passam a ser requisitos, não demonstração. Revisar a política de retenção com o responsável pelos dados antes de receber tráfego real.
 
+## Preparação já concluída no laboratório (2026-11-18)
+
+- Rótulo `server` em todos os alvos do Prometheus e nos streams do Alloy (`lab` no laboratório); cada servidor monitorado recebe o seu valor.
+- Variável **Server** nos quatro dashboards, aplicada a todas as consultas e aos links do Explore.
+- Limites de alerta como padrões aplicados a todo par (server, app) com tráfego, com override opcional por par; alertas HTTP agrupados por `server` e `app`.
+
 ## Pontos em aberto para o início do Marco 04
 
 - Sistema e versão do servidor central; forma de execução (Docker Compose no Linux ou serviços nativos).

@@ -59,7 +59,7 @@
     {
       "title": "Explore security events",
       "type": "link",
-      "url": "/explore?panes=%7B%220%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22expr%22%3A%22%7Bjob%3D%5C%22nginx%5C%22%2Capp%3D~%5C%22$app%5C%22%7D%20%7C%20status%3D~%5C%22403%7C404%7C5..%5C%22%20%7C%20remote_addr%3D~%60$%7Bsource_ip%3Araw%7D%60%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22$__from%22%2C%22to%22%3A%22$__to%22%7D%7D%7D&schemaVersion=1&orgId=1",
+      "url": "/explore?panes=%7B%220%22%3A%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22loki%22%2C%22uid%22%3A%22loki%22%7D%2C%22expr%22%3A%22%7Bjob%3D%5C%22nginx%5C%22%2Cserver%3D~%5C%22$server%5C%22%2Capp%3D~%5C%22$app%5C%22%7D%20%7C%20status%3D~%5C%22403%7C404%7C5..%5C%22%20%7C%20remote_addr%3D~%60$%7Bsource_ip%3Araw%7D%60%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22$__from%22%2C%22to%22%3A%22$__to%22%7D%7D%7D&schemaVersion=1&orgId=1",
       "icon": "external link",
       "tooltip": "Open Loki Explore with the selected application, source IP regex, security status filter, and time range.",
       "includeVars": false,
@@ -70,6 +70,29 @@
   "templating": {
     "list": [
       {
+        "name": "server",
+        "label": "Server",
+        "type": "query",
+        "description": "Monitored host that produced the metrics and events. All includes data recorded before the server label existed.",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(nginx_http_response_count_total, server)",
+          "refId": "Prometheus-server"
+        },
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
         "name": "app",
         "label": "Application",
         "type": "query",
@@ -79,7 +102,7 @@
           "uid": "prometheus"
         },
         "query": {
-          "query": "label_values(nginx_http_response_count_total, app)",
+          "query": "label_values(nginx_http_response_count_total{server=~\"$server\"}, app)",
           "refId": "Prometheus-app"
         },
         "refresh": 2,
@@ -141,7 +164,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",status=\"403\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"403\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -206,7 +229,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",status=\"404\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"404\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -271,7 +294,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(nginx_http_response_count_total{app=~\"$app\",status=\"429\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{app=~\"$app\"}[$__range])))",
+          "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"429\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": false
         }
@@ -336,7 +359,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\",status=~\"5..\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -401,7 +424,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{app=~\"$app\"}[$__rate_interval]))",
+          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false
         }
@@ -466,7 +489,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_parse_errors_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum(increase(nginx_parse_errors_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": false
         }
@@ -533,7 +556,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status,app) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"403|404|429\"}[$__rate_interval]))",
+          "expr": "sum by (status,app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"403|404|429\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{app}} / {{status}}"
@@ -585,7 +608,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (method) (increase(nginx_http_response_count_total{app=~\"$app\"}[$__range]))",
+          "expr": "sum by (method) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
           "instant": true,
           "legendFormat": "{{method}}",
@@ -655,7 +678,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (app,path) (count_over_time({job=\"nginx\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" | remote_addr=~`${source_ip:raw}` [$__range]))",
+          "expr": "sum by (app,path) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" | remote_addr=~`${source_ip:raw}` [$__range]))",
           "queryType": "instant",
           "refId": "A",
           "legendFormat": "{{app}} {{path}}"
@@ -708,7 +731,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (app,remote_addr) (count_over_time({job=\"nginx\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~`${source_ip:raw}` [$__range])) >= 2)",
+          "expr": "topk(10, sum by (app,remote_addr) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~`${source_ip:raw}` [$__range])) >= 2)",
           "queryType": "instant",
           "refId": "A",
           "legendFormat": "{{app}} / {{remote_addr}}"
@@ -761,7 +784,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (app) (rate(nginx_http_response_count_total{app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
+          "expr": "sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
           "legendFormat": "{{app}}"
@@ -826,7 +849,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"nginx\",app=~\"$app\"} | status=~\"403|404|5..\" | remote_addr=~`${source_ip:raw}`",
+          "expr": "{job=\"nginx\",server=~\"$server\",app=~\"$app\"} | status=~\"403|404|5..\" | remote_addr=~`${source_ip:raw}`",
           "queryType": "range",
           "refId": "A",
           "maxLines": 500

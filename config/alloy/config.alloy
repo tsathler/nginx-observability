@@ -1,8 +1,8 @@
 local.file_match "nginx" {
   path_targets = [
-    { __path__ = "/var/log/nginx/app-a.json", app = "app-a", job = "nginx" },
-    { __path__ = "/var/log/nginx/app-b.json", app = "app-b", job = "nginx" },
-    { __path__ = "/var/log/nginx/app-c.json", app = "app-c", job = "nginx" },
+    { __path__ = "/var/log/nginx/app-a.json", app = "app-a", job = "nginx", server = "lab" },
+    { __path__ = "/var/log/nginx/app-b.json", app = "app-b", job = "nginx", server = "lab" },
+    { __path__ = "/var/log/nginx/app-c.json", app = "app-c", job = "nginx", server = "lab" },
   ]
 }
 

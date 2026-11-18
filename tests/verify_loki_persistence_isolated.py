@@ -1,6 +1,7 @@
 """Exercise Loki WAL persistence in a separate Compose project and named volume."""
 
 import json
+import re
 import os
 import socket
 import subprocess
@@ -205,13 +206,19 @@ def assert_primary_mitigation_declared():
     assert "stop_grace_period: 2m" in loki_service, "Primary Loki grace period is missing"
 
 
+def compose_config_text(service):
+    compose_config = (ROOT / "compose.yaml").read_text(encoding="utf-8")
+    return compose_config.split(f"  {service}:\n", 1)[1].split("  alloy:\n", 1)[0]
+
+
 def verify_isolated_persistence():
     before_main = main_project_state()
     assert_primary_mitigation_declared()
     compose("config", "--quiet")
     config = json.loads(compose("config", "--format", "json"))
     service = config["services"]["loki"]
-    assert service["image"] == "grafana/loki:3.7.10"
+    primary_image = re.search(r"^    image: (\S+)$", compose_config_text("loki"), re.M).group(1)
+    assert service["image"] == primary_image, (service["image"], primary_image)
     assert service.get("stop_grace_period") in {"2m", "2m0s", "120s"}, \
         service.get("stop_grace_period")
     assert VOLUME in [volume.get("name") for volume in config["volumes"].values()]
@@ -257,7 +264,7 @@ def verify_isolated_persistence():
         assert_event(first_path, first_ts, first_event, first_line, "after graceful restart")
         assert_event(second_path, second_ts, second_event, second_line, "after graceful restart")
         print(
-            "OK: isolated Loki 3.7.10 graceful restart preserved both unique JSON events, "
+            "OK: isolated Loki (primary image) graceful restart preserved both unique JSON events, "
             "exact timestamps, and structured metadata after stream flush/removal/recreation."
         )
     finally:

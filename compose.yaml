@@ -97,7 +97,9 @@ services:
   loki:
     <<: *hardened
     cap_drop: [ALL]
-    image: grafana/loki:3.7.10
+    # Rebuild of Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118);
+    # built by .github/workflows/loki-image.yml. Return to an official image once one ships with Go >= 1.26.11.
+    image: ghcr.io/tsathler/loki:3.7.10-go1.26.11-walfix@sha256:72931af47a600cd99a92e64103a9aed3198e93836c2c27456f627041e1ffbede
     command: ["-config.file=/etc/loki/config.yml", "-config.expand-env=true"]
     stop_grace_period: 2m
     environment:

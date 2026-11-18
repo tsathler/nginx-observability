@@ -46,7 +46,7 @@ Um `log_format` JSON igual ao de `config/nginx/default.conf`, gravado em arquivo
 
 Nenhuma porta do Loki ou do Prometheus pode ser aberta para outra máquina antes de:
 
-1. **Loki corrigido:** imagem oficial compilada com Go `1.26.11` ou superior (CVE-2026-97054). Se o Marco 04 começar antes de existir release oficial, rebuild próprio revisado, com SBOM, varredura por digest e regressão completa. A aceitação de risco discutida para a v0.1.0 vale apenas para o laboratório local e não se estende a este cenário.
+1. **Loki corrigido:** ✅ atendido em 2026-11-18 pela reconstrução `ghcr.io/tsathler/loki:3.7.10-go1.26.11-walfix` (ver `docs/cve-triage.md`); trocar por imagem oficial quando houver. Texto original: imagem oficial compilada com Go `1.26.11` ou superior (CVE-2026-97054). Se o Marco 04 começar antes de existir release oficial, rebuild próprio revisado, com SBOM, varredura por digest e regressão completa. A aceitação de risco discutida para a v0.1.0 vale apenas para o laboratório local e não se estende a este cenário.
 2. **Transporte protegido:** TLS no proxy de entrada e autenticação por agente (de preferência certificado de cliente/mTLS); firewall do central aceitando somente os IPs dos agentes.
 3. **Grafana interno:** bind no IP interno ou atrás de proxy interno com HTTPS; login obrigatório, sem acesso anônimo nem cadastro aberto.
 4. **Backup fora do host:** destino protegido e restauração testada. Com dados reais, o backup deixa de ser opcional.

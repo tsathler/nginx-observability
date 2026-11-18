@@ -94,6 +94,9 @@ def state_of(uid, app=""):
             if alert.get("labels", {}).get("app") == app:
                 state = alert.get("state", rule.get("state"))
                 return {"inactive": "Normal", "pending": "Pending", "firing": "Alerting"}.get(state, state)
+        # Limits exist for each (server, app) with traffic; an app with no requests since the
+        # exporter started has no instance, which means it is not alerting.
+        return "Absent"
     state = rule.get("state") or (alerts[0].get("state") if alerts else None)
     return {"inactive": "Normal", "pending": "Pending", "firing": "Alerting"}.get(state, state)
 
@@ -259,8 +262,8 @@ def main():
         wait_state("http_5xx_critical", {"pending", "Pending", "firing", "Alerting"}, "app-a", timeout=50)
         wait_state("http_5xx_critical", {"firing", "Alerting"}, "app-a", timeout=50)
         wait_state("http_5xx_warning", {"firing", "Alerting"}, "app-a", timeout=50)
-        assert state_of("http_5xx_critical", "app-b") == "Normal"
-        assert state_of("http_5xx_critical", "app-c") == "Normal"
+        assert state_of("http_5xx_critical", "app-b") in {"Normal", "Absent"}
+        assert state_of("http_5xx_critical", "app-c") in {"Normal", "Absent"}
         wait_receiver(lambda data: data["count"] > before_events and any(
             item["alertname"] == "Critical HTTP 5xx ratio" and item["app"] == "app-a" and item["status"] == "firing"
             for item in data["events"]), "HTTP 5xx webhook was not delivered")

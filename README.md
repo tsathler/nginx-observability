@@ -38,7 +38,7 @@ Prometheus coleta métricas HTTP com labels de baixa cardinalidade, como `app`, 
 
 ## Release
 
-A release `v0.1.0` é um laboratório local/portfólio, **sem homologação para produção**. O risco do CVE do Go no Loki `3.7.10` foi aceito apenas para uso local; o Loki não deve receber conexões de outras máquinas até a adoção de imagem corrigida. Consulte o [changelog](CHANGELOG.md) e as [notas da release](docs/release-v0.1.0.md).
+A release `v0.1.0` é um laboratório local/portfólio, **sem homologação para produção**. O Loki roda numa reconstrução da v3.7.10 com Go `1.26.11` e a correção upstream do WAL (grafana/loki#25118), gerada pelo workflow `loki-image` e fixada por digest no `compose.yaml`; isso fecha o CVE-2026-97054 que havia sido aceito apenas para uso local. Voltar a uma imagem oficial assim que existir release corrigida. Consulte o [changelog](CHANGELOG.md) e as [notas da release](docs/release-v0.1.0.md).
 
 ## Executar
 

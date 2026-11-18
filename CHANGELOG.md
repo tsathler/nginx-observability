@@ -19,7 +19,11 @@ All notable changes to Nginx Observability are documented here.
 
 ### Added
 
-- GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run. Not yet run; Compose still uses the official image.
+- GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run.
+
+### Security
+
+- Loki now runs `ghcr.io/tsathler/loki:3.7.10-go1.26.11-walfix`, pinned by digest: Loki v3.7.10 rebuilt with Go 1.26.11 (fixes CVE-2026-97054) and the upstream WAL replay fix (grafana/loki#25118). The image passed the fix's regression test and a Trivy scan with no findings; the stack passed a graceful restart with marker and fixed-window checks, the isolated persistence regression and the integration suite. The local-only risk acceptance for CVE-2026-97054 is closed.
 
 ### Removed
 

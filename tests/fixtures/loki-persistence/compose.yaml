@@ -1,6 +1,6 @@
 services:
   loki:
-    image: grafana/loki:3.7.10
+    image: ghcr.io/tsathler/loki:3.7.10-go1.26.11-walfix@sha256:72931af47a600cd99a92e64103a9aed3198e93836c2c27456f627041e1ffbede
     command: ["-config.file=/etc/loki/config.yml"]
     stop_grace_period: 2m
     security_opt:

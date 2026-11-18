@@ -2,67 +2,48 @@ groups:
   - name: nginx-observability-thresholds
     interval: 5s
     rules:
-      # Edit the per-app values below to tune the corresponding Grafana rules.
-      - record: nginx_observability_http_5xx_warning_ratio
+      # Default limits apply to every (server, app) pair that reports HTTP traffic, so a new
+      # application or server is covered without editing this file. The dashboards color
+      # stats with the same defaults; tests/verify_pipeline.py fails if they diverge.
+      #
+      # To tune one pair, add an override record named <limit>_override with server and app
+      # labels, for example:
+      #   - record: nginx_observability_http_5xx_warning_ratio_override
+      #     expr: vector(0.10)
+      #     labels: {server: lab, app: app-a}
+      # Rules in this group run in order, so defaults are recorded before they are used.
+      # 5xx share that raises the warning alert
+      - record: nginx_observability_http_5xx_warning_ratio_default
         expr: vector(0.05)
-        labels: {app: app-a}
+      # 5xx share that raises the critical alert
+      - record: nginx_observability_http_5xx_critical_ratio_default
+        expr: vector(0.15)
+      # minimum requests per minute before the 5xx warning can fire
+      - record: nginx_observability_http_5xx_warning_min_requests_default
+        expr: vector(10)
+      # minimum requests per minute before the 5xx critical alert can fire
+      - record: nginx_observability_http_5xx_critical_min_requests_default
+        expr: vector(20)
+      # P95 latency (seconds) that raises the warning alert
+      - record: nginx_observability_http_p95_warning_seconds_default
+        expr: vector(0.5)
+      # P95 latency (seconds) that raises the critical alert
+      - record: nginx_observability_http_p95_critical_seconds_default
+        expr: vector(1)
+      # minimum requests per minute before latency alerts can fire
+      - record: nginx_observability_http_latency_min_requests_default
+        expr: vector(10)
       - record: nginx_observability_http_5xx_warning_ratio
-        expr: vector(0.05)
-        labels: {app: app-b}
-      - record: nginx_observability_http_5xx_warning_ratio
-        expr: vector(0.05)
-        labels: {app: app-c}
+        expr: nginx_observability_http_5xx_warning_ratio_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_5xx_warning_ratio_default))
       - record: nginx_observability_http_5xx_critical_ratio
-        expr: vector(0.15)
-        labels: {app: app-a}
-      - record: nginx_observability_http_5xx_critical_ratio
-        expr: vector(0.15)
-        labels: {app: app-b}
-      - record: nginx_observability_http_5xx_critical_ratio
-        expr: vector(0.15)
-        labels: {app: app-c}
+        expr: nginx_observability_http_5xx_critical_ratio_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_5xx_critical_ratio_default))
       - record: nginx_observability_http_5xx_warning_min_requests
-        expr: vector(10)
-        labels: {app: app-a}
-      - record: nginx_observability_http_5xx_warning_min_requests
-        expr: vector(10)
-        labels: {app: app-b}
-      - record: nginx_observability_http_5xx_warning_min_requests
-        expr: vector(10)
-        labels: {app: app-c}
+        expr: nginx_observability_http_5xx_warning_min_requests_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_5xx_warning_min_requests_default))
       - record: nginx_observability_http_5xx_critical_min_requests
-        expr: vector(20)
-        labels: {app: app-a}
-      - record: nginx_observability_http_5xx_critical_min_requests
-        expr: vector(20)
-        labels: {app: app-b}
-      - record: nginx_observability_http_5xx_critical_min_requests
-        expr: vector(20)
-        labels: {app: app-c}
+        expr: nginx_observability_http_5xx_critical_min_requests_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_5xx_critical_min_requests_default))
       - record: nginx_observability_http_p95_warning_seconds
-        expr: vector(0.5)
-        labels: {app: app-a}
-      - record: nginx_observability_http_p95_warning_seconds
-        expr: vector(0.5)
-        labels: {app: app-b}
-      - record: nginx_observability_http_p95_warning_seconds
-        expr: vector(0.5)
-        labels: {app: app-c}
+        expr: nginx_observability_http_p95_warning_seconds_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_p95_warning_seconds_default))
       - record: nginx_observability_http_p95_critical_seconds
-        expr: vector(1)
-        labels: {app: app-a}
-      - record: nginx_observability_http_p95_critical_seconds
-        expr: vector(1)
-        labels: {app: app-b}
-      - record: nginx_observability_http_p95_critical_seconds
-        expr: vector(1)
-        labels: {app: app-c}
+        expr: nginx_observability_http_p95_critical_seconds_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_p95_critical_seconds_default))
       - record: nginx_observability_http_latency_min_requests
-        expr: vector(10)
-        labels: {app: app-a}
-      - record: nginx_observability_http_latency_min_requests
-        expr: vector(10)
-        labels: {app: app-b}
-      - record: nginx_observability_http_latency_min_requests
-        expr: vector(10)
-        labels: {app: app-c}
+        expr: nginx_observability_http_latency_min_requests_override or on (server, app) (0 * max by (server, app) (nginx_http_response_count_total) + scalar(nginx_observability_http_latency_min_requests_default))

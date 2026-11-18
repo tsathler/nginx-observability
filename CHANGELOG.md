@@ -12,6 +12,11 @@ All notable changes to Nginx Observability are documented here.
 - Overview starts with a service and collection health strip (applications, Nginx, exporter, Alloy, Loki) and an active-alerts list; HTTP and availability alert rules link to their Overview panels.
 - The Source IP filter (Live Logs, Security and their Explore links) uses a raw LogQL string, so an escaped regex such as `172\.20\.0\.6` no longer fails with "invalid char escape".
 
+### Changed
+
+- Every Prometheus target and Loki stream carries a `server` label (`lab` in this lab), and all four dashboards have a Server variable applied to every query and Explore link.
+- Alert limits are defaults applied to every (server, app) pair with traffic, with optional per-pair overrides; a new application or server gets 5xx and latency alerts without editing the rules. HTTP alerts group by server and app.
+
 ### Removed
 
 - `scripts/build_dashboards.py`: it had diverged from the provisioned dashboards. The JSON files under `config/grafana/dashboards/` are the source of truth.

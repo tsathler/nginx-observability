@@ -66,7 +66,9 @@ As portas administrativas e de API são vinculadas somente ao loopback. Exporter
 - **Nginx | Live Logs:** eventos recentes com filtros e link para Explore; refresh periódico é diferente do Live tail WebSocket do Grafana Explore.
 - **Nginx | Security:** padrões para triagem e investigação. Respostas 403/404/500 são sinais para análise, não classificação automática de ataque.
 
-Alert rules ficam em **Grafana → Alerting → Alert rules**, na pasta **Nginx Operations**. Incluem disponibilidade, proporção de 5xx, P95, saúde do pipeline e uso dos blocos TSDB. Thresholds por aplicação estão em `config/prometheus/rules/alert-thresholds.yml`; as cores dos dashboards usam os mesmos valores, e os testes falham se divergirem.
+Alert rules ficam em **Grafana → Alerting → Alert rules**, na pasta **Nginx Operations**. Incluem disponibilidade, proporção de 5xx, P95, saúde do pipeline e uso dos blocos TSDB. Os limites ficam em `config/prometheus/rules/alert-thresholds.yml` como **valores padrão** aplicados automaticamente a todo par servidor/aplicação que gera tráfego; um par específico pode ser ajustado com um registro `_override` (exemplo no próprio arquivo). As cores dos dashboards usam os mesmos padrões, e os testes falham se divergirem.
+
+Toda métrica e todo stream de log carregam o rótulo `server` (no laboratório, `lab`). Os quatro dashboards têm a variável **Server**; a opção All também inclui dados gravados antes da existência do rótulo.
 
 Os JSONs em `config/grafana/dashboards/` são a fonte oficial dos dashboards: edite-os diretamente (ou exporte do Grafana) e rode `python tests/verify_pipeline.py`. O gerador `scripts/build_dashboards.py` foi aposentado porque havia divergido dos arquivos provisionados; o histórico Git o preserva. O contact point provisionado entrega apenas ao receptor de teste da rede Docker interna; ele não é uma integração de produção.
 

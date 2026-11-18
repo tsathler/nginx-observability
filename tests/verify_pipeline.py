@@ -73,8 +73,13 @@ def get_json(url):
         raise AssertionError(f"HTTP {error.code} from {url}: {error.read().decode(errors='replace')}") from error
 
 
+def resolve_server(expression):
+    """Resolve the dashboards' Server variable the way Grafana's "All" option does."""
+    return expression.replace('server=~"$server"', 'server=~".*"')
+
+
 def prom_query(expression):
-    query = urllib.parse.urlencode({"query": expression})
+    query = urllib.parse.urlencode({"query": resolve_server(expression)})
     result = get_json(f"{prom}/api/v1/query?{query}")
     assert result["status"] == "success", result
     return result["data"]["result"]
@@ -83,7 +88,7 @@ def prom_query(expression):
 def grafana_prom_frames(expression, legend_format="{{app}}"):
     body = {
         "queries": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "prometheus"},
-                     "expr": expression, "instant": True, "range": False, "format": "time_series",
+                     "expr": resolve_server(expression), "instant": True, "range": False, "format": "time_series",
                       "legendFormat": legend_format, "intervalMs": 10000, "maxDataPoints": 100}],
         "from": "now-15m", "to": "now",
     }
@@ -97,7 +102,7 @@ def grafana_prom_frames(expression, legend_format="{{app}}"):
 
 def grafana_loki_frames(expression, query_type="range", legend_format=None, max_lines=20):
     target = {"refId": "A", "datasource": {"type": "loki", "uid": "loki"},
-              "expr": expression, "queryType": query_type, "maxLines": max_lines}
+              "expr": resolve_server(expression), "queryType": query_type, "maxLines": max_lines}
     if legend_format:
         target["legendFormat"] = legend_format
     body = {
@@ -113,7 +118,7 @@ def grafana_loki_frames(expression, query_type="range", legend_format=None, max_
 
 
 def loki_instant(expression, eval_time_ns=None):
-    params = {"query": expression, "limit": "100"}
+    params = {"query": resolve_server(expression), "limit": "100"}
     if eval_time_ns is not None:
         params["time"] = str(eval_time_ns / 1_000_000_000)
     result = get_json(f"{loki}/loki/api/v1/query?{urllib.parse.urlencode(params)}")
@@ -135,7 +140,7 @@ def target_scraped_after(job, epoch):
 def loki_query(expression, start_ns=None, end_ns=None, limit=200):
     end_ns = end_ns or time.time_ns()
     params = {
-        "query": expression,
+        "query": resolve_server(expression),
         "start": str(start_ns or end_ns - 600_000_000_000),
         "end": str(end_ns),
         "limit": str(limit),
@@ -406,6 +411,7 @@ def verify_dashboard_and_datasources():
         # seriesToRows passes a single frame through unchanged, so a filter that leaves one
         # series made category bars render "No numeric fields found".
         assert not any(item.get("id") == "seriesToRows" for panel in panels for item in panel.get("transformations", [])),             f"{uid} uses seriesToRows, which breaks single-series results"
+        verify_server_scope(dashboard)
         # `or vector(0)` turned a missing exporter into a healthy-looking zero.
         assert not any("vector(0)" in target.get("expr", "") for panel in panels for target in panel.get("targets", [])),             f"{uid} masks missing data as zero with vector(0)"
         if uid == "nginx-overview":
@@ -448,10 +454,41 @@ def alert_threshold_values():
     root = os.path.dirname(os.path.dirname(__file__))
     text = open(os.path.join(root, "config", "prometheus", "rules", "alert-thresholds.yml"), encoding="utf-8").read()
     values = {}
-    for name, value in re.findall(r"record: (nginx_observability_http_\w+)\s+expr: vector\(([0-9.]+)\)", text):
+    for name, value in re.findall(r"record: (nginx_observability_http_\w+)_default\s+expr: vector\(([0-9.]+)\)", text):
         values.setdefault(name, set()).add(float(value))
-    assert all(len(found) == 1 for found in values.values()), f"Per-app alert limits differ; dashboard colors assume one value: {values}"
+    assert values, "No default alert limits found"
+    assert all(len(found) == 1 for found in values.values()), f"Duplicated default limits: {values}"
     return {name: found.pop() for name, found in values.items()}
+
+
+def verify_server_scope(dashboard):
+    variables = dashboard["templating"]["list"]
+    server = variables[0]
+    assert server["name"] == "server" and server.get("includeAll") and server.get("allValue") == ".*", server
+    reads_nginx = ("nginx_http_", "nginx_parse_errors_total", '{job="nginx"', "up{")
+    for panel in dashboard["panels"]:
+        for target in panel.get("targets", []):
+            expr = target.get("expr", "")
+            if any(marker in expr for marker in reads_nginx):
+                assert 'server=~"$server"' in expr, f"{dashboard['uid']}/{panel['title']} ignores the Server variable"
+    for link in dashboard.get("links", []):
+        if "/explore?" in link.get("url", ""):
+            assert "server%3D~%5C%22$server%5C%22" in link["url"], f"{dashboard['uid']} Explore link ignores Server"
+
+
+def verify_generic_alert_limits():
+    """Limits come from defaults for every (server, app) with traffic, not from a per-app list."""
+    root = os.path.dirname(os.path.dirname(__file__))
+    text = open(os.path.join(root, "config", "prometheus", "rules", "alert-thresholds.yml"), encoding="utf-8").read()
+    active = [line for line in text.splitlines() if line.strip() and not line.strip().startswith("#")]
+    assert not any("app-" in line for line in active), "Alert limits must not enumerate applications"
+    traffic = {(item["metric"].get("server"), item["metric"].get("app"))
+               for item in prom_query("max by (server, app) (nginx_http_response_count_total{server!=\"\"})")}
+    for name in ("nginx_observability_http_5xx_warning_ratio", "nginx_observability_http_p95_critical_seconds",
+                 "nginx_observability_http_latency_min_requests"):
+        limited = {(item["metric"].get("server"), item["metric"].get("app")) for item in prom_query(name)}
+        assert traffic and limited == traffic, f"{name} does not cover every (server, app) with traffic: {limited} vs {traffic}"
+    return len(traffic)
 
 
 def threshold_steps(panel):
@@ -461,6 +498,7 @@ def threshold_steps(panel):
 def verify_overview_health_and_limits(dashboard):
     by_title = {panel["title"]: panel for panel in dashboard["panels"]}
     limits = alert_threshold_values()
+    verify_generic_alert_limits()
     ratio_steps = [None, limits["nginx_observability_http_5xx_warning_ratio"], limits["nginx_observability_http_5xx_critical_ratio"]]
     p95_steps = [None, limits["nginx_observability_http_p95_warning_seconds"], limits["nginx_observability_http_p95_critical_seconds"]]
     share = by_title["5xx share (current)"]
@@ -488,7 +526,7 @@ def grafana_query_expression(expr):
     replacements = {
         "$__rate_interval": "1m", "$__range": "15m", "$__auto": "1m",
         "${method:regex}": ".*", "${path:regex}": ".*",
-        "${source_ip:raw}": ".*", "${status:raw}": ".*", "$app": ".*",
+        "${source_ip:raw}": ".*", "${status:raw}": ".*", "$server": ".*", "$app": ".*",
     }
     for token, value in replacements.items():
         expr = expr.replace(token, value)

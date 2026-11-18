@@ -10,6 +10,11 @@ All notable changes to Nginx Observability are documented here.
 - Stat and graph colors follow the alert limits (5xx share 5% / 15%, P95 0.5 s / 1 s); values without an alert limit use a neutral color.
 - Error views show the 5xx share in percent, per application, and rank applications by 5xx only; 4xx no longer inflate "errors". Application Detail replaces the always-zero 429 stat with the 5xx share.
 - Overview starts with a service and collection health strip (applications, Nginx, exporter, Alloy, Loki) and an active-alerts list; HTTP and availability alert rules link to their Overview panels.
+- The Source IP filter (Live Logs, Security and their Explore links) uses a raw LogQL string, so an escaped regex such as `172\.20\.0\.6` no longer fails with "invalid char escape".
+
+### Removed
+
+- `scripts/build_dashboards.py`: it had diverged from the provisioned dashboards. The JSON files under `config/grafana/dashboards/` are the source of truth.
 
 ## [0.1.0] - 2026-11-17
 

@@ -61,12 +61,14 @@ As portas administrativas e de API são vinculadas somente ao loopback. Exporter
 
 ## Dashboards e alertas
 
-- **Nginx | Overview:** saúde e volume geral, taxas atuais, erros, latência P95 e comparação entre aplicações.
+- **Nginx | Overview:** faixa de saúde dos serviços e da coleta, alertas ativos, volume, % de 4xx/5xx, latência P95 e comparação entre aplicações.
 - **Nginx | Application Detail:** métricas e requisições da aplicação selecionada, incluindo métodos, rotas, latência e logs recentes.
 - **Nginx | Live Logs:** eventos recentes com filtros e link para Explore; refresh periódico é diferente do Live tail WebSocket do Grafana Explore.
 - **Nginx | Security:** padrões para triagem e investigação. Respostas 403/404/500 são sinais para análise, não classificação automática de ataque.
 
-Alert rules ficam em **Grafana → Alerting → Alert rules**, na pasta **Nginx Operations**. Incluem disponibilidade, proporção de 5xx, P95, saúde do pipeline e uso dos blocos TSDB. Thresholds por aplicação estão em `config/prometheus/rules/alert-thresholds.yml`. O contact point provisionado entrega apenas ao receptor de teste da rede Docker interna; ele não é uma integração de produção.
+Alert rules ficam em **Grafana → Alerting → Alert rules**, na pasta **Nginx Operations**. Incluem disponibilidade, proporção de 5xx, P95, saúde do pipeline e uso dos blocos TSDB. Thresholds por aplicação estão em `config/prometheus/rules/alert-thresholds.yml`; as cores dos dashboards usam os mesmos valores, e os testes falham se divergirem.
+
+Os JSONs em `config/grafana/dashboards/` são a fonte oficial dos dashboards: edite-os diretamente (ou exporte do Grafana) e rode `python tests/verify_pipeline.py`. O gerador `scripts/build_dashboards.py` foi aposentado porque havia divergido dos arquivos provisionados; o histórico Git o preserva. O contact point provisionado entrega apenas ao receptor de teste da rede Docker interna; ele não é uma integração de produção.
 
 ## Cenários sintéticos
 
@@ -110,7 +112,7 @@ O exporter não faz backfill: requisições durante sua indisponibilidade podem 
 
 ## Capturas
 
-Não há capturas reais de dashboards versionadas neste repositório. Overview e Security têm revisões visuais concluídas e registradas; Application Detail e Live Logs permanecem pendentes de revisão num navegador disponível. Não usamos respostas de API como substituto para capturas visuais.
+Capturas reais da revisão visual de 2026-11-17 estão em [`docs/screenshots/`](docs/screenshots/) (Application Detail, Live Logs e Live tail no Explore); elas antecedem a faixa de saúde e as cores por limite adicionadas depois. Não usamos respostas de API como substituto para capturas visuais.
 
 ## Licença
 
@@ -123,7 +125,7 @@ O arquivo [LICENSE](LICENSE) propõe MIT para o conteúdo próprio, mas a titula
 - `config/`: Nginx, Prometheus, Loki, Alloy, dashboards e provisionamento Grafana.
 - `demo/`: aplicações, tráfego sintético e receptor local de alertas.
 - `tests/`: verificações de pipeline, confiabilidade e alertas.
-- `scripts/`: inicialização do ambiente, rotação de logs e geração de dashboards.
+- `scripts/`: inicialização do ambiente, rotação de logs e resumo das varreduras Trivy.
 - `docs/`: decisões, auditorias, procedimentos, resultados e limitações por marco.
 
 Auditorias técnicas e evidências: [arquitetura](docs/architecture-research.md), [segurança](docs/security-audit.md), [dashboards](docs/dashboard-audit.md), [alertas](docs/alerting-audit.md), [retenção e recuperação](docs/reliability-audit.md) e [auditoria final](docs/final-audit.md).

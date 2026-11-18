@@ -559,8 +559,8 @@ def verify_live_logs(dashboard):
     raw_streams = loki_query('{job="nginx",app="app-a"} | method="GET" | status="403" | path=~".*forbidden.*"')
     controlled = [json.loads(line) for stream in raw_streams for _, line in stream["values"]]
     event = next(item for item in controlled if item.get("path", "").endswith("/forbidden"))
-    # RE2 character classes avoid LogQL's Go-string escape rules for literal dots.
-    source_ip_regex = event["remote_addr"].replace(".", "[.]")
+    # An escaped regex (\.) is what an operator types; it must not break the raw-string filter.
+    source_ip_regex = re.escape(event["remote_addr"])
 
     filters = {
         "Application": (resolve_live_logs_expression(expression, app="app-a"), lambda e: e["app"] == "app-a"),
@@ -666,7 +666,7 @@ def verify_security_dashboard(dashboard):
     scanner = panels["Observed scanner-like paths"]
     scanner_expr = scanner["targets"][0]["expr"]
     assert "$__range" in scanner_expr, "Scanner paths must use the dashboard-selected time range"
-    assert 'remote_addr=~"${source_ip:raw}"' in scanner_expr, "Scanner paths must honor the Source IP filter"
+    assert 'remote_addr=~`${source_ip:raw}`' in scanner_expr, "Scanner paths must honor the Source IP filter"
     assert scanner["targets"][0].get("queryType") == "instant"
     assert all(path in scanner_expr for path in (".env", ".git", "wp-admin", "wp-login", "phpmyadmin", "/etc/passwd"))
     assert "not proof of an attack" in scanner["description"] and "query errors are reported separately" in scanner["description"]
@@ -675,7 +675,7 @@ def verify_security_dashboard(dashboard):
     origin_expr = origins["targets"][0]["expr"]
     assert "$__range" in origin_expr, "Repeated origins must use the dashboard-selected time range"
     assert "topk(10," in origin_expr and "status=~\"4..|5..\"" in origin_expr
-    assert "remote_addr=~\"${source_ip:raw}\"" in origin_expr and "sum by (app,remote_addr)" in origin_expr
+    assert "remote_addr=~`${source_ip:raw}`" in origin_expr and "sum by (app,remote_addr)" in origin_expr
     assert " >= 2)" in origin_expr, "Origins panel does not require repeated errors"
     assert "ephemeral query result dimension" in origins["description"]
 
@@ -754,7 +754,7 @@ def verify_security_scenario(dashboard, scan_start_ns):
         resolve_security_expression(origins_panel["targets"][0]["expr"], app="app-a")),
                                  eval_time_ns=eval_end_ns)
     assert app_a_origins and all(item["metric"].get("app") == "app-a" for item in app_a_origins), app_a_origins
-    source_ip_regex = next(iter(scan_ips)).replace(".", "[.]")
+    source_ip_regex = re.escape(next(iter(scan_ips)))
     selected_source_ip = next(iter(scan_ips))
     ip_only_scan = loki_instant(grafana_query_expression(resolve_security_expression(
         scanner["targets"][0]["expr"], source_ip=source_ip_regex)), eval_time_ns=eval_end_ns)

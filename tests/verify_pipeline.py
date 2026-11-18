@@ -406,9 +406,11 @@ def verify_dashboard_and_datasources():
         # seriesToRows passes a single frame through unchanged, so a filter that leaves one
         # series made category bars render "No numeric fields found".
         assert not any(item.get("id") == "seriesToRows" for panel in panels for item in panel.get("transformations", [])),             f"{uid} uses seriesToRows, which breaks single-series results"
+        # `or vector(0)` turned a missing exporter into a healthy-looking zero.
+        assert not any("vector(0)" in target.get("expr", "") for panel in panels for target in panel.get("targets", [])),             f"{uid} masks missing data as zero with vector(0)"
         if uid == "nginx-overview":
             by_title = {panel["title"]: panel for panel in panels}
-            for title in ("Requests by application (period total)", "Applications with the most errors (period total)"):
+            for title in ("Requests by application (period total)", "Applications with the most 5xx (period total)"):
                 bar = by_title[title]
                 assert bar.get("type") == "barchart", f"{title} is not a bar chart"
                 assert bar.get("options", {}).get("xField") == "app", f"{title} does not use the app label as category"
@@ -418,6 +420,7 @@ def verify_dashboard_and_datasources():
                 assert bar["fieldConfig"]["defaults"].get("decimals") == 0, f"{title} should display whole estimated requests"
                 assert "extrapolates" in bar.get("description", ""), f"{title} does not document increase() semantics"
             assert not any("429" in panel["title"] for panel in panels), "Overview reserves space for the synthetic zero-only 429 metric"
+            verify_overview_health_and_limits(dashboard)
             assert any("period total" in panel["title"] for panel in panels if panel.get("type") == "barchart")
             for title in ("Requests in selected period", "4xx responses (period)", "5xx responses (period)"):
                 total = by_title[title]
@@ -438,6 +441,47 @@ def verify_dashboard_and_datasources():
         dashboards[uid] = dashboard
         counts[uid] = len(panels)
     return sorted(source["name"] for source in sources), counts, dashboards
+
+
+def alert_threshold_values():
+    """Warning/critical limits recorded for the Grafana alert rules (identical for every app)."""
+    root = os.path.dirname(os.path.dirname(__file__))
+    text = open(os.path.join(root, "config", "prometheus", "rules", "alert-thresholds.yml"), encoding="utf-8").read()
+    values = {}
+    for name, value in re.findall(r"record: (nginx_observability_http_\w+)\s+expr: vector\(([0-9.]+)\)", text):
+        values.setdefault(name, set()).add(float(value))
+    assert all(len(found) == 1 for found in values.values()), f"Per-app alert limits differ; dashboard colors assume one value: {values}"
+    return {name: found.pop() for name, found in values.items()}
+
+
+def threshold_steps(panel):
+    return [step["value"] for step in panel["fieldConfig"]["defaults"]["thresholds"]["steps"]]
+
+
+def verify_overview_health_and_limits(dashboard):
+    by_title = {panel["title"]: panel for panel in dashboard["panels"]}
+    limits = alert_threshold_values()
+    ratio_steps = [None, limits["nginx_observability_http_5xx_warning_ratio"], limits["nginx_observability_http_5xx_critical_ratio"]]
+    p95_steps = [None, limits["nginx_observability_http_p95_warning_seconds"], limits["nginx_observability_http_p95_critical_seconds"]]
+    share = by_title["5xx share (current)"]
+    assert share["fieldConfig"]["defaults"]["color"]["mode"] == "thresholds" and threshold_steps(share) == ratio_steps
+    assert share["fieldConfig"]["defaults"]["unit"] == "percentunit"
+    assert threshold_steps(by_title["P95 latency"]) == p95_steps
+    assert threshold_steps(by_title["5xx share by application"]) == ratio_steps
+    assert threshold_steps(by_title["P95 by application"]) == p95_steps
+    assert "4.." not in by_title["5xx share by application"]["targets"][0]["expr"], "5xx share must exclude client errors"
+    for title in ("Current request rate", "4xx share (current)", "4xx responses (period)", "5xx responses (period)"):
+        assert by_title[title]["fieldConfig"]["defaults"]["color"]["mode"] == "fixed", f"{title} implies a severity color"
+    health = by_title["Service and collection health"]
+    components = {item["metric"].get("component"): item["value"][1] for item in prom_query(health["targets"][0]["expr"])}
+    expected = {"app-a", "app-b", "app-c", "nginx-health", "nginx-access", "alloy", "loki"}
+    assert set(components) == expected and all(value == "1" for value in components.values()), components
+    assert any(panel["type"] == "alertlist" for panel in dashboard["panels"]), "Overview does not list active alerts"
+    root = os.path.dirname(os.path.dirname(__file__))
+    alerts = open(os.path.join(root, "config", "grafana", "provisioning", "alerting", "alerts.yml"), encoding="utf-8").read()
+    panel_ids = {str(panel["id"]) for panel in dashboard["panels"]}
+    linked = re.findall(r"__dashboardUid__: (\S+)\s+__panelId__: '(\d+)'", alerts)
+    assert len(linked) == 9 and all(uid == "nginx-overview" and pid in panel_ids for uid, pid in linked), linked
 
 
 def grafana_query_expression(expr):
@@ -613,7 +657,8 @@ def verify_security_dashboard(dashboard):
         assert "rate(" in panel["targets"][0]["expr"], f"{panel['title']} is not a current rate"
     assert "period total" in panels["429 responses (period total, estimated)"]["title"]
     assert "increase(" in panels["429 responses (period total, estimated)"]["targets"][0]["expr"]
-    assert "cumulative exporter parse errors" in panels["Exporter parse errors (collection health)"]["description"].lower()
+    parse_panel = panels["Exporter parse errors (period)"]
+    assert "increase(" in parse_panel["targets"][0]["expr"] and "vector(0)" not in parse_panel["targets"][0]["expr"]
     metric_series = prom_query("nginx_http_response_count_total")
     assert metric_series and all("remote_addr" not in item["metric"] for item in metric_series), \
         "Source IP must not become a Prometheus label"
@@ -781,7 +826,7 @@ def verify_dashboard_queries(dashboards):
                     series = prom_query(expr)
                     if dashboard["uid"] == "nginx-overview" and panel["title"] in (
                         "Requests by application (period total)",
-                        "Applications with the most errors (period total)",
+                        "Applications with the most 5xx (period total)",
                     ):
                         apps = {item["metric"].get("app") for item in series}
                         assert apps == {"app-a", "app-b", "app-c"}, (panel["title"], apps, series)
@@ -803,7 +848,7 @@ def verify_dashboard_queries(dashboards):
 
 def verify_overview_bar_categories(dashboard):
     expected = {"app-a", "app-b", "app-c"}
-    titles = ("Requests by application (period total)", "Applications with the most errors (period total)")
+    titles = ("Requests by application (period total)", "Applications with the most 5xx (period total)")
     for title in titles:
         panel = next(item for item in dashboard["panels"] if item["title"] == title)
         expression = grafana_query_expression(panel["targets"][0]["expr"])
@@ -1010,7 +1055,11 @@ def verify_application_detail(dashboard):
             expression = panel["targets"][0]["expr"]
             assert '$app' in expression, f"{title} is not application scoped"
             assert '${method:regex}' in expression, f"{title} does not honor the method filter"
-            assert '${status:raw}' in expression, f"{title} does not honor the status filter"
+            if title == "5xx share (current)":
+                # A status filter would turn the ratio into 0% or 100%; the panel documents the exception.
+                assert '${status:raw}' not in expression and "status filter" in panel.get("description", "")
+            else:
+                assert '${status:raw}' in expression, f"{title} does not honor the status filter"
     return {"method_categories": sorted(method_labels), "path_categories": len(path_results), "paths_descending": path_sort == {"field": "Value", "desc": True},
             "slow_app_a_values": len(slow_app_a), "recent_frames": len(frames)}
 

@@ -69,6 +69,11 @@ jobs:
           # The documentation hunk of the commit does not apply to v3.7.10 and is not needed.
           git diff "${WAL_FIX_REF}^" "$WAL_FIX_REF" -- pkg/ > ../wal-fix.patch
           git apply --verbose ../wal-fix.patch
+          # The fix's test uses testutil.MustPlan, a test-only helper added upstream after v3.7.10.
+          # Take that helper file from the same commit; it is not compiled into the Loki binary.
+          helper=pkg/querier/testutil/requests.go
+          if [ ! -f "$helper" ]; then git show "${WAL_FIX_REF}:${helper}" > "$helper"; fi
+          git status --short
           git diff --stat
 
       - name: Set up Go for the patch test

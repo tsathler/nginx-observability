@@ -394,10 +394,10 @@ def install_carousel(grafana, args, dashboards, uids, lang):
         if existing:
             grafana.call("PUT", f"/api/playlists/{existing[0]['uid']}", body)
             playlist_uid = existing[0]["uid"]
-            print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(pairs)} applications, every {args.carousel_interval}")
+            print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(pairs)} application(s), every {args.carousel_interval}")
         else:
             playlist_uid = grafana.call("POST", "/api/playlists", body).get("uid")
-            print(f"  {grafana.did('created', 'would create')} playlist {name}: {len(pairs)} applications, every {args.carousel_interval}")
+            print(f"  {grafana.did('created', 'would create')} playlist {name}: {len(pairs)} application(s), every {args.carousel_interval}")
         if not playlist_uid:
             print(f"  the carousel button of {detail['title']} is added once the playlist exists")
             continue

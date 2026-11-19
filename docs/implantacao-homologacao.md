@@ -47,21 +47,22 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
 
 ## 2. Grafana existente
 
-1. **Acesso do Grafana ao Loki e ao Prometheus:** o container do Grafana entra na rede `nginx-observability-central`. No `compose` do Grafana:
-   ```yaml
-   services:
-     grafana:
-       networks: [default, nginx-observability-central]
-   networks:
-     nginx-observability-central:
-       external: true
-   ```
-   (Alternativa provisória: `docker network connect nginx-observability-central <container-do-grafana>`, que se perde se o container for recriado.)
+1. **Acesso do Grafana ao Loki e ao Prometheus** — depende de como o container do Grafana está em rede:
+   - **`network_mode: host`**: ele já enxerga as portas de loopback do host. Use `--prometheus-url http://127.0.0.1:19090 --loki-url http://127.0.0.1:13100` no passo 3; nada muda no compose do Grafana.
+   - **Rede Docker própria:** o container entra na rede `nginx-observability-central` e usa os aliases padrão do script (`http://nginx-obs-prometheus:9090`, `http://nginx-obs-loki:3100`). No `compose` do Grafana:
+     ```yaml
+     services:
+       grafana:
+         networks: [default, nginx-observability-central]
+     networks:
+       nginx-observability-central:
+         external: true
+     ```
 2. **Token:** em Administration → Service accounts, criar `nginx-observability-installer` com papel Admin e gerar um token.
 3. **Instalar:** no servidor central,
    ```bash
    cd /opt/nginx-observability
-   GRAFANA_TOKEN=<token> python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000 --alert-interval 30s
+   GRAFANA_TOKEN=<token> python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000      --prometheus-url http://127.0.0.1:19090 --loki-url http://127.0.0.1:13100 --alert-interval 30s
    ```
    Cria os datasources `Nginx Observability - Prometheus/Loki` (UIDs `nginx-obs-prometheus` e `nginx-obs-loki`, sem conflito com os existentes), a pasta **Nginx Observability** com os 4 dashboards e o grupo de 16 regras de alerta. Pode ser repetido após cada `git pull`; use `--dry-run` para ver o que faria.
 4. **Notificações:** o script não altera pontos de contato nem políticas. Criar no Grafana uma rota para as regras desta pasta (rótulos `severity`, `component`, `server`, `app`) até o canal da equipe.

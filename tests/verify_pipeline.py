@@ -718,6 +718,12 @@ def verify_security_dashboard(dashboard):
     assert all(path in scanner_expr for path in (".env", ".git", "wp-admin", "wp-login", "phpmyadmin", "/etc/passwd"))
     assert "not proof of an attack" in scanner["description"] and "query errors are reported separately" in scanner["description"]
 
+    for title, column in (("Observed scanner-like paths", "path"), ("Origins with repeated 4xx / 5xx (by app)", "remote_addr")):
+        table = panels[title]
+        assert table["type"] == "table", f"{title} must show what each row is, not bars labelled only by app"
+        organize = next(item for item in table["transformations"] if item["id"] == "organize")["options"]
+        assert column in organize["indexByName"] and "app" in organize["indexByName"], (title, organize)
+
     origins = panels["Origins with repeated 4xx / 5xx (by app)"]
     origin_expr = origins["targets"][0]["expr"]
     assert "$__range" in origin_expr, "Repeated origins must use the dashboard-selected time range"
@@ -994,7 +1000,10 @@ def verify_application_detail(dashboard):
     slow_expr = grafana_query_expression(slow["targets"][0]["expr"])
     assert slow["targets"][0].get("queryType") == "instant"
     assert "topk(10," in slow["targets"][0]["expr"] and "1000 *" in slow["targets"][0]["expr"]
-    assert slow["fieldConfig"]["defaults"].get("unit") == "ms" and slow["fieldConfig"]["defaults"].get("decimals") == 0
+    # Only the duration column is in ms; a default unit also turned Status into "200 ms".
+    assert "unit" not in slow["fieldConfig"]["defaults"], "Slowest table must not apply ms to every column"
+    duration = next(item for item in slow["fieldConfig"]["overrides"] if item["matcher"]["options"] == "Max duration (ms)")
+    assert {item["id"]: item["value"] for item in duration["properties"]} == {"unit": "ms", "decimals": 0}
     assert "top 10" in slow.get("description", "") and "descending" in slow.get("description", "")
     slow_transform_ids = [item.get("id") for item in slow.get("transformations", [])]
     assert slow_transform_ids == ["merge", "sortBy", "organize"], slow_transform_ids

@@ -859,11 +859,26 @@
           "color": {
             "mode": "palette-classic"
           },
-          "mappings": [],
-          "unit": "ms",
-          "decimals": 0
+          "mappings": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max duration (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
@@ -905,15 +920,17 @@
               "app": 0,
               "method": 1,
               "status": 2,
-              "path": 3,
-              "Value": 4
+              "Value": 3,
+              "path": 4,
+              "Value #A": 3
             },
             "renameByName": {
               "app": "App",
               "method": "Method",
               "status": "Status",
               "path": "Path",
-              "Value": "Max duration (ms)"
+              "Value": "Max duration (ms)",
+              "Value #A": "Max duration (ms)"
             }
           }
         }

@@ -660,7 +660,7 @@
     {
       "id": 9,
       "title": "Observed scanner-like paths",
-      "type": "barchart",
+      "type": "table",
       "gridPos": {
         "x": 0,
         "y": 15,
@@ -690,30 +690,55 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "decimals": 0
         },
         "overrides": []
       },
       "options": {
-        "orientation": "horizontal",
-        "showValue": "always",
-        "stacking": "none",
-        "legend": {
-          "displayMode": "hidden",
-          "placement": "bottom",
-          "showLegend": false
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "desc"
-        }
+        "sortBy": [
+          {
+            "displayName": "Events",
+            "desc": true
+          }
+        ]
       },
-      "description": "Counts matching synthetic scanner-like paths over the selected dashboard interval; these patterns are not proof of an attack. No data means no matching events in that interval; query errors are reported separately by Grafana."
+      "description": "Counts matching synthetic scanner-like paths over the selected dashboard interval; these patterns are not proof of an attack. No data means no matching events in that interval; query errors are reported separately by Grafana.",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "app": 0,
+              "path": 1,
+              "Value": 2,
+              "Value #A": 2
+            },
+            "renameByName": {
+              "app": "App",
+              "path": "Path",
+              "Value": "Events",
+              "Value #A": "Events"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 10,
       "title": "Origins with repeated 4xx / 5xx (by app)",
-      "type": "barchart",
+      "type": "table",
       "gridPos": {
         "x": 12,
         "y": 15,
@@ -743,25 +768,50 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short"
+          "decimals": 0
         },
         "overrides": []
       },
       "options": {
-        "orientation": "horizontal",
-        "showValue": "always",
-        "stacking": "none",
-        "legend": {
-          "displayMode": "hidden",
-          "placement": "bottom",
-          "showLegend": false
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "desc"
-        }
+        "sortBy": [
+          {
+            "displayName": "4xx/5xx events",
+            "desc": true
+          }
+        ]
       },
-      "description": "Top application/source pairs with at least two 4xx/5xx events over the selected dashboard interval. IP is structured event metadata and only an ephemeral query result dimension, never a stored Loki or Prometheus label."
+      "description": "Top application/source pairs with at least two 4xx/5xx events over the selected dashboard interval. IP is structured event metadata and only an ephemeral query result dimension, never a stored Loki or Prometheus label.",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "app": 0,
+              "remote_addr": 1,
+              "Value": 2,
+              "Value #A": 2
+            },
+            "renameByName": {
+              "app": "App",
+              "remote_addr": "Source IP",
+              "Value": "4xx/5xx events",
+              "Value #A": "4xx/5xx events"
+            }
+          }
+        }
+      ]
     },
     {
       "id": 11,

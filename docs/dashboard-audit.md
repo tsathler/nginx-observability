@@ -62,7 +62,7 @@ As cinco lacunas foram tratadas com quatro dashboards provisionados e seleção 
 
 Capturas feitas no Chrome em 1440×900, com `Server = lab`: [Overview](screenshots/overview.jpg), [Application Detail](screenshots/application-detail.jpg), [Live Logs](screenshots/live-logs.jpg) e [Security](screenshots/security.jpg). Confirmam a faixa de saúde, a lista de alertas, as cores por limite, a variável Server e os indicadores com consulta instantânea.
 
-Defeitos visuais encontrados (abertos):
+Defeitos visuais encontrados — **corrigidos no mesmo dia** (tabela Slowest com `ms` só na duração e coluna de duração antes do path; painéis do Security convertidos em tabelas App/Path/Events e App/Source IP/4xx-5xx events, ordenadas por contagem; texto e refresh do Live Logs em 5 s). As capturas de Application Detail e Security foram refeitas depois da correção:
 
 1. **Application Detail — "Slowest by app/method/status/path":** a unidade `ms` do campo de duração também é aplicada à coluna **Status** (`200 ms`, `404 ms`); a coluna de duração fica fora da área visível do painel.
 2. **Security — "Observed scanner-like paths" e "Origins with repeated 4xx / 5xx":** as barras mostram apenas a aplicação (`app-a` repetido), sem o path ou o IP de origem, o que impede saber qual caminho ou origem cada barra representa.

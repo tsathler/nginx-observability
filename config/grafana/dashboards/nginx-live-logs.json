@@ -10,7 +10,7 @@
   "timezone": "browser",
   "schemaVersion": 41,
   "version": 1,
-  "refresh": "2s",
+  "refresh": "5s",
   "time": {
     "from": "now-15m",
     "to": "now"
@@ -263,7 +263,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "Dashboard refreshes every 2s after ingestion. For Loki WebSocket Live tail, open Explore above and click **Live**."
+        "content": "Dashboard refreshes every 5s after ingestion. For Loki WebSocket Live tail, open Explore above and click **Live**."
       },
       "description": "Periodic dashboard refresh is not streaming. Grafana Explore Live uses the native Loki WebSocket tail."
     },

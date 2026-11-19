@@ -242,7 +242,7 @@
           "editorMode": "code",
           "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -268,7 +268,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -305,7 +305,7 @@
           "editorMode": "code",
           "expr": "sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -332,7 +332,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -370,7 +370,7 @@
           "editorMode": "code",
           "expr": "(sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -397,7 +397,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -435,7 +435,7 @@
           "editorMode": "code",
           "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -462,7 +462,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -500,7 +500,7 @@
           "editorMode": "code",
           "expr": "(sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -534,7 +534,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -572,7 +572,7 @@
           "editorMode": "code",
           "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -599,7 +599,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -637,7 +637,7 @@
           "editorMode": "code",
           "expr": "histogram_quantile(0.95,sum by (le) (rate(nginx_http_response_time_seconds_hist_bucket{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -670,7 +670,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {

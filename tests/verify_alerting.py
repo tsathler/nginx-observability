@@ -46,7 +46,8 @@ def rule_inventory():
     assert EXPECTED_RULES <= set(rules), f"Missing provisioned alerts: {EXPECTED_RULES - set(rules)}"
     for uid in EXPECTED_RULES:
         rule = rules[uid]
-        assert rule.get("noDataState") == "NoData", (uid, rule.get("noDataState"))
+        expected_no_data = "OK" if uid.startswith("http_") else "NoData"
+        assert rule.get("noDataState") == expected_no_data, (uid, rule.get("noDataState"))
         assert rule.get("execErrState") == "Error", (uid, rule.get("execErrState"))
         assert rule.get("annotations"), f"{uid} has no operator guidance"
         assert rule.get("labels", {}).get("severity") in {"warning", "critical"}, uid

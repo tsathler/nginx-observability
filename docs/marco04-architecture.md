@@ -26,7 +26,7 @@ O central pode ser compartilhado com outros sistemas. Por isso os dados da obser
 
 Pendências antes da implantação:
 
-1. Validar os dashboards e regras de alerta no **Grafana 13.x** (foram feitos e testados no 12.4.15); dá para testar no laboratório com a imagem 13.x.
+1. ✅ Validar os dashboards e regras de alerta no **Grafana 13.x**. Feito em 2026-11-19 com um Grafana `13.2.2` temporário no laboratório, usando o mesmo provisionamento: datasources e 4 dashboards carregados sem erro, 15 regras de alerta com saúde `ok`, ponto de contato criado; `tests/verify_pipeline.py` passou contra ele (`GRAFANA_URL` apontando para o temporário) e a revisão visual no Chrome não mostrou diferença em relação ao 12.4.15. Observação: o provisionamento registra erro inofensivo se a pasta `provisioning/plugins` não existir.
 2. Verificar se os UIDs de datasource `prometheus` e `loki` já estão em uso no Grafana existente; se estiverem, adotar UIDs próprios (ex.: `nginx-obs-prometheus`) e ajustar os dashboards.
 3. Descobrir como o Grafana existente é implantado (Compose e pasta de provisionamento, ou só UI/API) para escolher entre provisionamento por arquivo e importação via API.
 4. Definir o tamanho do volume dedicado e quem o cria (requer root).

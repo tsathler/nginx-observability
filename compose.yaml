@@ -125,7 +125,7 @@ services:
   grafana:
     <<: *hardened
     cap_drop: [ALL]
-    image: grafana/grafana:12.4.15
+    image: grafana/grafana:13.2.2
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run python scripts/init_lab_env.py to create local credentials}

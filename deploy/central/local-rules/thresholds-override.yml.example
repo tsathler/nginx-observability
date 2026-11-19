@@ -1,0 +1,25 @@
+# Per-server limits for the HTTP alerts, kept only on this central server.
+#
+# Copy to thresholds-override.yml in this directory (that name is git-ignored), keep the
+# records you need, then reload Prometheus from deploy/central:
+#   cp thresholds-override.yml.example thresholds-override.yml
+#   docker compose kill -s HUP prometheus
+#
+# Each record overrides one default from config/prometheus/rules/alert-thresholds.yml for one
+# (server, app) pair; pairs without an override keep the defaults. Values are in seconds,
+# ratios (0.05 = 5%) or requests per minute.
+groups:
+  - name: nginx-observability-local-overrides
+    interval: 15s
+    rules:
+      # Example: a slower application tolerates a higher P95 latency.
+      - record: nginx_observability_http_p95_warning_seconds_override
+        expr: vector(1.5)
+        labels: {server: web-01, app: portal}
+      - record: nginx_observability_http_p95_critical_seconds_override
+        expr: vector(3)
+        labels: {server: web-01, app: portal}
+      # Example: tolerate up to 10% 5xx before the warning.
+      # - record: nginx_observability_http_5xx_warning_ratio_override
+      #   expr: vector(0.10)
+      #   labels: {server: web-01, app: portal}

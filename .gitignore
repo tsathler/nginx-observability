@@ -8,3 +8,6 @@ __pycache__/
 
 # Notes about the real (internal) environment; never published.
 docs/interno/
+
+# Per-server alert limits on the central server (only the .example is versioned).
+deploy/central/local-rules/*.yml

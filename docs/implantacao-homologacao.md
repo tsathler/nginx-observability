@@ -74,7 +74,7 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
    |---|---|
    | `--lang en` (padrão), `pt-BR` ou `both` | idioma dos dashboards. `both` instala as duas versões (UIDs `…-pt-br` para o português) com um botão "English" / "Português (BR)" que troca de idioma mantendo filtros e período |
    | `--alert-lang en` ou `pt-BR` | idioma dos títulos e textos dos alertas; padrão: português quando `--lang` inclui pt-BR. Os alertas são instalados uma vez só, num idioma |
-   | `--carousel` | cria a subpasta **Carrossel** com uma página de Detalhe da aplicação fixada em cada (servidor, aplicação) com tráfego no último dia, e a playlist **Nginx Observability - Carrossel** (Visão geral + essas páginas). O script imprime o endereço para abrir em modo quiosque numa TV |
+   | `--carousel` | põe no dashboard **Detalhe da aplicação** o botão **Carrossel das aplicações**: ele abre, em tela cheia (modo quiosque), cada aplicação com tráfego no último dia, trocando sozinho; Esc sai. Por trás, uma página fixada por (servidor, aplicação) na subpasta **Carrossel** e uma playlist por idioma. Os outros dashboards não mudam |
    | `--carousel-interval 30s` | tempo em cada página |
    | `--carousel-apps servidor/app,…` | lista fixa em vez da descoberta automática |
    | `--include-lab-rules` | mantém as 3 regras que dependem dos endpoints de saúde e do exporter do laboratório (por padrão ficam de fora: num servidor real ficariam sempre em "No data") |

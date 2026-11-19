@@ -106,14 +106,19 @@ def alerts():
 
 
 def carousel():
-    template = next(d for d in ig.build_dashboards("pt-BR", UIDS) if d["uid"] == "nginx-application-detail-pt-br")
-    page = ig.carousel_page(template, "web-01", "portal")
-    assert page["uid"] == "nginx-carousel-web-01-portal"
+    template = next(d for d in ig.build_dashboards("both", UIDS) if d["uid"] == "nginx-application-detail-pt-br")
+    page = ig.carousel_page(template, "web-01", "portal", "pt-BR")
+    assert page["uid"] == "nginx-carousel-web-01-portal-pt-br"
+    assert ig.carousel_uid("web-01", "portal") == "nginx-carousel-web-01-portal"
     current = {v["name"]: v["current"]["value"] for v in page["templating"]["list"] if v["name"] in ("server", "app")}
     assert current == {"server": "web-01", "app": "portal"}, current
     assert ig.CAROUSEL_TAG in page["tags"] and page["title"].endswith("portal (web-01)")
-    long_uid = ig.carousel_uid("a-very-long-server-name.example.internal", "an-application-with-a-long-name")
-    assert len(long_uid) <= 40 and long_uid.startswith("nginx-carousel-"), long_uid
+    assert all(link["title"] not in ig.LANGUAGES.values() for link in page["links"]), "no language switch inside the rotation"
+    link = ig.carousel_link("abc123", "pt-BR")
+    assert link["url"] == "/playlists/play/abc123?kiosk" and link["title"] == "Carrossel das aplicações"
+    for lang in ("en", "pt-BR"):
+        long_uid = ig.carousel_uid("a-very-long-server-name.example.internal", "an-application-with-a-long-name", lang)
+        assert len(long_uid) <= 40 and long_uid.startswith("nginx-carousel-"), long_uid
 
 
 def main():

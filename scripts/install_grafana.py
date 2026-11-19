@@ -11,8 +11,8 @@ What it creates or updates (idempotent; run again after a git pull):
     English, Brazilian Portuguese (--lang pt-BR) or both with a language switch (--lang both);
   * alert rule group(s) from deploy/grafana/alert-rules.json in that folder, without the
     lab-only rules that need the lab's health endpoints and exporter;
-  * optionally (--carousel) one Application Detail page per (server, app) and a playlist that
-    rotates through them, for a TV / kiosk screen.
+  * optionally (--carousel) a "Carousel" button in Application Detail that rotates one pinned
+    page per (server, app) full screen (a Grafana playlist in kiosk mode).
 It never changes contact points or notification policies: route the rules' labels
 (severity, component, server, app) in the existing policy tree.
 
@@ -40,7 +40,6 @@ CATALOGS = ROOT / "deploy" / "grafana" / "i18n"
 LAB_UIDS = {"prometheus": "prometheus", "loki": "loki"}  # datasource UIDs used in the repo
 DASHBOARD_UIDS = ("nginx-overview", "nginx-application-detail", "nginx-live-logs", "nginx-security")
 APP_DETAIL_UID = "nginx-application-detail"
-OVERVIEW_UID = "nginx-overview"
 # Rules that watch the lab's own health endpoints and nginxlog-exporter. Monitored servers use
 # the Alloy agent instead, where "Monitored server agent stopped sending" covers the gap.
 LAB_ONLY_RULES = {"app_unavailable", "nginx_unavailable", "exporter_unavailable"}
@@ -315,12 +314,16 @@ def install_alerts(grafana, folder_uid, groups, interval_override, skipped):
 
 
 # --- carousel ----------------------------------------------------------------------------
+# The rotation belongs to Application Detail: that dashboard gets a "Carousel" button opening a
+# playlist that cycles one pinned copy of it per (server, app). Grafana cannot cycle a variable
+# inside one dashboard, so the copies carry the server and app values instead.
 
-def carousel_uid(server, app):
+def carousel_uid(server, app, lang="en"):
     slug = re.sub(r"[^a-z0-9-]+", "-", f"{server}-{app}".lower()).strip("-")
-    uid = f"nginx-carousel-{slug}"
+    suffix = LANG_SUFFIX[lang]
+    uid = f"nginx-carousel-{slug}{suffix}"
     if len(uid) > 40:  # Grafana's UID limit
-        uid = f"nginx-carousel-{slug[:16]}-{hashlib.sha1(slug.encode()).hexdigest()[:8]}"
+        uid = f"nginx-carousel-{slug[:10]}-{hashlib.sha1(slug.encode()).hexdigest()[:8]}{suffix}"
     return uid
 
 
@@ -335,12 +338,14 @@ def discover_pairs(grafana, prometheus_uid):
     return sorted(pair for pair in pairs if all(pair))
 
 
-def carousel_page(template, server, app):
+def carousel_page(template, server, app, lang="en"):
     page = copy.deepcopy(template)
-    page["uid"] = carousel_uid(server, app)
+    page["uid"] = carousel_uid(server, app, lang)
     page["title"] = f"{template['title']} - {app} ({server})"
     page["tags"] = sorted(set(page.get("tags", [])) | {CAROUSEL_TAG})
     page["refresh"] = "30s"
+    # Inside the rotation the pages keep the navigation links but not the language switch.
+    page["links"] = [link for link in page.get("links", []) if link.get("title") not in LANGUAGES.values()]
     for variable in page.get("templating", {}).get("list", []):
         if variable.get("name") in ("server", "app"):
             value = server if variable["name"] == "server" else app
@@ -348,11 +353,20 @@ def carousel_page(template, server, app):
     return page
 
 
+def carousel_link(playlist_uid, lang):
+    pt = lang == "pt-BR"
+    return {
+        "title": "Carrossel das aplicações" if pt else "Application carousel", "type": "link", "icon": "dashboard",
+        "url": f"/playlists/play/{playlist_uid}?kiosk", "includeVars": False, "keepTime": False,
+        "targetBlank": False, "asDropdown": False, "tags": [],
+        "tooltip": ("Mostra cada aplicação em tela cheia, trocando sozinha; Esc sai do modo quiosque" if pt
+                    else "Shows each application full screen in turn; Esc leaves kiosk mode"),
+    }
+
+
 def install_carousel(grafana, args, dashboards, uids, lang):
-    view_lang = "pt-BR" if lang in ("pt-BR", "both") else "en"
-    suffix = LANG_SUFFIX[view_lang]
+    languages = ["en", "pt-BR"] if lang == "both" else [lang]
     by_uid = {dashboard["uid"]: dashboard for dashboard in dashboards}
-    template = by_uid[APP_DETAIL_UID + suffix]
     if args.carousel_apps:
         pairs = sorted(tuple(item.split("/", 1)) for item in args.carousel_apps.split(",") if "/" in item)
     else:
@@ -360,37 +374,48 @@ def install_carousel(grafana, args, dashboards, uids, lang):
     if not pairs:
         print("  no (server, app) with traffic yet; pass --carousel-apps server/app,... or run again later")
         return
-    pt = view_lang == "pt-BR"
     sub_uid = f"{args.folder_uid}-carousel"
-    ensure_folder(grafana, sub_uid, "Carrossel" if pt else "Carousel", parent_uid=args.folder_uid)
+    ensure_folder(grafana, sub_uid, "Carrossel" if "pt-BR" in languages else "Carousel", parent_uid=args.folder_uid)
     wanted = set()
-    for server, app in pairs:
-        page = carousel_page(template, server, app)
-        wanted.add(page["uid"])
-        grafana.call("POST", "/api/dashboards/db", {"dashboard": page, "folderUid": sub_uid, "overwrite": True,
-                                                    "message": "nginx-observability carousel"})
-        print(f"  page {page['title']} ({page['uid']})")
+    for language in languages:
+        pt = language == "pt-BR"
+        detail = by_uid[APP_DETAIL_UID + LANG_SUFFIX[language]]
+        for server, app in pairs:
+            page = carousel_page(detail, server, app, language)
+            wanted.add(page["uid"])
+            grafana.call("POST", "/api/dashboards/db", {"dashboard": page, "folderUid": sub_uid, "overwrite": True,
+                                                        "message": "nginx-observability carousel"})
+            print(f"  page {page['title']} ({page['uid']})")
+        name = "Nginx Observability - Carrossel das aplicações" if pt else "Nginx Observability - Application carousel"
+        body = {"name": name, "interval": args.carousel_interval,
+                "items": [{"type": "dashboard_by_uid", "value": carousel_uid(server, app, language)} for server, app in pairs]}
+        existing = [item for item in grafana.call("GET", f"/api/playlists?name={urllib.parse.quote(name)}") or []
+                    if item.get("name") == name]
+        if existing:
+            grafana.call("PUT", f"/api/playlists/{existing[0]['uid']}", body)
+            playlist_uid = existing[0]["uid"]
+            print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(pairs)} applications, every {args.carousel_interval}")
+        else:
+            playlist_uid = grafana.call("POST", "/api/playlists", body).get("uid")
+            print(f"  {grafana.did('created', 'would create')} playlist {name}: {len(pairs)} applications, every {args.carousel_interval}")
+        if not playlist_uid:
+            print(f"  the carousel button of {detail['title']} is added once the playlist exists")
+            continue
+        # The only entry point is a button in Application Detail.
+        detail["links"] = [link for link in detail.get("links", []) if "/playlists/play/" not in link.get("url", "")]
+        detail["links"].append(carousel_link(playlist_uid, language))
+        grafana.call("POST", "/api/dashboards/db", {"dashboard": detail, "folderUid": args.folder_uid, "overwrite": True,
+                                                    "message": "nginx-observability carousel button"})
+        print(f"  {grafana.did('added', 'would add')} carousel button to {detail['title']}")
     # Pages for pairs that no longer report traffic are removed, so the rotation stays current.
     for hit in grafana.call("GET", f"/api/search?tag={CAROUSEL_TAG}&type=dash-db") or []:
         if hit.get("uid") not in wanted and hit.get("folderUid") == sub_uid:
             grafana.call("DELETE", f"/api/dashboards/uid/{hit['uid']}")
             print(f"  {grafana.did('removed', 'would remove')} stale page {hit.get('title')} ({hit['uid']})")
-
-    name = "Nginx Observability - Carrossel" if pt else "Nginx Observability - Carousel"
-    items = ([{"type": "dashboard_by_uid", "value": OVERVIEW_UID + suffix}] if not args.carousel_skip_overview else [])
-    items += [{"type": "dashboard_by_uid", "value": carousel_uid(server, app)} for server, app in pairs]
-    body = {"name": name, "interval": args.carousel_interval, "items": items}
-    existing = [item for item in grafana.call("GET", f"/api/playlists?name={urllib.parse.quote(name)}") or []
-                if item.get("name") == name]
-    if existing:
-        grafana.call("PUT", f"/api/playlists/{existing[0]['uid']}", body)
-        playlist_uid = existing[0]["uid"]
-        print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(items)} pages, every {args.carousel_interval}")
-    else:
-        created = grafana.call("POST", "/api/playlists", body)
-        playlist_uid = created.get("uid", "<new>")
-        print(f"  {grafana.did('created', 'would create')} playlist {name}: {len(items)} pages, every {args.carousel_interval}")
-    print(f"  play on a screen: {args.grafana_url.rstrip('/')}/playlists/play/{playlist_uid}?kiosk")
+    for playlist in grafana.call("GET", "/api/playlists") or []:
+        if playlist.get("name") in ("Nginx Observability - Carousel", "Nginx Observability - Carrossel"):  # earlier names
+            grafana.call("DELETE", f"/api/playlists/{playlist['uid']}")
+            print(f"  {grafana.did('removed', 'would remove')} old playlist {playlist['name']}")
 
 
 # --- main --------------------------------------------------------------------------------
@@ -415,10 +440,9 @@ def main():
     parser.add_argument("--include-lab-rules", action="store_true",
                         help="also install the rules that watch the lab's health endpoints and exporter")
     parser.add_argument("--carousel", action="store_true",
-                        help="create one Application Detail page per (server, app) and a playlist rotating them")
+                        help="add an 'Application carousel' button to Application Detail that rotates one page per (server, app)")
     parser.add_argument("--carousel-interval", default="30s", help="time on each page, e.g. 30s or 1m")
     parser.add_argument("--carousel-apps", help="server/app pairs, comma-separated (default: discovered from traffic)")
-    parser.add_argument("--carousel-skip-overview", action="store_true", help="do not start the rotation with Overview")
     parser.add_argument("--dry-run", action="store_true", help="read only; print the writes it would make")
     args = parser.parse_args()
     if hasattr(sys.stdout, "reconfigure"):  # Portuguese titles on consoles that are not UTF-8

@@ -164,9 +164,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"403\"}[$__rate_interval]))",
+          "expr": "(sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"403\"}[$__rate_interval]))) or (0 * sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -193,7 +193,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -206,7 +206,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
     },
     {
       "id": 2,
@@ -229,9 +229,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"404\"}[$__rate_interval]))",
+          "expr": "(sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"404\"}[$__rate_interval]))) or (0 * sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -258,7 +258,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -271,7 +271,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
     },
     {
       "id": 3,
@@ -296,7 +296,7 @@
           "editorMode": "code",
           "expr": "(sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=\"429\"}[$__range]))) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -323,7 +323,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -359,9 +359,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval]))",
+          "expr": "(sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval]))) or (0 * sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -388,7 +388,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -401,7 +401,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
     },
     {
       "id": 5,
@@ -426,7 +426,7 @@
           "editorMode": "code",
           "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -453,7 +453,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -491,7 +491,7 @@
           "editorMode": "code",
           "expr": "sum(increase(nginx_parse_errors_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -520,7 +520,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {

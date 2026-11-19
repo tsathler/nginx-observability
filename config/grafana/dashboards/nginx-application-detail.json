@@ -223,7 +223,7 @@
           "editorMode": "code",
           "expr": "sum(rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__rate_interval]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -249,7 +249,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -286,7 +286,7 @@
           "editorMode": "code",
           "expr": "sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",method=~\"${method:regex}\",status=~\"${status:raw}\"}[$__range]))",
           "refId": "A",
-          "instant": false
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -312,7 +312,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
@@ -376,7 +376,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "horizontal",
         "reduceOptions": {
@@ -447,7 +447,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "horizontal",
         "reduceOptions": {
@@ -512,7 +512,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "horizontal",
         "reduceOptions": {
@@ -548,7 +548,7 @@
           },
           "editorMode": "code",
           "refId": "A",
-          "instant": false,
+          "instant": true,
           "expr": "(sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",method=~\"${method:regex}\",status=~\"5..\"}[$__rate_interval])) or (0 * sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",method=~\"${method:regex}\"}[$__rate_interval])))) / sum (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",method=~\"${method:regex}\"}[$__rate_interval]))"
         }
       ],
@@ -583,7 +583,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {

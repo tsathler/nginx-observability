@@ -412,6 +412,10 @@ def verify_dashboard_and_datasources():
         # series made category bars render "No numeric fields found".
         assert not any(item.get("id") == "seriesToRows" for panel in panels for item in panel.get("transformations", [])),             f"{uid} uses seriesToRows, which breaks single-series results"
         verify_server_scope(dashboard)
+        # Range queries reduced with lastNotNull kept showing the last value from before an outage.
+        stale = [panel["title"] for panel in panels if panel.get("type") == "stat"
+                 and not all(target.get("instant") for target in panel.get("targets", []))]
+        assert not stale, f"{uid} stat panels must use instant queries: {stale}"
         # `or vector(0)` turned a missing exporter into a healthy-looking zero.
         assert not any("vector(0)" in target.get("expr", "") for panel in panels for target in panel.get("targets", [])),             f"{uid} masks missing data as zero with vector(0)"
         if uid == "nginx-overview":
@@ -695,6 +699,11 @@ def verify_security_dashboard(dashboard):
         assert "rate(" in panel["targets"][0]["expr"], f"{panel['title']} is not a current rate"
     assert "period total" in panels["429 responses (period total, estimated)"]["title"]
     assert "increase(" in panels["429 responses (period total, estimated)"]["targets"][0]["expr"]
+    for title in ("403 responses / second (current rate)", "404 responses / second (current rate)",
+                  "5xx responses / second (current rate)"):
+        expr = panels[title]["targets"][0]["expr"]
+        assert "or (0 * sum(rate(nginx_http_response_count_total" in expr, f"{title} must show 0 while traffic exists"
+        assert prom_query(grafana_query_expression(expr)), f"{title} returned no value although traffic is collected"
     parse_panel = panels["Exporter parse errors (period)"]
     assert "increase(" in parse_panel["targets"][0]["expr"] and "vector(0)" not in parse_panel["targets"][0]["expr"]
     metric_series = prom_query("nginx_http_response_count_total")

@@ -353,7 +353,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # Limits exist only while the exporter reports traffic; its outage is signalled by
+        # exporter_unavailable, so missing data here is not a second alert.
+        noDataState: OK
         execErrState: Error
         for: 30s
         labels: {severity: warning, component: http}
@@ -386,7 +388,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # Limits exist only while the exporter reports traffic; its outage is signalled by
+        # exporter_unavailable, so missing data here is not a second alert.
+        noDataState: OK
         execErrState: Error
         for: 15s
         labels: {severity: critical, component: http}
@@ -419,7 +423,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # Limits exist only while the exporter reports traffic; its outage is signalled by
+        # exporter_unavailable, so missing data here is not a second alert.
+        noDataState: OK
         execErrState: Error
         for: 2m
         labels: {severity: warning, component: http}
@@ -452,7 +458,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # Limits exist only while the exporter reports traffic; its outage is signalled by
+        # exporter_unavailable, so missing data here is not a second alert.
+        noDataState: OK
         execErrState: Error
         for: 1m
         labels: {severity: critical, component: http}

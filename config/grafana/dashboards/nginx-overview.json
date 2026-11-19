@@ -874,10 +874,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95,sum by (app,le) (rate(nginx_http_response_time_seconds_hist_bucket{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95,sum by (server,app,le) (rate(nginx_http_response_time_seconds_hist_bucket{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))",
           "refId": "A",
           "instant": false,
-          "legendFormat": "{{app}}"
+          "legendFormat": "{{app}} ({{server}})"
         }
       ],
       "fieldConfig": {
@@ -947,10 +947,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or on (app) (0 * sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
+          "expr": "(sum by (server, app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__rate_interval])) or on (server, app) (0 * sum by (server, app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval])))) / sum by (server, app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
-          "legendFormat": "{{app}}"
+          "legendFormat": "{{app}} ({{server}})"
         }
       ],
       "fieldConfig": {

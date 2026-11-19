@@ -68,3 +68,21 @@ Os logs das aplicações publicadas contêm IPs de usuários reais. A minimizaç
 - Métricas: `remote_write` do Alloy para o Prometheus ou métricas derivadas dos logs; o `nginxlog-exporter` atual roda ao lado do Nginx e não serve a coleta remota como está.
 - Dimensionamento de disco e retenção para N servidores.
 - Inventário dos servidores e aplicações a monitorar.
+
+## Ensaio com segundo servidor simulado (`lab2`) — 2026-11-19
+
+O perfil Compose `lab2` (desligado por padrão; `docker compose --profile lab2 up -d`) sobe um segundo "servidor" com Nginx, três apps, gerador de tráfego, exporter e um **Alloy que envia** logs ao Loki e métricas ao Prometheus (`remote_write`, rótulo `server="lab2"`), ensaiando o modelo de push deste marco. O Prometheus passou a aceitar gravações remotas (`--web.enable-remote-write-receiver`); no Marco 04 isso fica atrás do proxy com TLS e autenticação.
+
+Resultado do ensaio:
+
+- As métricas e os logs do `lab2` chegaram com `server="lab2"`; os limites de alerta para `lab2/app-a|b|c` foram criados automaticamente pelos padrões, sem editar regras.
+- Um cenário de degradação no `lab2` disparou "Elevated/Critical HTTP 5xx ratio" **apenas** para `lab2` (15–24% de 5xx), sem afetar o `lab`. Ao desligar o `lab2`, nenhum alerta ficou preso.
+- A variável Server mostrou `lab` e `lab2`; com "All", a faixa de saúde exibiu os 12 componentes identificados por servidor ([captura](screenshots/multi-server-overview.jpg)).
+- Corrigido durante o ensaio: "P95 by application" e "5xx share by application" agrupavam só por app, misturando servidores; agora agrupam por servidor e app ("app-a (lab2)"). O alerta "Application unavailable" passou a cruzar app e Nginx por `server` e `instance`.
+- Lição de configuração: no Alloy, `scrape_timeout` padrão (10 s) não pode exceder `scrape_interval`; com 5 s é preciso declarar `scrape_timeout` menor.
+
+Pendências para o Marco 04 vistas no ensaio:
+
+- "Requests by application" e "Applications with the most 5xx" ainda somam a mesma app de servidores diferentes.
+- As estatísticas P50/P95/P99 do Application Detail agregam servidores quando Server = All.
+- Com muitos servidores, a faixa de saúde fica com rótulos pequenos; considerar uma linha por servidor ou repetição do painel por servidor.

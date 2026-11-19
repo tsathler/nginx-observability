@@ -33,7 +33,7 @@ groups:
             relativeTimeRange: {from: 60, to: 0}
             model:
               datasource: {type: prometheus, uid: prometheus}
-              expr: '((up{job="app-health"} == bool 0) and on(instance) (max by (instance) (up{job="nginx-health"}) == 1))'
+              expr: '((up{job="app-health"} == bool 0) and on(server, instance) (max by (server, instance) (up{job="nginx-health"}) == 1))'
               instant: true
               range: false
               refId: A

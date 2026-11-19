@@ -114,7 +114,15 @@ O exporter não faz backfill: requisições durante sua indisponibilidade podem 
 
 ## Capturas
 
-Capturas reais da revisão visual de 2026-11-17 estão em [`docs/screenshots/`](docs/screenshots/) (Application Detail, Live Logs e Live tail no Explore); elas antecedem a faixa de saúde e as cores por limite adicionadas depois. Não usamos respostas de API como substituto para capturas visuais.
+Capturas reais dos quatro dashboards (2026-11-19, `Server = lab`, tráfego sintético do laboratório):
+
+| Overview | Application Detail |
+|---|---|
+| ![Overview com faixa de saúde, alertas ativos e indicadores](docs/screenshots/overview.jpg) | ![Application Detail da app-a](docs/screenshots/application-detail.jpg) |
+| **Live Logs** | **Security** |
+| ![Live Logs com eventos recentes](docs/screenshots/live-logs.jpg) | ![Security com indicadores de 403/404/5xx](docs/screenshots/security.jpg) |
+
+Capturas anteriores (2026-11-17), incluindo o filtro de path e o Live tail no Explore, continuam em [`docs/screenshots/`](docs/screenshots/). Não usamos respostas de API como substituto para capturas visuais.
 
 ## Licença
 

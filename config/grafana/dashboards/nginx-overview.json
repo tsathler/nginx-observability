@@ -121,7 +121,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Scrape state of each application health check and of the collection pipeline (nginx-health, nginx-access exporter, Alloy, Loki). DOWN means the metrics on this dashboard may be incomplete or stale; No samples means Prometheus itself is not answering.",
+      "description": "Scrape state of each application health check and of the collection pipeline (lab: nginx-health and the nginx-access exporter; every environment: the Alloy agent of each server and Loki). DOWN means the metrics on this dashboard may be incomplete or stale; No samples means Prometheus itself is not answering.",
       "targets": [
         {
           "datasource": {

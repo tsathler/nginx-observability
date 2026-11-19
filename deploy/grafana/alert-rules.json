@@ -516,14 +516,14 @@
           ],
           "dashboardUid": "",
           "panelId": 0,
-          "noDataState": "NoData",
+          "noDataState": "OK",
           "execErrState": "Error",
           "for": "30s",
           "annotations": {
-            "action": "Inspect exporter parse errors and compare the configured log format with the generated file.",
-            "cause": "The Nginx access log format no longer matches the exporter configuration.",
-            "description": "The exporter has reported malformed access log entries during the last five minutes.",
-            "summary": "Exporter parse errors detected for {{ $labels.app }} on {{ $labels.server }}"
+            "action": "Compare the Nginx log_format with the expected JSON fields and inspect the collector logs.",
+            "cause": "The Nginx access log format no longer matches the format the collector expects.",
+            "description": "The log collector (exporter or Alloy agent) reported malformed access log entries during the last five minutes.",
+            "summary": "Access log parse errors detected for {{ $labels.app }} on {{ $labels.server }}"
           },
           "labels": {
             "component": "exporter",

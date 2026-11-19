@@ -97,8 +97,4 @@ Resultado do ensaio:
 - Corrigido durante o ensaio: "P95 by application" e "5xx share by application" agrupavam só por app, misturando servidores; agora agrupam por servidor e app ("app-a (lab2)"). O alerta "Application unavailable" passou a cruzar app e Nginx por `server` e `instance`.
 - Lição de configuração: no Alloy, `scrape_timeout` padrão (10 s) não pode exceder `scrape_interval`; com 5 s é preciso declarar `scrape_timeout` menor.
 
-Pendências para o Marco 04 vistas no ensaio:
-
-- "Requests by application" e "Applications with the most 5xx" ainda somam a mesma app de servidores diferentes.
-- As estatísticas P50/P95/P99 do Application Detail agregam servidores quando Server = All.
-- Com muitos servidores, a faixa de saúde fica com rótulos pequenos; considerar uma linha por servidor ou repetição do painel por servidor.
+Pendências para o Marco 04 vistas no ensaio — **resolvidas em 2026-11-19**: "Requests by application", "Applications with the most 5xx", as estatísticas P50/P95/P99, as tendências e tabelas do Security passaram a separar servidor e app ("app-a (lab2)"); as tabelas de log ganharam a coluna Server; a faixa de saúde mantém tamanho mínimo por componente em vez de encolher os rótulos.

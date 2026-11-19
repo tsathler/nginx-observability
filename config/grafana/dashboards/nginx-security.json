@@ -556,10 +556,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status,app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"403|404|429\"}[$__rate_interval]))",
+          "expr": "sum by (server,app,status) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"403|404|429\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
-          "legendFormat": "{{app}} / {{status}}"
+          "legendFormat": "{{app}} ({{server}}) / {{status}}"
         }
       ],
       "fieldConfig": {
@@ -621,7 +621,7 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short",
+          "unit": "none",
           "decimals": 0
         },
         "overrides": []
@@ -678,10 +678,10 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (app,path) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" | remote_addr=~`${source_ip:raw}` [$__range]))",
+          "expr": "sum by (server,app,path) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | path=~\".*(\\\\.env|\\\\.git|wp-admin|wp-login\\\\.php|phpmyadmin|/etc/passwd).*\" | remote_addr=~`${source_ip:raw}` [$__range]))",
           "queryType": "instant",
           "refId": "A",
-          "legendFormat": "{{app}} {{path}}"
+          "legendFormat": "{{server}} / {{app}} {{path}}"
         }
       ],
       "fieldConfig": {
@@ -720,16 +720,18 @@
               "Time": true
             },
             "indexByName": {
-              "app": 0,
-              "path": 1,
-              "Value": 2,
-              "Value #A": 2
+              "app": 1,
+              "path": 2,
+              "Value": 3,
+              "Value #A": 3,
+              "server": 0
             },
             "renameByName": {
               "app": "App",
               "path": "Path",
               "Value": "Events",
-              "Value #A": "Events"
+              "Value #A": "Events",
+              "server": "Server"
             }
           }
         }
@@ -756,10 +758,10 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (app,remote_addr) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~`${source_ip:raw}` [$__range])) >= 2)",
+          "expr": "topk(10, sum by (server,app,remote_addr) (count_over_time({job=\"nginx\",server=~\"$server\",app=~\"$app\"} | status=~\"4..|5..\" | remote_addr=~`${source_ip:raw}` [$__range])) >= 2)",
           "queryType": "instant",
           "refId": "A",
-          "legendFormat": "{{app}} / {{remote_addr}}"
+          "legendFormat": "{{server}} / {{app}} / {{remote_addr}}"
         }
       ],
       "fieldConfig": {
@@ -798,16 +800,18 @@
               "Time": true
             },
             "indexByName": {
-              "app": 0,
-              "remote_addr": 1,
-              "Value": 2,
-              "Value #A": 2
+              "app": 1,
+              "remote_addr": 2,
+              "Value": 3,
+              "Value #A": 3,
+              "server": 0
             },
             "renameByName": {
               "app": "App",
               "remote_addr": "Source IP",
               "Value": "4xx/5xx events",
-              "Value #A": "4xx/5xx events"
+              "Value #A": "4xx/5xx events",
+              "server": "Server"
             }
           }
         }
@@ -834,10 +838,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
+          "expr": "sum by (server,app) (rate(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"4..|5..\"}[$__rate_interval]))",
           "refId": "A",
           "instant": false,
-          "legendFormat": "{{app}}"
+          "legendFormat": "{{app}} ({{server}})"
         }
       ],
       "fieldConfig": {
@@ -999,6 +1003,21 @@
           }
         },
         {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "path": "server",
+                "alias": "server"
+              }
+            ],
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
           "id": "convertFieldType",
           "options": {
             "conversions": [
@@ -1050,19 +1069,21 @@
             },
             "indexByName": {
               "Time": 0,
-              "app": 1,
-              "status": 2,
-              "method": 3,
-              "path": 4,
-              "remote_addr": 5,
-              "Duration (ms)": 6
+              "app": 2,
+              "status": 3,
+              "method": 4,
+              "path": 5,
+              "remote_addr": 6,
+              "Duration (ms)": 7,
+              "server": 1
             },
             "renameByName": {
               "app": "App",
               "status": "Status",
               "method": "Method",
               "path": "Path",
-              "remote_addr": "Source IP"
+              "remote_addr": "Source IP",
+              "server": "Server"
             }
           }
         }

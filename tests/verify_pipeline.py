@@ -423,9 +423,10 @@ def verify_dashboard_and_datasources():
             for title in ("Requests by application (period total)", "Applications with the most 5xx (period total)"):
                 bar = by_title[title]
                 assert bar.get("type") == "barchart", f"{title} is not a bar chart"
-                assert bar.get("options", {}).get("xField") == "app", f"{title} does not use the app label as category"
-                assert bar["targets"][0].get("format") == "table", f"{title} must return one table frame with an app column"
-                assert " by (app) " in bar["targets"][0]["expr"], f"{title} query does not group by app"
+                assert bar.get("options", {}).get("xField") == "target", f"{title} does not use the app (server) label as category"
+                assert bar["targets"][0].get("format") == "table", f"{title} must return one table frame with a category column"
+                assert " by (server, app) " in bar["targets"][0]["expr"], f"{title} query must not merge one app across servers"
+                assert 'label_join(' in bar["targets"][0]["expr"], f"{title} must build an app (server) category"
                 assert "increase(" in bar["targets"][0]["expr"], f"{title} no longer uses the counter increase estimate"
                 assert bar["fieldConfig"]["defaults"].get("decimals") == 0, f"{title} should display whole estimated requests"
                 assert "extrapolates" in bar.get("description", ""), f"{title} does not document increase() semantics"
@@ -553,9 +554,9 @@ def verify_live_logs(dashboard):
     expression = target["expr"]
     assert panel["type"] == "table"
     assert target["queryType"] == "range" and target.get("maxLines") == 500
-    expected_columns = {"Time", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
+    expected_columns = {"Time", "server", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
     transformations = panel.get("transformations", [])
-    assert [item["id"] for item in transformations] == ["extractFields", "convertFieldType", "calculateField", "organize"]
+    assert [item["id"] for item in transformations] == ["extractFields", "extractFields", "convertFieldType", "calculateField", "organize"]
     organize = transformations[-1]["options"]
     assert set(organize["indexByName"]) == expected_columns
     assert organize["excludeByName"].get("Line") is True
@@ -723,12 +724,13 @@ def verify_security_dashboard(dashboard):
         assert table["type"] == "table", f"{title} must show what each row is, not bars labelled only by app"
         organize = next(item for item in table["transformations"] if item["id"] == "organize")["options"]
         assert column in organize["indexByName"] and "app" in organize["indexByName"], (title, organize)
+        assert organize["indexByName"].get("server") == 0 and organize["renameByName"].get("server") == "Server", (title, organize)
 
     origins = panels["Origins with repeated 4xx / 5xx (by app)"]
     origin_expr = origins["targets"][0]["expr"]
     assert "$__range" in origin_expr, "Repeated origins must use the dashboard-selected time range"
     assert "topk(10," in origin_expr and "status=~\"4..|5..\"" in origin_expr
-    assert "remote_addr=~`${source_ip:raw}`" in origin_expr and "sum by (app,remote_addr)" in origin_expr
+    assert "remote_addr=~`${source_ip:raw}`" in origin_expr and "sum by (server,app,remote_addr)" in origin_expr
     assert " >= 2)" in origin_expr, "Origins panel does not require repeated errors"
     assert "ephemeral query result dimension" in origins["description"]
 
@@ -737,9 +739,9 @@ def verify_security_dashboard(dashboard):
     assert recent["targets"][0].get("maxLines") == 500
     assert recent["options"].get("sortBy") == [{"displayName": "Time", "desc": True}]
     assert [item["id"] for item in recent["transformations"]] == [
-        "extractFields", "convertFieldType", "calculateField", "organize"]
+        "extractFields", "extractFields", "convertFieldType", "calculateField", "organize"]
     organize = recent["transformations"][-1]["options"]
-    columns = {"Time", "app", "status", "method", "path", "remote_addr", "Duration (ms)"}
+    columns = {"Time", "server", "app", "status", "method", "path", "remote_addr", "Duration (ms)"}
     assert set(organize["indexByName"]) == columns
     hidden_fields = {"Line", "labels", "tsNs", "labelTypes", "id", "time", "request_time", "remote_user",
                      "time_local", "request", "body_bytes_sent", "http_referer", "http_user_agent"}
@@ -883,6 +885,8 @@ def verify_dashboard_queries(dashboards):
                     ):
                         apps = {item["metric"].get("app") for item in series}
                         assert apps == {"app-a", "app-b", "app-c"}, (panel["title"], apps, series)
+                        assert all(item["metric"].get("target") == f'{item["metric"]["app"]} ({item["metric"]["server"]})'
+                                   for item in series), (panel["title"], series)
                     checked["prometheus"] += 1
                 elif ds_type == "loki":
                     is_metric = bool(re.search(r"\]\s*\)\s*$", expr)) or "topk(" in expr or "max_over_time(" in expr
@@ -905,17 +909,19 @@ def verify_overview_bar_categories(dashboard):
     for title in titles:
         panel = next(item for item in dashboard["panels"] if item["title"] == title)
         expression = grafana_query_expression(panel["targets"][0]["expr"])
-        frames = grafana_prom_frames(expression)
+        frames = grafana_prom_frames(expression, panel["targets"][0]["legendFormat"])
         labels = set()
         series_names = set()
         for frame in frames:
             fields = frame["schema"]["fields"]
             value_field = next(field for field in fields if field["name"] == "Value")
-            if "app" in value_field.get("labels", {}):
-                labels.add(value_field["labels"]["app"])
+            value_labels = value_field.get("labels", {})
+            if "app" in value_labels:
+                labels.add(value_labels["app"])
+                assert value_labels.get("target") == f'{value_labels["app"]} ({value_labels["server"]})', value_labels
                 series_names.add(value_field.get("config", {}).get("displayNameFromDS"))
         assert labels == expected, f"{title}: Grafana query frame labels do not identify every app: {labels}"
-        assert series_names == expected, f"{title}: Grafana series names are not one name per app: {series_names}"
+        assert {name.split(" (")[0] for name in series_names} == expected and all(name.endswith(")") for name in series_names),             f"{title}: Grafana series names are not 'app (server)': {series_names}"
         selected = grafana_prom_frames(expression.replace('app=~".*"', 'app=~"app-b"'))
         selected_apps = {
             field.get("labels", {}).get("app")
@@ -970,8 +976,8 @@ def verify_application_detail(dashboard):
     for title in ("P50 latency", "P95 latency", "P99 latency"):
         percentile = panels[title]
         target = percentile["targets"][0]
-        assert "sum by (le,app)" in target["expr"], f"{title} must preserve application series"
-        assert target.get("legendFormat") == "{{app}}", f"{title} must label values by app"
+        assert "sum by (le,server,app)" in target["expr"], f"{title} must keep one series per server and app"
+        assert target.get("legendFormat") == "{{app}} ({{server}})", f"{title} must label values by app and server"
         assert target.get("instant") is True, f"{title} must show one current value per app"
         assert percentile["options"].get("textMode") == "value_and_name", f"{title} should show each app name beside the value"
         assert percentile["options"].get("orientation") == "horizontal", f"{title} should align the single-app name and value horizontally"
@@ -981,7 +987,7 @@ def verify_application_detail(dashboard):
         assert app_labels >= {"app-a", "app-b", "app-c"}, f"{title} has unlabeled/missing apps: {app_labels}"
         display_names = {field.get("config", {}).get("displayNameFromDS") for frame in frames
                          for field in frame["schema"]["fields"] if field["name"] == "Value"}
-        assert display_names >= {"app-a", "app-b", "app-c"}, f"{title} Grafana series names do not identify each app: {display_names}"
+        assert {name.split(" (")[0] for name in display_names} >= {"app-a", "app-b", "app-c"}, f"{title} Grafana series names do not identify each app: {display_names}"
         selected = grafana_prom_frames(grafana_query_expression(target["expr"]).replace(
             'app=~".*"', 'app=~"app-a"').replace('method=~".*"', 'method=~"GET"').replace(
                 'status=~".*"', 'status=~"2.."'), target["legendFormat"])
@@ -1058,17 +1064,18 @@ def verify_application_detail(dashboard):
     assert recent.get("type") == "table", "Recent requests should be a structured table"
     assert recent["targets"][0].get("queryType") == "range"
     transform_ids = [item.get("id") for item in recent.get("transformations", [])]
-    assert transform_ids == ["extractFields", "convertFieldType", "calculateField", "organize"], transform_ids
+    assert transform_ids == ["extractFields", "extractFields", "convertFieldType", "calculateField", "organize"], transform_ids
     extract = next((item for item in recent.get("transformations", []) if item.get("id") == "extractFields"), None)
     assert extract and extract.get("options", {}).get("source") == "Line", "Recent request table must parse fields from the raw event line"
-    conversion = recent["transformations"][1]["options"]["conversions"]
+    assert recent["transformations"][1]["options"].get("jsonPaths") == [{"path": "server", "alias": "server"}], "Recent requests must show the server label"
+    conversion = recent["transformations"][2]["options"]["conversions"]
     assert conversion == [{"targetField": "request_time", "destinationType": "number"}], conversion
-    calculation = recent["transformations"][2]["options"]
+    calculation = recent["transformations"][3]["options"]
     assert calculation["mode"] == "binary" and calculation["binary"]["operator"] == "*"
     assert calculation["binary"]["right"] == {"fixed": "1000"} and calculation["alias"] == "Duration (ms)"
     organize = next((item for item in recent.get("transformations", []) if item.get("id") == "organize"), None)
-    assert organize, "Recent request table must organize the seven requested columns"
-    expected_columns = {"Time", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
+    assert organize, "Recent request table must organize the requested columns"
+    expected_columns = {"Time", "server", "app", "method", "status", "path", "Duration (ms)", "remote_addr"}
     assert set(organize["options"]["indexByName"]) == expected_columns
     assert organize["options"]["excludeByName"].get("Line") is True, "Raw JSON should not be a visible table column"
     duration_override = next(item for item in recent["fieldConfig"]["overrides"] if item["matcher"]["options"] == "Duration (ms)")

@@ -14,6 +14,7 @@ All notable changes to Nginx Observability are documented here.
 
 ### Changed
 
+- Dashboards keep servers apart when Server = All: "Requests by application", "Applications with the most 5xx" (now top 5), the P50/P95/P99 stats, the Security trends and tables show one entry per app and server ("app-a (lab2)"); log tables gain a Server column and drop the duplicate raw `time` column; count bars use plain integers instead of repeated "1 K" ticks; the health strip keeps a minimum tile size instead of shrinking labels.
 - Grafana upgraded from 12.4.15 to 13.2.2, the version of the organization's existing Grafana targeted by Marco 04. Dashboards, datasources and alert rules load unchanged; pipeline and alerting suites pass.
 - Every Prometheus target and Loki stream carries a `server` label (`lab` in this lab), and all four dashboards have a Server variable applied to every query and Explore link.
 - Alert limits are defaults applied to every (server, app) pair with traffic, with optional per-pair overrides; a new application or server gets 5xx and latency alerts without editing the rules. HTTP alerts group by server and app.

@@ -4,7 +4,17 @@ All notable changes to Nginx Observability are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `install_grafana.py --lang pt-BR|both`: Brazilian Portuguese dashboards and alert texts from one catalog (`deploy/grafana/i18n/pt-BR.json`), so the English dashboards stay the single source. With `both`, each dashboard links to its other-language twin keeping variables and time range; alerts are installed once, in Portuguese by default when Portuguese is chosen.
+- `install_grafana.py --carousel`: one pinned Application Detail page per (server, app) with traffic, in a "Carousel" subfolder, and a Grafana playlist that rotates Overview and those pages for a TV / kiosk screen (`--carousel-interval`, `--carousel-apps`). Pages of pairs that stopped reporting are removed on the next run.
+- Per-server alert limits on the central server: Prometheus also loads `deploy/central/local-rules/*.yml` (git-ignored; `thresholds-override.yml.example` shows the override records), so a slower application such as a ticketing system gets its own P95 or 5xx limits without changing the repository.
+- `tests/verify_grafana_install.py`: offline checks for translation coverage, language links, translated table columns, lab-only rule filtering and carousel pages.
+
 ### Fixed
+
+- The installer no longer installs the three lab-only rules (application health endpoint, Nginx health endpoint, nginxlog-exporter) into an existing Grafana, where they sat in "No data"; `--include-lab-rules` keeps them. "Nginx access log parse errors" treats missing data as OK, because Alloy agents create the counter only on the first malformed line, and its texts name the collector instead of the exporter; the Security panel is now "Log parse errors (period)" and shows 0 while traffic is collected without errors.
+- `install_grafana.py --dry-run` prints "would create / would update" instead of reading as if the changes had been made.
 
 - Health stats no longer turn missing data into a healthy-looking zero: `or vector(0)` was removed, and zero is shown only while the traffic counter has samples. Exporter parse errors now count the selected period instead of a lifetime total.
 - Stat and graph colors follow the alert limits (5xx share 5% / 15%, P95 0.5 s / 1 s); values without an alert limit use a neutral color.

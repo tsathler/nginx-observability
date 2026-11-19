@@ -7,21 +7,27 @@ the Grafana container and its own provisioning is left alone.
 What it creates or updates (idempotent; run again after a git pull):
   * datasources "Nginx Observability - Prometheus" / "- Loki" with their own UIDs, so they
     never collide with datasources the Grafana already has;
-  * folder "Nginx Observability" with the four dashboards (datasource UIDs rewritten);
-  * alert rule group(s) from deploy/grafana/alert-rules.json in that folder.
+  * folder "Nginx Observability" with the four dashboards (datasource UIDs rewritten), in
+    English, Brazilian Portuguese (--lang pt-BR) or both with a language switch (--lang both);
+  * alert rule group(s) from deploy/grafana/alert-rules.json in that folder, without the
+    lab-only rules that need the lab's health endpoints and exporter;
+  * optionally (--carousel) one Application Detail page per (server, app) and a playlist that
+    rotates through them, for a TV / kiosk screen.
 It never changes contact points or notification policies: route the rules' labels
 (severity, component, server, app) in the existing policy tree.
 
 Authentication: a service account token with the Admin role in GRAFANA_TOKEN.
 
 Example (on the central server):
-  GRAFANA_TOKEN=... python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000
+  GRAFANA_TOKEN=... python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000 --lang both --carousel
 """
 import argparse
 import copy
+import hashlib
 import json
 import os
 import pathlib
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -30,7 +36,22 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DASHBOARDS = ROOT / "config" / "grafana" / "dashboards"
 ALERT_BUNDLE = ROOT / "deploy" / "grafana" / "alert-rules.json"
+CATALOGS = ROOT / "deploy" / "grafana" / "i18n"
 LAB_UIDS = {"prometheus": "prometheus", "loki": "loki"}  # datasource UIDs used in the repo
+DASHBOARD_UIDS = ("nginx-overview", "nginx-application-detail", "nginx-live-logs", "nginx-security")
+APP_DETAIL_UID = "nginx-application-detail"
+OVERVIEW_UID = "nginx-overview"
+# Rules that watch the lab's own health endpoints and nginxlog-exporter. Monitored servers use
+# the Alloy agent instead, where "Monitored server agent stopped sending" covers the gap.
+LAB_ONLY_RULES = {"app_unavailable", "nginx_unavailable", "exporter_unavailable"}
+CAROUSEL_TAG = "nginx-carousel"
+LANGUAGES = {"en": "English", "pt-BR": "Português (BR)"}
+LANG_SUFFIX = {"en": "", "pt-BR": "-pt-br"}
+
+# Dashboard keys whose string value is shown to people (translated when a catalog has them).
+TEXT_KEYS = {"title", "description", "label", "noValue", "axisLabel", "tooltip", "content", "displayName", "text"}
+# Raw log fields that tables show under their own name unless a translation renames them.
+RAW_FIELDS = ("body_bytes_sent",)
 
 
 class Grafana:
@@ -59,6 +80,12 @@ class Grafana:
             detail = error.read().decode(errors="replace")[:500]
             raise SystemExit(f"Grafana API {method} {path} failed: HTTP {error.code}: {detail}")
 
+    def did(self, done, planned):
+        """Past tense for real runs, "would ..." for --dry-run, so a rehearsal never reads as done."""
+        return planned if self.dry_run else done
+
+
+# --- datasources -------------------------------------------------------------------------
 
 def rewrite_datasources(value, uids):
     """Point every datasource reference (objects, alert queries, Explore links) at the new UIDs."""
@@ -89,24 +116,158 @@ def ensure_datasource(grafana, kind, uid, name, url):
     current = grafana.call("GET", f"/api/datasources/uid/{uid}", allow_404=True)
     if current is None:
         grafana.call("POST", "/api/datasources", body)
-        print(f"  created datasource {name} ({uid}) -> {url}")
+        print(f"  {grafana.did('created', 'would create')} datasource {name} ({uid}) -> {url}")
     else:
         grafana.call("PUT", f"/api/datasources/uid/{uid}", {**current, **body})
-        print(f"  updated datasource {name} ({uid}) -> {url}")
+        print(f"  {grafana.did('updated', 'would update')} datasource {name} ({uid}) -> {url}")
 
 
-def ensure_folder(grafana, uid, title):
+def ensure_folder(grafana, uid, title, parent_uid=None):
     if grafana.call("GET", f"/api/folders/{uid}", allow_404=True) is None:
-        grafana.call("POST", "/api/folders", {"uid": uid, "title": title})
-        print(f"  created folder {title} ({uid})")
+        body = {"uid": uid, "title": title}
+        if parent_uid:
+            body["parentUid"] = parent_uid
+        grafana.call("POST", "/api/folders", body)
+        print(f"  {grafana.did('created', 'would create')} folder {title} ({uid})")
     else:
         print(f"  folder {title} ({uid}) exists")
 
 
-def install_dashboards(grafana, folder_uid, uids):
+# --- translation -------------------------------------------------------------------------
+
+def load_catalog(lang):
+    if lang == "en":
+        return {}
+    path = CATALOGS / f"{lang}.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def dashboard_strings(dashboard):
+    """Every human-readable string the translation step looks at, for catalog coverage checks."""
+    found = set()
+
+    def walk(value):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in TEXT_KEYS and isinstance(item, str):
+                    found.add(item)
+            if value.get("id") == "organize" and isinstance(value.get("options"), dict):
+                renames = value["options"].get("renameByName", {})
+                found.update(name for name in renames.values() if isinstance(name, str))
+                found.update(field for field in value["options"].get("indexByName", {}) if field not in renames)
+                excluded = value["options"].get("excludeByName", {})
+                if "Line" in excluded:  # tables built from parsed Loki lines
+                    found.update(field for field in RAW_FIELDS if not excluded.get(field))
+            for item in value.values():
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(dashboard)
+    return {text for text in found if needs_translation(text)}
+
+
+def needs_translation(text):
+    """Skip values that are data rather than prose: status codes, methods, variables, field ids."""
+    if not re.search(r"[A-Za-z]{2}", text):
+        return False
+    return not re.fullmatch(r"(\dxx|GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|\$\{?\w+.*|server|app|method|status|path"
+                            r"|remote_addr|request_time|Value( #A)?)", text)
+
+
+def translate_dashboard(dashboard, catalog):
+    """Translate titles, descriptions, labels and table columns. Field names used by queries and
+    transformations stay as they are; only what people read changes."""
+    if not catalog:
+        return dashboard
+
+    def tr(text):
+        return catalog.get(text, text)
+
+    def walk(value):
+        if isinstance(value, dict):
+            result = {}
+            for key, item in value.items():
+                if key in TEXT_KEYS and isinstance(item, str):
+                    result[key] = tr(item)
+                elif key == "matcher" and isinstance(item, dict) and item.get("id") == "byName":
+                    # Overrides match the displayed column name, which is translated below.
+                    result[key] = {**item, "options": tr(item.get("options", ""))}
+                elif key == "sortBy" and isinstance(item, list):
+                    result[key] = [{**entry, "displayName": tr(entry.get("displayName", ""))}
+                                   if isinstance(entry, dict) else entry for entry in item]
+                else:
+                    result[key] = walk(item)
+            if result.get("id") == "organize" and isinstance(result.get("options"), dict):
+                options = result["options"]
+                renames = {key: tr(name) for key, name in options.get("renameByName", {}).items()}
+                # Columns shown under their own field name (Time, the calculated duration) are
+                # renamed here, after every transformation that refers to them.
+                for field in options.get("indexByName", {}):
+                    if field not in renames and field in catalog:
+                        renames[field] = catalog[field]
+                if "Line" in options.get("excludeByName", {}):
+                    for field in RAW_FIELDS:
+                        if not options["excludeByName"].get(field) and field in catalog:
+                            renames.setdefault(field, catalog[field])
+                options["renameByName"] = renames
+            return result
+        if isinstance(value, list):
+            return [walk(item) for item in value]
+        return value
+
+    return walk(dashboard)
+
+
+def localize_uids(value, lang):
+    """Point links and alert annotations at the dashboards of the chosen language."""
+    suffix = LANG_SUFFIX[lang]
+    if not suffix:
+        return value
+    pattern = re.compile(r"/d/(" + "|".join(DASHBOARD_UIDS) + r")(?=[/?\"'&]|$)")
+
+    def walk(item):
+        if isinstance(item, dict):
+            return {key: (f"{child}{suffix}" if key in ("uid", "__dashboardUid__") and child in DASHBOARD_UIDS else walk(child))
+                    for key, child in item.items()}
+        if isinstance(item, list):
+            return [walk(child) for child in item]
+        if isinstance(item, str):
+            return pattern.sub(lambda match: f"/d/{match.group(1)}{suffix}", item)
+        return item
+
+    return walk(value)
+
+
+def language_link(base_uid, target_lang):
+    return {
+        "title": LANGUAGES[target_lang], "type": "link", "icon": "info",
+        "url": f"/d/{base_uid}{LANG_SUFFIX[target_lang]}", "includeVars": True, "keepTime": True,
+        "targetBlank": False, "asDropdown": False, "tags": [],
+        "tooltip": "Abrir esta página em português" if target_lang == "pt-BR" else "Open this page in English",
+    }
+
+
+def build_dashboards(lang, uids):
+    """Return the dashboards to install for --lang en / pt-BR / both."""
+    languages = ["en", "pt-BR"] if lang == "both" else [lang]
+    built = []
     for path in sorted(DASHBOARDS.glob("*.json")):
-        dashboard = rewrite_datasources(json.loads(path.read_text(encoding="utf-8")), uids)
-        dashboard.pop("id", None)
+        source = rewrite_datasources(json.loads(path.read_text(encoding="utf-8")), uids)
+        source.pop("id", None)
+        base_uid = source["uid"]
+        for language in languages:
+            dashboard = localize_uids(translate_dashboard(copy.deepcopy(source), load_catalog(language)), language)
+            if lang == "both":
+                other = "pt-BR" if language == "en" else "en"
+                dashboard.setdefault("links", []).append(language_link(base_uid, other))
+            built.append(dashboard)
+    return built
+
+
+def install_dashboards(grafana, folder_uid, dashboards):
+    for dashboard in dashboards:
         grafana.call("POST", "/api/dashboards/db", {
             "dashboard": dashboard, "folderUid": folder_uid, "overwrite": True,
             "message": "nginx-observability install_grafana.py",
@@ -114,28 +275,125 @@ def install_dashboards(grafana, folder_uid, uids):
         print(f"  dashboard {dashboard['title']} ({dashboard['uid']})")
 
 
+# --- alerts ------------------------------------------------------------------------------
+
 def seconds(duration):
     units = {"s": 1, "m": 60, "h": 3600}
     return int(duration[:-1]) * units[duration[-1]] if duration[-1] in units else int(duration)
 
 
-def install_alerts(grafana, folder_uid, uids, interval_override):
+def build_alert_groups(uids, folder_uid, alert_lang, include_lab_rules):
+    catalog = load_catalog(alert_lang)
     bundle = json.loads(ALERT_BUNDLE.read_text(encoding="utf-8"))
+    groups = []
     for group in bundle["groups"]:
         rules = []
         for source in group["rules"]:
-            rule = rewrite_datasources(copy.deepcopy(source), uids)
+            if source["uid"] in LAB_ONLY_RULES and not include_lab_rules:
+                continue
+            rule = localize_uids(rewrite_datasources(copy.deepcopy(source), uids), alert_lang)
             # The export repeats the dashboard link (already in the __dashboardUid__/__panelId__
             # annotations) as fields the provisioning API rejects; unlinked rules carry "" and 0.
             rule.pop("dashboardUid", None)
             rule.pop("panelId", None)
+            rule["title"] = catalog.get(rule["title"], rule["title"])
+            rule["annotations"] = {key: catalog.get(text, text) for key, text in rule.get("annotations", {}).items()}
             rule.update({"folderUID": folder_uid, "ruleGroup": group["name"]})
             rules.append(rule)
+        groups.append({**group, "rules": rules})
+    return groups
+
+
+def install_alerts(grafana, folder_uid, groups, interval_override, skipped):
+    for group in groups:
         interval = interval_override or group["interval"]
         grafana.call("PUT", f"/api/v1/provisioning/folder/{folder_uid}/rule-groups/{urllib.parse.quote(group['name'])}",
-                     {"title": group["name"], "folderUid": folder_uid, "interval": seconds(interval), "rules": rules})
-        print(f"  alert group {group['name']}: {len(rules)} rules, every {interval}")
+                     {"title": group["name"], "folderUid": folder_uid, "interval": seconds(interval), "rules": group["rules"]})
+        print(f"  alert group {group['name']}: {len(group['rules'])} rules, every {interval}")
+    if skipped:
+        print(f"  lab-only rules left out (pass --include-lab-rules to keep them): {', '.join(sorted(skipped))}")
 
+
+# --- carousel ----------------------------------------------------------------------------
+
+def carousel_uid(server, app):
+    slug = re.sub(r"[^a-z0-9-]+", "-", f"{server}-{app}".lower()).strip("-")
+    uid = f"nginx-carousel-{slug}"
+    if len(uid) > 40:  # Grafana's UID limit
+        uid = f"nginx-carousel-{slug[:16]}-{hashlib.sha1(slug.encode()).hexdigest()[:8]}"
+    return uid
+
+
+def discover_pairs(grafana, prometheus_uid):
+    """(server, app) pairs with HTTP traffic in the last day, read through the Grafana datasource."""
+    query = urllib.parse.urlencode({"query": "group by (server, app) (max_over_time(nginx_http_response_count_total[1d]))"})
+    answer = grafana.call("GET", f"/api/datasources/proxy/uid/{prometheus_uid}/api/v1/query?{query}", allow_404=True)
+    if answer is None:  # a dry run against a Grafana that does not have the datasource yet
+        print("  datasource not created yet; the real run discovers the (server, app) pairs")
+        return []
+    pairs = {(item["metric"].get("server", ""), item["metric"].get("app", "")) for item in answer.get("data", {}).get("result", [])}
+    return sorted(pair for pair in pairs if all(pair))
+
+
+def carousel_page(template, server, app):
+    page = copy.deepcopy(template)
+    page["uid"] = carousel_uid(server, app)
+    page["title"] = f"{template['title']} - {app} ({server})"
+    page["tags"] = sorted(set(page.get("tags", [])) | {CAROUSEL_TAG})
+    page["refresh"] = "30s"
+    for variable in page.get("templating", {}).get("list", []):
+        if variable.get("name") in ("server", "app"):
+            value = server if variable["name"] == "server" else app
+            variable["current"] = {"selected": True, "text": value, "value": value}
+    return page
+
+
+def install_carousel(grafana, args, dashboards, uids, lang):
+    view_lang = "pt-BR" if lang in ("pt-BR", "both") else "en"
+    suffix = LANG_SUFFIX[view_lang]
+    by_uid = {dashboard["uid"]: dashboard for dashboard in dashboards}
+    template = by_uid[APP_DETAIL_UID + suffix]
+    if args.carousel_apps:
+        pairs = sorted(tuple(item.split("/", 1)) for item in args.carousel_apps.split(",") if "/" in item)
+    else:
+        pairs = discover_pairs(grafana, uids["prometheus"])
+    if not pairs:
+        print("  no (server, app) with traffic yet; pass --carousel-apps server/app,... or run again later")
+        return
+    pt = view_lang == "pt-BR"
+    sub_uid = f"{args.folder_uid}-carousel"
+    ensure_folder(grafana, sub_uid, "Carrossel" if pt else "Carousel", parent_uid=args.folder_uid)
+    wanted = set()
+    for server, app in pairs:
+        page = carousel_page(template, server, app)
+        wanted.add(page["uid"])
+        grafana.call("POST", "/api/dashboards/db", {"dashboard": page, "folderUid": sub_uid, "overwrite": True,
+                                                    "message": "nginx-observability carousel"})
+        print(f"  page {page['title']} ({page['uid']})")
+    # Pages for pairs that no longer report traffic are removed, so the rotation stays current.
+    for hit in grafana.call("GET", f"/api/search?tag={CAROUSEL_TAG}&type=dash-db") or []:
+        if hit.get("uid") not in wanted and hit.get("folderUid") == sub_uid:
+            grafana.call("DELETE", f"/api/dashboards/uid/{hit['uid']}")
+            print(f"  {grafana.did('removed', 'would remove')} stale page {hit.get('title')} ({hit['uid']})")
+
+    name = "Nginx Observability - Carrossel" if pt else "Nginx Observability - Carousel"
+    items = ([{"type": "dashboard_by_uid", "value": OVERVIEW_UID + suffix}] if not args.carousel_skip_overview else [])
+    items += [{"type": "dashboard_by_uid", "value": carousel_uid(server, app)} for server, app in pairs]
+    body = {"name": name, "interval": args.carousel_interval, "items": items}
+    existing = [item for item in grafana.call("GET", f"/api/playlists?name={urllib.parse.quote(name)}") or []
+                if item.get("name") == name]
+    if existing:
+        grafana.call("PUT", f"/api/playlists/{existing[0]['uid']}", body)
+        playlist_uid = existing[0]["uid"]
+        print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(items)} pages, every {args.carousel_interval}")
+    else:
+        created = grafana.call("POST", "/api/playlists", body)
+        playlist_uid = created.get("uid", "<new>")
+        print(f"  {grafana.did('created', 'would create')} playlist {name}: {len(items)} pages, every {args.carousel_interval}")
+    print(f"  play on a screen: {args.grafana_url.rstrip('/')}/playlists/play/{playlist_uid}?kiosk")
+
+
+# --- main --------------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -148,17 +406,30 @@ def main():
                         help="UID prefix for the datasources (default: nginx-obs)")
     parser.add_argument("--folder-uid", default="nginx-observability")
     parser.add_argument("--folder-title", default="Nginx Observability")
+    parser.add_argument("--lang", choices=["en", "pt-BR", "both"], default="en",
+                        help="dashboard language; 'both' installs English and Portuguese with a switch link")
+    parser.add_argument("--alert-lang", choices=["en", "pt-BR"],
+                        help="language of alert titles and annotations (default: pt-BR when --lang is pt-BR or both)")
     parser.add_argument("--alert-interval", help="evaluation interval for the rule group, e.g. 30s or 1m")
     parser.add_argument("--skip-alerts", action="store_true")
+    parser.add_argument("--include-lab-rules", action="store_true",
+                        help="also install the rules that watch the lab's health endpoints and exporter")
+    parser.add_argument("--carousel", action="store_true",
+                        help="create one Application Detail page per (server, app) and a playlist rotating them")
+    parser.add_argument("--carousel-interval", default="30s", help="time on each page, e.g. 30s or 1m")
+    parser.add_argument("--carousel-apps", help="server/app pairs, comma-separated (default: discovered from traffic)")
+    parser.add_argument("--carousel-skip-overview", action="store_true", help="do not start the rotation with Overview")
     parser.add_argument("--dry-run", action="store_true", help="read only; print the writes it would make")
     args = parser.parse_args()
+    if hasattr(sys.stdout, "reconfigure"):  # Portuguese titles on consoles that are not UTF-8
+        sys.stdout.reconfigure(errors="replace")
 
     token = os.getenv("GRAFANA_TOKEN")
     if not token:
         raise SystemExit("Set GRAFANA_TOKEN to a service account token with the Admin role.")
     grafana = Grafana(args.grafana_url, token, args.dry_run)
     health = grafana.call("GET", "/api/health")
-    print(f"Grafana {health.get('version')} at {args.grafana_url}")
+    print(f"Grafana {health.get('version')} at {args.grafana_url}{' (dry run: nothing is written)' if args.dry_run else ''}")
 
     uids = {"prometheus": f"{args.datasource_prefix}-prometheus", "loki": f"{args.datasource_prefix}-loki"}
     print("Datasources")
@@ -166,11 +437,18 @@ def main():
     ensure_datasource(grafana, "loki", uids["loki"], "Nginx Observability - Loki", args.loki_url)
     print("Folder")
     ensure_folder(grafana, args.folder_uid, args.folder_title)
-    print("Dashboards")
-    install_dashboards(grafana, args.folder_uid, uids)
+    print(f"Dashboards ({args.lang})")
+    dashboards = build_dashboards(args.lang, uids)
+    install_dashboards(grafana, args.folder_uid, dashboards)
     if not args.skip_alerts:
-        print("Alert rules")
-        install_alerts(grafana, args.folder_uid, uids, args.alert_interval)
+        alert_lang = args.alert_lang or ("en" if args.lang == "en" else "pt-BR")
+        print(f"Alert rules ({alert_lang})")
+        groups = build_alert_groups(uids, args.folder_uid, alert_lang, args.include_lab_rules)
+        skipped = set() if args.include_lab_rules else LAB_ONLY_RULES
+        install_alerts(grafana, args.folder_uid, groups, args.alert_interval, skipped)
+    if args.carousel:
+        print("Carousel")
+        install_carousel(grafana, args, dashboards, uids, args.lang)
     print("Done. Route the alerts in the existing notification policies (labels: severity, component, server, app).")
 
 

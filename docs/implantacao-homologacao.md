@@ -29,12 +29,14 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
    sudo lvcreate -L 40G -n observability ubuntu-vg
    sudo mkfs.ext4 /dev/ubuntu-vg/observability
    sudo mkdir -p /srv/observability
-   echo '/dev/ubuntu-vg/observability /srv/observability ext4 defaults 0 2' | sudo tee -a /etc/fstab
-   sudo mount /srv/observability
+   echo '/dev/ubuntu-vg/observability /srv/observability ext4 defaults,nofail 0 2' | sudo tee -a /etc/fstab
+   sudo systemctl daemon-reload
+   sudo mount -a
    sudo mkdir -p /srv/observability/loki /srv/observability/prometheus
    sudo chown 10001:10001 /srv/observability/loki
    sudo chown 65534:65534 /srv/observability/prometheus
    ```
+   `nofail` deixa o servidor subir mesmo se o volume falhar, em vez de parar em modo de emergência; `mount -a` testa a linha do `fstab` sem reiniciar.
 2. **Código:** `git clone https://github.com/tsathler/nginx-observability.git /opt/nginx-observability` (atualizações com `git pull`).
 3. **Configuração:** `cd /opt/nginx-observability/deploy/central && cp .env.example .env` e ajuste retenção e portas no `.env`.
 4. **Subir:** `docker compose up -d`. Verificar: `curl -s http://127.0.0.1:13100/ready` e `curl -s http://127.0.0.1:19090/-/ready`.
@@ -44,6 +46,7 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
    - `allow` com o IP privado de cada servidor monitorado; `listen` só no IP privado;
    - `sudo nginx -t && sudo systemctl reload nginx`.
 6. **Firewall:** liberar a porta da entrada apenas para os IPs dos agentes; Loki e Prometheus continuam só em `127.0.0.1`.
+7. **Limites de alerta por aplicação** (opcional): os padrões valem para todo par (servidor, aplicação) — 5xx 5% / 15%, P95 0,5 s / 1 s. Para uma aplicação naturalmente mais lenta, copie `deploy/central/local-rules/thresholds-override.yml.example` para `thresholds-override.yml` na mesma pasta (ignorado pelo git), ajuste `server`, `app` e os valores, e recarregue: `docker compose kill -s HUP prometheus`. As cores dos dashboards continuam nos padrões; os alertas usam o override.
 
 ## 2. Grafana existente
 
@@ -59,12 +62,26 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
          external: true
      ```
 2. **Token:** em Administration → Service accounts, criar `nginx-observability-installer` com papel Admin e gerar um token.
-3. **Instalar:** no servidor central,
+3. **Instalar:** no servidor central (o token é lido sem aparecer na tela nem no histórico),
    ```bash
    cd /opt/nginx-observability
-   GRAFANA_TOKEN=<token> python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000      --prometheus-url http://127.0.0.1:19090 --loki-url http://127.0.0.1:13100 --alert-interval 30s
+   read -rs GRAFANA_TOKEN && export GRAFANA_TOKEN
+   python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000 --prometheus-url http://127.0.0.1:19090 --loki-url http://127.0.0.1:13100 --alert-interval 30s --lang both --carousel --dry-run
    ```
-   Cria os datasources `Nginx Observability - Prometheus/Loki` (UIDs `nginx-obs-prometheus` e `nginx-obs-loki`, sem conflito com os existentes), a pasta **Nginx Observability** com os 4 dashboards e o grupo de 16 regras de alerta. Pode ser repetido após cada `git pull`; use `--dry-run` para ver o que faria.
+   Sem `--dry-run`, cria os datasources `Nginx Observability - Prometheus/Loki` (UIDs `nginx-obs-prometheus` e `nginx-obs-loki`, sem conflito com os existentes), a pasta **Nginx Observability** com os dashboards e o grupo de regras de alerta. Pode ser repetido após cada `git pull`.
+
+   | Opção | Efeito |
+   |---|---|
+   | `--lang en` (padrão), `pt-BR` ou `both` | idioma dos dashboards. `both` instala as duas versões (UIDs `…-pt-br` para o português) com um botão "English" / "Português (BR)" que troca de idioma mantendo filtros e período |
+   | `--alert-lang en` ou `pt-BR` | idioma dos títulos e textos dos alertas; padrão: português quando `--lang` inclui pt-BR. Os alertas são instalados uma vez só, num idioma |
+   | `--carousel` | cria a subpasta **Carrossel** com uma página de Detalhe da aplicação fixada em cada (servidor, aplicação) com tráfego no último dia, e a playlist **Nginx Observability - Carrossel** (Visão geral + essas páginas). O script imprime o endereço para abrir em modo quiosque numa TV |
+   | `--carousel-interval 30s` | tempo em cada página |
+   | `--carousel-apps servidor/app,…` | lista fixa em vez da descoberta automática |
+   | `--include-lab-rules` | mantém as 3 regras que dependem dos endpoints de saúde e do exporter do laboratório (por padrão ficam de fora: num servidor real ficariam sempre em "No data") |
+
+   Aplicação ou servidor novo: rode o instalador de novo com `--carousel` para incluí-lo na rotação; páginas de pares que pararam de enviar tráfego são removidas.
+
+   A interface do Grafana (menus, botões, seletor de período) é traduzida pelo próprio Grafana: em **Profile → Preferences → Language**, por usuário, ou em **Administration → Default preferences**, para a organização.
 4. **Notificações:** o script não altera pontos de contato nem políticas. Criar no Grafana uma rota para as regras desta pasta (rótulos `severity`, `component`, `server`, `app`) até o canal da equipe.
 5. Revogar ou desativar o token depois da instalação se ele não for reutilizado.
 
@@ -76,8 +93,10 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
    access_log /var/log/nginx/observability/portal.json observability_json;
    ```
    `sudo install -d -o www-data -g adm -m 0750 /var/log/nginx/observability`, depois `sudo nginx -t && sudo systemctl reload nginx`.
+   Em sites que encaminham tudo para um front controller (`try_files … /index.php`), `$uri` termina valendo `/index.php`; nesse caso use `map $request_uri $obs_path` com expressões ancoradas no início do caminho. A query string continua fora do log, porque o mapa só devolve os rótulos cadastrados.
 2. **Rotação:** `deploy/agent/logrotate.example` → `/etc/logrotate.d/nginx-observability`.
 3. **Agente:** `git clone` do repositório, `cd deploy/agent && cp .env.example .env`, preencher `AGENT_SERVER_NAME`, `CENTRAL_URL`, `AGENT_PASSWORD` e `CENTRAL_CA_FILE`; `docker compose up -d`.
+   - **Agente no próprio servidor central:** o container chega à entrada com o IP da rede Docker dele (`docker network inspect nginx-observability-agent_default`), não com o IP privado do host. Essa sub-rede precisa estar no `allow` da entrada e no firewall.
 4. **Conferir:** `docker compose logs alloy` sem erros; no Grafana, a variável **Server** passa a listar o servidor e o bloco "alloy (servidor)" aparece na faixa de saúde.
 
 ## 4. Verificação ponta a ponta

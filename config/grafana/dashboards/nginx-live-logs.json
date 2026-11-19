@@ -388,6 +388,21 @@
           }
         },
         {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "path": "server",
+                "alias": "server"
+              }
+            ],
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
           "id": "convertFieldType",
           "options": {
             "conversions": [
@@ -428,23 +443,26 @@
               "labelTypes": true,
               "id": true,
               "request_time": true,
-              "Line": true
+              "Line": true,
+              "time": true
             },
             "indexByName": {
               "Time": 0,
-              "app": 1,
-              "method": 2,
-              "status": 3,
-              "path": 4,
-              "Duration (ms)": 5,
-              "remote_addr": 6
+              "app": 2,
+              "method": 3,
+              "status": 4,
+              "path": 5,
+              "Duration (ms)": 6,
+              "remote_addr": 7,
+              "server": 1
             },
             "renameByName": {
               "app": "App",
               "method": "Method",
               "status": "Status",
               "path": "Path",
-              "remote_addr": "Source IP"
+              "remote_addr": "Source IP",
+              "server": "Server"
             }
           }
         }

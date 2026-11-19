@@ -182,12 +182,18 @@
           "fields": "",
           "values": false
         },
-        "orientation": "vertical",
+        "orientation": "auto",
         "textMode": "value_and_name",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center",
-        "wideLayout": true
+        "wideLayout": true,
+        "minVizWidth": 105,
+        "minVizHeight": 70,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 26
+        }
       }
     },
     {
@@ -817,10 +823,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
+          "expr": "label_replace(label_join(sum by (server, app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])), \"target\", \" (\", \"app\", \"server\"), \"target\", \"$1)\", \"target\", \"(.*)\")",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{app}}",
+          "legendFormat": "{{app}} ({{server}})",
           "format": "table"
         }
       ],
@@ -830,7 +836,7 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short",
+          "unit": "none",
           "decimals": 0
         },
         "overrides": []
@@ -848,7 +854,7 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "app"
+        "xField": "target"
       },
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
       "transformations": []
@@ -1023,10 +1029,10 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(3, sum by (app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__range])) or on (app) (0 * sum by (app) (nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"})))",
+          "expr": "label_replace(label_join(topk(5, sum by (server, app) (increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\",status=~\"5..\"}[$__range])) or on (server, app) (0 * sum by (server, app) (nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}))), \"target\", \" (\", \"app\", \"server\"), \"target\", \"$1)\", \"target\", \"(.*)\")",
           "refId": "A",
           "instant": true,
-          "legendFormat": "{{app}}",
+          "legendFormat": "{{app}} ({{server}})",
           "format": "table"
         }
       ],
@@ -1036,7 +1042,7 @@
             "mode": "palette-classic"
           },
           "mappings": [],
-          "unit": "short",
+          "unit": "none",
           "decimals": 0
         },
         "overrides": []
@@ -1054,7 +1060,7 @@
           "mode": "single",
           "sort": "desc"
         },
-        "xField": "app"
+        "xField": "target"
       },
       "description": "Estimated with Prometheus increase(), which extrapolates counter samples to the selected interval. Displayed rounded to whole requests; this is not an exact event count.",
       "transformations": []

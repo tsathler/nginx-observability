@@ -1,0 +1,17 @@
+# Rotation for the sanitized observability logs. Copy to /etc/logrotate.d/nginx-observability
+# and test with: sudo logrotate -d /etc/logrotate.d/nginx-observability
+# Alloy follows rotated files by name; with "rotate 2" a short agent outage loses nothing.
+/var/log/nginx/observability/*.json {
+    daily
+    maxsize 200M
+    rotate 2
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        if [ -f /run/nginx.pid ]; then kill -USR1 "$(cat /run/nginx.pid)"; fi
+    endscript
+}

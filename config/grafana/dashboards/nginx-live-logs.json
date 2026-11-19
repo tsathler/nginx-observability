@@ -342,6 +342,12 @@
                   "type": "color-background",
                   "mode": "basic"
                 }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
               }
             ]
           },

@@ -14,6 +14,30 @@ Levar a stack para um servidor Linux central que recebe logs e métricas de vár
 | Conectividade | Os servidores Nginx monitorados alcançam o central por **rede privada** (IPs internos). |
 | Coleta | **Alloy** como agente em cada servidor Nginx, mais um **segundo access log em JSON sanitizado**. O log original de cada servidor permanece intacto. |
 | Implantação | O código chega aos servidores por **git** (`git clone` / `git pull`). A configuração específica de cada servidor — IPs, nomes, certificados, credenciais de agentes e do Grafana — é feita **no próprio servidor**, em arquivos fora do controle de versão (como o `.env`), e nunca é commitada. O repositório GitHub é público; o que está nele deve permanecer genérico. |
+| Sistema do servidor central | **Ubuntu** (o servidor de teste usa 24.04 LTS). |
+| Grafana | **Grafana único já existente** na organização, usado para todos os dashboards. Esta stack **não sobe Grafana próprio** no central: datasources, dashboards e regras de alerta são instalados nesse Grafana. |
+| Forma de execução | Central com Docker Compose; agentes Alloy nos servidores monitorados — modo (nativo via systemd ou container) **a confirmar**. |
+| Inventário | Servidores e aplicações monitorados **a mapear** pelo mantenedor (incluindo requisições/dia por servidor). |
+
+
+## Servidor central de teste (levantamento de 2026-11-19)
+
+Servidor Ubuntu **já existente e de teste**, compartilhado com outro sistema (aplicação PHP + MariaDB atrás do Nginx local) e com o Grafana único da organização (Grafana 13.x em container). Acesso para diagnóstico por SSH com usuário somente leitura e chave exclusiva por servidor; endereços e credenciais ficam fora deste repositório.
+
+| Recurso | Situação | Decisão |
+|---|---|---|
+| CPU / RAM | 2 vCPU, ~4 GB disponíveis | Suficiente para Loki + Prometheus + Alloy (~1 GB no laboratório). |
+| Disco | Raiz de 63 GB com ~25 GB livres; **grupo LVM com ~64 GB não alocados** | Criar **volume lógico dedicado** para os dados da observabilidade (ex.: 40 GB em `/srv/observability`), para que o Loki nunca encha o disco do sistema compartilhado. |
+| Nginx local | Ativo (80/443) | Usar como **porta de entrada**: HTTPS para o Grafana interno e entrada autenticada (TLS + credencial por agente) para Loki e Prometheus, sem expor as portas deles. |
+| Grafana | Container 13.x já em uso | Instalar nele os datasources, dashboards e alertas desta stack; o container precisa alcançar Loki e Prometheus (rede Docker compartilhada ou acesso pelo host). |
+| Monitoramento existente | Agente de outra ferramenta de infraestrutura presente | Sem conflito de portas. |
+
+Pendências antes da implantação:
+
+1. Validar os dashboards e regras de alerta no **Grafana 13.x** (foram feitos e testados no 12.4.15); dá para testar no laboratório com a imagem 13.x.
+2. Verificar se os UIDs de datasource `prometheus` e `loki` já estão em uso no Grafana existente; se estiverem, adotar UIDs próprios (ex.: `nginx-obs-prometheus`) e ajustar os dashboards.
+3. Descobrir como o Grafana existente é implantado (Compose e pasta de provisionamento, ou só UI/API) para escolher entre provisionamento por arquivo e importação via API.
+4. Definir o tamanho do volume dedicado e quem o cria (requer root).
 
 ## Topologia
 

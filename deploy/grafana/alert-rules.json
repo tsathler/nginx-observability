@@ -1,0 +1,1695 @@
+{
+  "source": "config/grafana/provisioning/alerting/alerts.yml (resolved by Grafana)",
+  "groups": [
+    {
+      "name": "nginx-operational-alerts",
+      "interval": "10s",
+      "rules": [
+        {
+          "uid": "agent_silent",
+          "title": "Monitored server agent stopped sending",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "(group by (server) (max_over_time(up{job=\"alloy\"}[1h])) unless on (server) group by (server) (max_over_time(up{job=\"alloy\"}[2m]))) or on (server) (0 * group by (server) (max_over_time(up{job=\"alloy\"}[2m])))",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "1m",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "On the monitored server, check `docker ps` and the Alloy logs; on the central server, check the ingress access log for 401/403 from this agent.",
+            "cause": "The Alloy container on the monitored server stopped, lost its route to the central server, or its credentials were rejected.",
+            "description": "No metrics have arrived from this server for over 2 minutes; logs from it are probably missing too.",
+            "summary": "Agent on {{ $labels.server }} stopped sending data"
+          },
+          "labels": {
+            "component": "alloy",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "alloy_dropped_logs",
+          "title": "Alloy dropped log entries",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "sum(increase(loki_write_dropped_entries_total[5m])) > bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "30s",
+          "annotations": {
+            "action": "Check Alloy writer metrics and Loki availability. Correlate affected intervals with Nginx access files and Loki events.",
+            "cause": "The receiver may be unavailable or rejecting writes beyond the writer retry window.",
+            "description": "The Alloy Loki writer reported dropped entries during the last five minutes.",
+            "summary": "Alloy dropped log entries before Loki ingestion"
+          },
+          "labels": {
+            "component": "alloy",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "alloy_unavailable",
+          "title": "Grafana Alloy unavailable",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "up{job=\"alloy\"} == bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "20s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "Check Alloy health, file source positions, and the logs network.",
+            "cause": "Alloy is stopped or its internal metrics endpoint is unreachable.",
+            "description": "Log collection health cannot be confirmed while Alloy metrics are not scrapeable.",
+            "summary": "Alloy metrics endpoint is unavailable"
+          },
+          "labels": {
+            "component": "alloy",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "app_unavailable",
+          "title": "Application unavailable",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "((up{job=\"app-health\"} == bool 0) and on(server, instance) (max by (server, instance) (up{job=\"nginx-health\"}) == 1))",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "20s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "Check the named app container health and its Nginx upstream.",
+            "cause": "The app process is stopped, unhealthy, or its route is broken.",
+            "description": "Prometheus cannot scrape the app health endpoint while Nginx remains reachable. No request traffic is required for this signal.",
+            "summary": "{{ $labels.app }} on {{ $labels.server }} health endpoint is not responding through Nginx"
+          },
+          "labels": {
+            "component": "application",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "exporter_parse_errors",
+          "title": "Nginx access log parse errors",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "sum by (server, app) (increase(nginx_parse_errors_total[5m])) > bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "30s",
+          "annotations": {
+            "action": "Inspect exporter parse errors and compare the configured log format with the generated file.",
+            "cause": "The Nginx access log format no longer matches the exporter configuration.",
+            "description": "The exporter has reported malformed access log entries during the last five minutes.",
+            "summary": "Exporter parse errors detected for {{ $labels.app }} on {{ $labels.server }}"
+          },
+          "labels": {
+            "component": "exporter",
+            "severity": "warning"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "exporter_unavailable",
+          "title": "Nginx log exporter unavailable",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "up{job=\"nginx-access\"} == bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "20s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "Restore the exporter and check its logs. Compare Loki events with Prometheus counters to assess the known non-backfill gap.",
+            "cause": "The exporter is stopped, cannot read the access logs, or is unreachable on the metrics network.",
+            "description": "Prometheus cannot scrape the log exporter. Requests during this outage may remain in Loki without being backfilled into Prometheus counters.",
+            "summary": "Nginx log exporter scrape failed"
+          },
+          "labels": {
+            "component": "exporter",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "http_5xx_critical",
+          "title": "Critical HTTP 5xx ratio",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "((sum by (server, app) (increase(nginx_http_response_count_total{status=~\"5..\"}[1m])) or on (server, app) (0 * nginx_observability_http_5xx_critical_min_requests)) / clamp_min((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_5xx_critical_min_requests)), 1) > bool on (server, app) nginx_observability_http_5xx_critical_ratio) * on (server, app) ((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_5xx_critical_min_requests)) >= bool on (server, app) nginx_observability_http_5xx_critical_min_requests)",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 10,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "15s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "10",
+            "action": "Check the app health endpoint, Nginx upstream status, and recent error responses.",
+            "cause": "The application is likely experiencing a sustained failure.",
+            "description": "The 5xx share exceeded the per-app critical limit with at least the configured minimum request volume over one minute.",
+            "summary": "Critical HTTP 5xx ratio for {{ $labels.app }} on {{ $labels.server }}"
+          },
+          "labels": {
+            "component": "http",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "http_5xx_warning",
+          "title": "Elevated HTTP 5xx ratio",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "((sum by (server, app) (increase(nginx_http_response_count_total{status=~\"5..\"}[1m])) or on (server, app) (0 * nginx_observability_http_5xx_warning_min_requests)) / clamp_min((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_5xx_warning_min_requests)), 1) > bool on (server, app) nginx_observability_http_5xx_warning_ratio) * on (server, app) ((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_5xx_warning_min_requests)) >= bool on (server, app) nginx_observability_http_5xx_warning_min_requests)",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 10,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "30s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "10",
+            "action": "Compare application logs and Recent requests for the affected app before escalating.",
+            "cause": "The application or an upstream dependency may be failing.",
+            "description": "The 5xx share exceeded the per-app warning limit and the minimum request volume over one minute.",
+            "summary": "HTTP 5xx ratio is elevated for {{ $labels.app }} on {{ $labels.server }}"
+          },
+          "labels": {
+            "component": "http",
+            "severity": "warning"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "http_p95_critical",
+          "title": "Critical HTTP P95 latency",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "((histogram_quantile(0.95, sum by (server, app, le) (rate(nginx_http_response_time_seconds_hist_bucket[1m]))) or on (server, app) (0 * nginx_observability_http_p95_critical_seconds)) > bool on (server, app) nginx_observability_http_p95_critical_seconds) * on (server, app) ((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_latency_min_requests)) >= bool on (server, app) nginx_observability_http_latency_min_requests)",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 9,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "1m",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "9",
+            "action": "Check for slow upstream operations and compare recent request latency in Loki.",
+            "cause": "The app is severely delayed or a dependency is degraded.",
+            "description": "P95 latency exceeded the configurable per-app critical threshold with sufficient recent request volume.",
+            "summary": "Critical HTTP P95 latency for {{ $labels.app }} on {{ $labels.server }}"
+          },
+          "labels": {
+            "component": "http",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "http_p95_warning",
+          "title": "Elevated HTTP P95 latency",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "((histogram_quantile(0.95, sum by (server, app, le) (rate(nginx_http_response_time_seconds_hist_bucket[1m]))) or on (server, app) (0 * nginx_observability_http_p95_warning_seconds)) > bool on (server, app) nginx_observability_http_p95_warning_seconds) * on (server, app) ((sum by (server, app) (increase(nginx_http_response_count_total[1m])) or on (server, app) (0 * nginx_observability_http_latency_min_requests)) >= bool on (server, app) nginx_observability_http_latency_min_requests)",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 9,
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "for": "2m",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "9",
+            "action": "Inspect the Application Detail latency panels and slowest request events in Loki.",
+            "cause": "The application, Nginx upstream, or a dependency may be slow.",
+            "description": "P95 latency exceeded the configurable per-app warning threshold with sufficient recent request volume.",
+            "summary": "HTTP P95 latency is elevated for {{ $labels.app }} on {{ $labels.server }}"
+          },
+          "labels": {
+            "component": "http",
+            "severity": "warning"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "loki_ingestion_failures",
+          "title": "Loki ingestion or flush failures",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "(sum(increase(loki_ingester_wal_disk_full_failures_total[5m])) + sum(increase(loki_ingester_chunks_flush_failures_total[5m]))) > bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "30s",
+          "annotations": {
+            "action": "Inspect Loki logs and Docker volume capacity; this lab has no reliable filesystem free-space metric.",
+            "cause": "The Loki volume may be full or the filesystem may be returning write errors.",
+            "description": "Loki reported WAL disk-full failures or failed chunk flushes during the last five minutes.",
+            "summary": "Loki reported ingestion or chunk flush failures"
+          },
+          "labels": {
+            "component": "loki",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "loki_unavailable",
+          "title": "Loki unavailable",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "up{job=\"loki\"} == bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "20s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "Check Loki health, its filesystem volume, and logs-network connectivity.",
+            "cause": "Loki is stopped or unreachable from the internal monitoring network.",
+            "description": "Loki availability cannot be confirmed from its metrics endpoint.",
+            "summary": "Loki metrics endpoint is unavailable"
+          },
+          "labels": {
+            "component": "loki",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "nginx_unavailable",
+          "title": "Nginx unavailable",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "up{job=\"nginx-health\"} == bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "nginx-overview",
+          "panelId": 13,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "20s",
+          "annotations": {
+            "__dashboardUid__": "nginx-overview",
+            "__panelId__": "13",
+            "action": "Check Nginx container health, host-access networking, and the /nginx-metrics route.",
+            "cause": "Nginx is stopped, unreachable, or its internal health route is misconfigured.",
+            "description": "The Nginx metrics endpoint cannot be scraped.",
+            "summary": "Nginx health endpoint is unavailable"
+          },
+          "labels": {
+            "component": "nginx",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "prometheus_config_failed",
+          "title": "Prometheus configuration reload failed",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 60,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "prometheus_config_last_reload_successful == bool 0",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "15s",
+          "annotations": {
+            "action": "Inspect the Prometheus logs and /api/v1/status/config before reloading again.",
+            "cause": "A scrape, rule, or Prometheus configuration file is invalid.",
+            "description": "Prometheus is running, but its most recent configuration reload failed.",
+            "summary": "Prometheus rejected a configuration reload"
+          },
+          "labels": {
+            "component": "prometheus",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "prometheus_tsdb_storage_critical",
+          "title": "Prometheus TSDB blocks near retention limit (critical)",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "prometheus_tsdb_storage_blocks_bytes / clamp_min(prometheus_tsdb_retention_limit_bytes, 1) > bool 0.9",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "5m",
+          "annotations": {
+            "action": "Review metric growth and free space; do not assume Prometheus will protect the Docker host filesystem.",
+            "cause": "The configured TSDB retention size is nearly saturated.",
+            "description": "This signal covers persisted TSDB blocks only; it is not a filesystem-capacity alert.",
+            "summary": "Prometheus TSDB blocks exceed 90% of the configured retention size"
+          },
+          "labels": {
+            "component": "storage",
+            "severity": "critical"
+          },
+          "isPaused": false
+        },
+        {
+          "uid": "prometheus_tsdb_storage_warning",
+          "title": "Prometheus TSDB blocks near retention limit",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 120,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "expr": "prometheus_tsdb_storage_blocks_bytes / clamp_min(prometheus_tsdb_retention_limit_bytes, 1) > bool 0.8",
+                "instant": true,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+              }
+            },
+            {
+              "refId": "B",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+              }
+            },
+            {
+              "refId": "C",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "B"
+                      ]
+                    },
+                    "reducer": {
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+              }
+            }
+          ],
+          "dashboardUid": "",
+          "panelId": 0,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "10m",
+          "annotations": {
+            "action": "Review cardinality, retention settings, and free space on the Docker data disk.",
+            "cause": "Metric volume or retention duration is using most of the configured TSDB block budget.",
+            "description": "This signal covers persisted TSDB blocks only; WAL, head data, and filesystem free space are not included.",
+            "summary": "Prometheus TSDB blocks exceed 80% of the configured retention size"
+          },
+          "labels": {
+            "component": "storage",
+            "severity": "warning"
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ]
+}

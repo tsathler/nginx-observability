@@ -32,7 +32,10 @@ All notable changes to Nginx Observability are documented here.
 
 ### Added
 
-- Compose profile `lab2`: a simulated second server (Nginx, three apps, exporter, traffic generator and an Alloy agent that pushes logs and metrics with `server="lab2"`), off by default. Prometheus accepts remote writes for it.
+- Compose profile `lab2`: a simulated second server (Nginx, three apps, traffic generator and the Marco 04 Alloy agent pushing logs and metrics with `server="lab2"`), off by default. Prometheus accepts remote writes for it.
+- Agent configuration for monitored servers (`config/agent/config.alloy`): Alloy alone tails the sanitized JSON logs, pushes them to Loki and derives the HTTP metrics (same names and labels as nginxlog-exporter) for Prometheus remote_write; lab2 runs it.
+- Alert "Monitored server agent stopped sending", per server, for agents that push and therefore never report `up == 0`.
+- Deployment packages: `deploy/central` (Loki and Prometheus on loopback, host Nginx ingress template with TLS, per-agent credentials and IP allowlist), `deploy/agent` (Alloy container, sanitized log_format, logrotate) and `scripts/install_grafana.py`, which installs datasources (own UIDs), dashboards and alert rules into an existing Grafana through its API. Guide: `docs/implantacao-homologacao.md`.
 
 - GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run.
 

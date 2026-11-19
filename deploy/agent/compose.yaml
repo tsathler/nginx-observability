@@ -1,0 +1,42 @@
+# Alloy agent for a monitored Nginx server (Marco 04). Reads the sanitized JSON access logs
+# and pushes logs and log-derived metrics to the central server. It opens no ports.
+#
+# Usage, from this directory:
+#   cp .env.example .env        # then edit .env on this server; never commit it
+#   docker compose up -d
+name: nginx-observability-agent
+
+services:
+  alloy:
+    image: grafana/alloy:v1.22.0
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      # Loopback inside the container: only the agent scrapes its own metrics.
+      - --server.http.listen-addr=127.0.0.1:12345
+    environment:
+      AGENT_SERVER_NAME: ${AGENT_SERVER_NAME:?Set AGENT_SERVER_NAME in .env}
+      AGENT_LOG_GLOB: /var/log/nginx/observability/*.json
+      CENTRAL_LOKI_URL: ${CENTRAL_URL:?Set CENTRAL_URL in .env}/loki/api/v1/push
+      CENTRAL_PROMETHEUS_URL: ${CENTRAL_URL}/api/v1/write
+      AGENT_USERNAME: ${AGENT_SERVER_NAME}
+      AGENT_PASSWORD: ${AGENT_PASSWORD:?Set AGENT_PASSWORD in .env}
+      # Go reads this file as the trusted CA list; point it at the internal CA when the
+      # central certificate is not from a public CA.
+      SSL_CERT_FILE: /etc/alloy/central-ca.pem
+    volumes:
+      - ../../config/agent/config.alloy:/etc/alloy/config.alloy:ro
+      - ${CENTRAL_CA_FILE:?Set CENTRAL_CA_FILE in .env}:/etc/alloy/central-ca.pem:ro
+      - ${NGINX_JSON_LOG_DIR:-/var/log/nginx/observability}:/var/log/nginx/observability:ro
+      # Read positions survive restarts, so lines are neither lost nor re-sent.
+      - alloy-data:/var/lib/alloy/data
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+volumes:
+  alloy-data:

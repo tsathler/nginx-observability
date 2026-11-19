@@ -1,6 +1,6 @@
 # Marco 04 — Arquitetura multi-servidor (planejamento)
 
-**Estado:** desenho aprovado pelo mantenedor em 2026-11-17. **Não iniciado.** O Marco 04 só começa depois de concluídas as pendências da release v0.1.0. Nada deste documento está implementado.
+**Estado:** desenho aprovado pelo mantenedor em 2026-11-17. Pacotes de implantação prontos e testados no laboratório em 2026-11-19 (`deploy/`, `config/agent/`, `scripts/install_grafana.py`); passo a passo em [implantacao-homologacao.md](implantacao-homologacao.md). Ainda não implantado em homologação.
 
 ## Objetivo
 
@@ -16,7 +16,8 @@ Levar a stack para um servidor Linux central que recebe logs e métricas de vár
 | Implantação | O código chega aos servidores por **git** (`git clone` / `git pull`). A configuração específica de cada servidor — IPs, nomes, certificados, credenciais de agentes e do Grafana — é feita **no próprio servidor**, em arquivos fora do controle de versão (como o `.env`), e nunca é commitada. O repositório GitHub é público; o que está nele deve permanecer genérico. |
 | Sistema do servidor central | **Ubuntu** 24.04 LTS. |
 | Grafana | Usar um **Grafana já existente**, compartilhado com outros dashboards. Esta stack **não sobe Grafana próprio** no central: datasources, dashboards e regras de alerta são instalados nele. |
-| Forma de execução | Central com Docker Compose; agentes Alloy nos servidores monitorados — modo (nativo via systemd ou container) **a confirmar**. |
+| Forma de execução | Central com Docker Compose; **agente Alloy em container** em cada servidor monitorado (decisão de 2026-11-19). |
+| Métricas | **Só o Alloy**: o agente gera as métricas HTTP a partir do log JSON, com os mesmos nomes e rótulos do exporter, e envia por `remote_write`. Sem `nginxlog-exporter` nos servidores monitorados. |
 | Inventário | Servidores e aplicações monitorados **a mapear** pelo mantenedor (incluindo requisições/dia por servidor). |
 
 
@@ -81,7 +82,6 @@ Os logs das aplicações publicadas contêm IPs de usuários reais. A minimizaç
 ## Pontos em aberto para o início do Marco 04
 
 - Sistema e versão do servidor central; forma de execução (Docker Compose no Linux ou serviços nativos).
-- Métricas: `remote_write` do Alloy para o Prometheus ou métricas derivadas dos logs; o `nginxlog-exporter` atual roda ao lado do Nginx e não serve a coleta remota como está.
 - Dimensionamento de disco e retenção para N servidores.
 - Inventário dos servidores e aplicações a monitorar.
 

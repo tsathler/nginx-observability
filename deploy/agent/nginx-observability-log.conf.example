@@ -1,0 +1,39 @@
+# Second, sanitized access log for the observability agent. The server's existing access
+# log is not touched. Copy to /etc/nginx/conf.d/observability-log.conf (http context),
+# adjust the route map, then add the two lines shown at the end to each monitored site.
+# Apply with: sudo nginx -t && sudo systemctl reload nginx   (reload, no downtime)
+
+# Route classification. Only routes listed here appear by name; everything else is logged
+# as /_unclassified, so IDs, tokens or e-mails in URLs never reach Loki. The query string
+# is never logged.
+map $uri $obs_path {
+    default                      /_unclassified;
+
+    # Common scanner probes (feed the Security dashboard).
+    ~^/\.env$                    /.env;
+    ~^/\.git/                    /.git;
+    ~^/wp-admin                  /wp-admin;
+    ~^/wp-login\.php$            /wp-login.php;
+    ~^/phpmyadmin                /phpmyadmin;
+    ~/etc/passwd                 /etc/passwd;
+
+    # Known application routes, one line each. Examples:
+    # /                          /;
+    # /login                     /login;
+    # ~^/api/orders/[0-9]+$      /api/orders/:id;
+}
+
+# Fields: time, application, client IP, method, classified route, status, duration, bytes.
+# No query string, cookies, Authorization, Referer or User-Agent.
+log_format observability_json escape=json
+    '{"time":"$time_iso8601","app":"$obs_app","remote_addr":"$remote_addr",'
+    '"method":"$request_method","path":"$obs_path","status":$status,'
+    '"request_time":$request_time,"body_bytes_sent":$body_bytes_sent}';
+
+# In each monitored server {} block (or location), name the application and add the log.
+# The file name is the application name shown in the dashboards:
+#
+#   set $obs_app portal;
+#   access_log /var/log/nginx/observability/portal.json observability_json;
+#
+# Create the directory once: sudo install -d -o www-data -g adm -m 0750 /var/log/nginx/observability

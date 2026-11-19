@@ -1,0 +1,46 @@
+# Ingress for the Alloy agents, served by the Nginx already running on the central server.
+# Copy to /etc/nginx/sites-available/observability-ingress (or conf.d/), replace every
+# <PLACEHOLDER>, then: sudo nginx -t && sudo systemctl reload nginx
+#
+# Only two paths are exposed, both write-only: Loki push and Prometheus remote_write.
+# Query APIs, UIs and everything else stay on 127.0.0.1.
+
+# Bind to the private interface only, on a dedicated port. Never to 0.0.0.0 on a host
+# with a public interface.
+server {
+    listen <CENTRAL_PRIVATE_IP>:<INGRESS_PORT> ssl;
+    server_name <CENTRAL_INTERNAL_NAME>;
+
+    ssl_certificate     /etc/nginx/observability/tls/server.crt;
+    ssl_certificate_key /etc/nginx/observability/tls/server.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # One line per monitored server (its private IP). Everything else is refused.
+    allow <AGENT_IP_1>;
+    # allow <AGENT_IP_2>;
+    deny all;
+
+    # One user per agent: sudo htpasswd -B /etc/nginx/observability/agents.htpasswd <server-name>
+    auth_basic           "observability ingress";
+    auth_basic_user_file /etc/nginx/observability/agents.htpasswd;
+
+    client_max_body_size 10m;
+    access_log /var/log/nginx/observability-ingress.access.log;
+    error_log  /var/log/nginx/observability-ingress.error.log warn;
+
+    location = /loki/api/v1/push {
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:<LOKI_PORT>;
+        proxy_set_header Authorization "";
+    }
+
+    location = /api/v1/write {
+        limit_except POST { deny all; }
+        proxy_pass http://127.0.0.1:<PROMETHEUS_PORT>;
+        proxy_set_header Authorization "";
+    }
+
+    location / {
+        return 404;
+    }
+}

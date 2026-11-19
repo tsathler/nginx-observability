@@ -144,6 +144,10 @@ Auditorias técnicas e evidências: [arquitetura](docs/architecture-research.md)
 
 A varredura Trivy da release e os SBOMs SPDX das 11 imagens examinadas estão em [`docs/sbom/`](docs/sbom/). A triagem dos findings restantes, com pré-condições e decisões, está em [`docs/cve-triage.md`](docs/cve-triage.md). Esses relatórios não são certificação de segurança nem substituem uma triagem de VEX e alcance do código.
 
+## Implantação multi-servidor (Marco 04)
+
+`deploy/central` (Loki e Prometheus), `deploy/agent` (agente Alloy por servidor Nginx) e `scripts/install_grafana.py` (dashboards e alertas num Grafana existente). Passo a passo e checklist em [docs/implantacao-homologacao.md](docs/implantacao-homologacao.md). O perfil `lab2` executa o mesmo agente no laboratório.
+
 ## Encerrar
 
 ```shell

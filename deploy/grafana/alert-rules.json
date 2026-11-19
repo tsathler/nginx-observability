@@ -200,7 +200,7 @@
           ],
           "dashboardUid": "",
           "panelId": 0,
-          "noDataState": "NoData",
+          "noDataState": "OK",
           "execErrState": "Error",
           "for": "30s",
           "annotations": {
@@ -304,7 +304,7 @@
           ],
           "dashboardUid": "nginx-overview",
           "panelId": 13,
-          "noDataState": "NoData",
+          "noDataState": "OK",
           "execErrState": "Error",
           "for": "20s",
           "annotations": {

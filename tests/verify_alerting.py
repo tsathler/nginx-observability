@@ -50,7 +50,7 @@ def rule_inventory():
     for uid in EXPECTED_RULES:
         rule = rules[uid]
         # HTTP rules and the silent-agent rule return no series while everything is fine.
-        expected_no_data = "OK" if uid.startswith("http_") or uid in ("agent_silent", "exporter_parse_errors") else "NoData"
+        expected_no_data = "OK" if uid.startswith("http_") or uid in ("agent_silent", "exporter_parse_errors", "alloy_unavailable", "alloy_dropped_logs") else "NoData"
         assert rule.get("noDataState") == expected_no_data, (uid, rule.get("noDataState"))
         assert rule.get("execErrState") == "Error", (uid, rule.get("execErrState"))
         assert rule.get("annotations"), f"{uid} has no operator guidance"

@@ -163,7 +163,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # On monitored servers Alloy pushes its own metrics, so a stopped agent sends nothing at
+        # all; "Monitored server agent stopped sending" reports that case. Missing data here is OK.
+        noDataState: OK
         execErrState: Error
         for: 20s
         labels: {severity: critical, component: alloy}
@@ -359,7 +361,9 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # On monitored servers Alloy pushes its own metrics, so a stopped agent sends nothing at
+        # all; "Monitored server agent stopped sending" reports that case. Missing data here is OK.
+        noDataState: OK
         execErrState: Error
         for: 30s
         labels: {severity: critical, component: alloy}

@@ -14,6 +14,7 @@ All notable changes to Nginx Observability are documented here.
 ### Fixed
 
 - The installer no longer installs the three lab-only rules (application health endpoint, Nginx health endpoint, nginxlog-exporter) into an existing Grafana, where they sat in "No data"; `--include-lab-rules` keeps them. "Nginx access log parse errors" treats missing data as OK, because Alloy agents create the counter only on the first malformed line, and its texts name the collector instead of the exporter; the Security panel is now "Log parse errors (period)" and shows 0 while traffic is collected without errors.
+- "Grafana Alloy unavailable" and "Alloy dropped log entries" treat missing data as OK: on monitored servers the agent pushes its own metrics, so a stopped agent sends nothing and these rules went to No data next to "Monitored server agent stopped sending", which is the alert for that case (found in a staging stop test). In the lab, where Prometheus scrapes Alloy, the first still fires on `up == 0`.
 - `install_grafana.py --dry-run` prints "would create / would update" instead of reading as if the changes had been made.
 
 - Health stats no longer turn missing data into a healthy-looking zero: `or vector(0)` was removed, and zero is shown only while the traffic counter has samples. Exporter parse errors now count the selected period instead of a lifetime total.

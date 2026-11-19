@@ -214,28 +214,25 @@ services:
       lab2-frontend: { aliases: [nginx] }
     depends_on: [lab2-app-a, lab2-app-b, lab2-app-c]
 
-  lab2-exporter:
-    <<: *hardened
-    cap_drop: [ALL]
-    image: nginx-observability-nginxlog-exporter:v1.11.0-go1.27.3
-    profiles: [lab2]
-    command: ["-config-file", "/etc/exporter/config.yml"]
-    volumes:
-      - ./config/exporters/nginxlog-exporter.yml:/etc/exporter/config.yml:ro
-      - lab2-nginx-logs:/var/log/nginx:ro
-    networks: [lab2-frontend]
-    depends_on: [lab2-nginx]
-
+  # The lab2 agent runs the same Alloy config as a real monitored server
+  # (config/agent/config.alloy): logs to Loki and log-derived metrics to Prometheus.
   lab2-alloy:
     <<: *hardened
     image: grafana/alloy:v1.22.0
     profiles: [lab2]
-    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data", "--server.http.listen-addr=127.0.0.1:12345"]
+    environment:
+      AGENT_SERVER_NAME: lab2
+      AGENT_LOG_GLOB: /var/log/nginx/*.json
+      CENTRAL_LOKI_URL: http://loki:3100/loki/api/v1/push
+      CENTRAL_PROMETHEUS_URL: http://prometheus:9090/api/v1/write
+      AGENT_USERNAME: lab2
+      AGENT_PASSWORD: lab-only-not-checked
     volumes:
-      - ./config/lab2/config.alloy:/etc/alloy/config.alloy:ro
+      - ./config/agent/config.alloy:/etc/alloy/config.alloy:ro
       - lab2-nginx-logs:/var/log/nginx:ro
     networks: [lab2-frontend, logs, metrics]
-    depends_on: [lab2-nginx, lab2-exporter]
+    depends_on: [lab2-nginx]
 
   lab2-traffic:
     <<: *hardened

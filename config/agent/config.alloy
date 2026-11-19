@@ -1,0 +1,172 @@
+// Agent for a monitored Nginx server (Marco 04). One Alloy container per server:
+//   * tails the sanitized JSON access logs (one file per application, named <app>.json);
+//   * ships the log lines to the central Loki;
+//   * derives the HTTP metrics the dashboards and alerts use (same names and labels as
+//     nginxlog-exporter in the lab) and ships them to the central Prometheus (remote_write).
+// The agent only opens outbound connections. Everything server-specific comes from
+// environment variables (see deploy/agent/.env.example); nothing here names a real host.
+
+local.file_match "nginx" {
+  path_targets = [{
+    __path__ = sys.env("AGENT_LOG_GLOB"),
+    job      = "nginx",
+    server   = sys.env("AGENT_SERVER_NAME"),
+  }]
+}
+
+// The application name is the log file name: /var/log/nginx/observability/app-a.json -> app-a.
+discovery.relabel "nginx" {
+  targets = local.file_match.nginx.targets
+
+  rule {
+    source_labels = ["__path__"]
+    regex         = ".*/([^/]+)\\.json"
+    target_label  = "app"
+  }
+}
+
+loki.source.file "nginx" {
+  targets    = discovery.relabel.nginx.output
+  forward_to = [loki.process.nginx.receiver]
+}
+
+loki.process "nginx" {
+  stage.label_drop {
+    values = ["filename"]
+  }
+
+  // Lines that are not the expected JSON event count as parse errors (dashboards and the
+  // "Nginx access log parse errors" alert read nginx_parse_errors_total).
+  stage.match {
+    selector = "{job=\"nginx\"} !~ \"\\\"status\\\":[0-9]{3}\""
+
+    stage.metrics {
+      metric.counter {
+        name              = "parse_errors_total"
+        prefix            = "nginx_"
+        description       = "Access log lines that are not a valid JSON event."
+        match_all         = true
+        action            = "inc"
+        max_idle_duration = "24h"
+      }
+    }
+  }
+
+  stage.json {
+    expressions = {
+      time         = "time",
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+
+  // method and status become labels only long enough to label the metrics.
+  stage.labels {
+    values = {
+      method = "method",
+      status = "status",
+    }
+  }
+
+  stage.metrics {
+    metric.counter {
+      name              = "http_response_count_total"
+      prefix            = "nginx_"
+      description       = "HTTP responses by application, method and status."
+      source            = "status"
+      action            = "inc"
+      max_idle_duration = "24h"
+    }
+
+    metric.histogram {
+      name              = "http_response_time_seconds_hist"
+      prefix            = "nginx_"
+      description       = "HTTP response time (request_time) in seconds."
+      source            = "request_time"
+      buckets           = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
+      max_idle_duration = "24h"
+    }
+  }
+
+  // Route, status, duration and client IP stay out of Loki labels (cardinality).
+  stage.label_drop {
+    values = ["method", "status"]
+  }
+
+  stage.structured_metadata {
+    values = {
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+
+  forward_to = [loki.write.central.receiver]
+}
+
+loki.write "central" {
+  endpoint {
+    url = sys.env("CENTRAL_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("AGENT_USERNAME")
+      password = sys.env("AGENT_PASSWORD")
+    }
+  }
+}
+
+// The derived metrics live in Alloy's own registry; scrape it, keep only what the central
+// side needs, and push it. The job name "alloy" gives the agent a health tile per server.
+prometheus.scrape "agent" {
+  job_name        = "alloy"
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+  targets         = [{ __address__ = "127.0.0.1:12345", server = sys.env("AGENT_SERVER_NAME") }]
+  forward_to      = [prometheus.relabel.agent.receiver]
+}
+
+prometheus.relabel "agent" {
+  rule {
+    source_labels = ["__name__"]
+    regex         = "nginx_.*|up|alloy_build_info|loki_write_.*|prometheus_remote_storage_samples_failed_total"
+    action        = "keep"
+  }
+
+  // Labels Alloy adds to its own metrics, or that collide with the scrape target's job and
+  // server, would only duplicate what job/server already say.
+  rule {
+    regex  = "component_id|component_path|exported_job|exported_server"
+    action = "labeldrop"
+  }
+
+  // The agent's own address says nothing useful centrally; the server label does.
+  rule {
+    target_label = "instance"
+    replacement  = sys.env("AGENT_SERVER_NAME")
+  }
+
+  forward_to = [prometheus.remote_write.central.receiver]
+}
+
+prometheus.remote_write "central" {
+  endpoint {
+    url = sys.env("CENTRAL_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("AGENT_USERNAME")
+      password = sys.env("AGENT_PASSWORD")
+    }
+  }
+
+  external_labels = { server = sys.env("AGENT_SERVER_NAME") }
+}

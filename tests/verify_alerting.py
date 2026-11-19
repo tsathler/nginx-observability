@@ -11,12 +11,15 @@ import urllib.request
 
 import verify_pipeline as pipeline
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+import export_alert_rules  # noqa: E402
+
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 EXPECTED_RULES = {
     "app_unavailable", "nginx_unavailable", "exporter_unavailable", "alloy_unavailable",
     "loki_unavailable", "prometheus_config_failed", "exporter_parse_errors",
-    "loki_ingestion_failures", "alloy_dropped_logs",
+    "loki_ingestion_failures", "alloy_dropped_logs", "agent_silent",
     "http_5xx_warning", "http_5xx_critical", "http_p95_warning", "http_p95_critical",
     "prometheus_tsdb_storage_warning", "prometheus_tsdb_storage_critical",
 }
@@ -46,7 +49,8 @@ def rule_inventory():
     assert EXPECTED_RULES <= set(rules), f"Missing provisioned alerts: {EXPECTED_RULES - set(rules)}"
     for uid in EXPECTED_RULES:
         rule = rules[uid]
-        expected_no_data = "OK" if uid.startswith("http_") else "NoData"
+        # HTTP rules and the silent-agent rule return no series while everything is fine.
+        expected_no_data = "OK" if uid.startswith("http_") or uid == "agent_silent" else "NoData"
         assert rule.get("noDataState") == expected_no_data, (uid, rule.get("noDataState"))
         assert rule.get("execErrState") == "Error", (uid, rule.get("execErrState"))
         assert rule.get("annotations"), f"{uid} has no operator guidance"
@@ -56,6 +60,11 @@ def rule_inventory():
         assert query, f"{uid} has no PromQL query"
         result = pipeline.get_json(f"{pipeline.prom}/api/v1/query?{urllib.parse.urlencode({'query': query})}")
         assert result.get("status") == "success", (uid, query, result)
+    # scripts/install_grafana.py installs rules from this bundle; it must match alerts.yml.
+    exported = grafana_json("/api/v1/provisioning/alert-rules/export?format=json")["groups"]
+    with open(export_alert_rules.BUNDLE, encoding="utf-8") as bundle_file:
+        bundle = json.load(bundle_file)["groups"]
+    assert bundle == export_alert_rules.normalized(exported),         "deploy/grafana/alert-rules.json is out of date: run python scripts/export_alert_rules.py"
     contact_points = grafana_json("/api/v1/provisioning/contact-points")
     assert any(point.get("name") == "Local test webhook" for point in contact_points), contact_points
     return rules

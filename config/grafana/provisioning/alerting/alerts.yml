@@ -175,6 +175,41 @@ groups:
           cause: 'Alloy is stopped or its internal metrics endpoint is unreachable.'
           action: 'Check Alloy health, file source positions, and the logs network.'
 
+      # A pushing agent that dies sends nothing, so up{job="alloy"} == 0 never appears for it.
+      # Compare servers seen in the last hour with servers that pushed in the last 2 minutes.
+      - uid: agent_silent
+        title: Monitored server agent stopped sending
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            relativeTimeRange: {from: 60, to: 0}
+            model:
+              datasource: {type: prometheus, uid: prometheus}
+              expr: '(group by (server) (max_over_time(up{job="alloy"}[1h])) unless on (server) group by (server) (max_over_time(up{job="alloy"}[2m]))) or on (server) (0 * group by (server) (max_over_time(up{job="alloy"}[2m])))'
+              instant: true
+              range: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: __expr__
+            model: *reduce
+          - refId: C
+            datasourceUid: __expr__
+            model: *condition
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        labels: {severity: critical, component: alloy}
+        annotations:
+          __dashboardUid__: nginx-overview
+          __panelId__: '13'
+          summary: 'Agent on {{ $labels.server }} stopped sending data'
+          description: 'No metrics have arrived from this server for over 2 minutes; logs from it are probably missing too.'
+          cause: 'The Alloy container on the monitored server stopped, lost its route to the central server, or its credentials were rejected.'
+          action: 'On the monitored server, check `docker ps` and the Alloy logs; on the central server, check the ingress access log for 401/403 from this agent.'
+
       - uid: loki_unavailable
         title: Loki unavailable
         condition: C

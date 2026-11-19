@@ -17,6 +17,10 @@ All notable changes to Nginx Observability are documented here.
 - Every Prometheus target and Loki stream carries a `server` label (`lab` in this lab), and all four dashboards have a Server variable applied to every query and Explore link.
 - Alert limits are defaults applied to every (server, app) pair with traffic, with optional per-pair overrides; a new application or server gets 5xx and latency alerts without editing the rules. HTTP alerts group by server and app.
 
+- Stat panels use instant queries, so during a collection outage they show "No samples" instead of repeating the last value from before the failure (found by stopping the exporter for two minutes).
+- Security's 403/404/5xx rate stats show 0 while traffic is collected but none of those responses occurred, instead of "No samples".
+- HTTP 5xx and latency alerts treat missing data as OK: their per-app limits exist only while the exporter reports traffic, and an exporter outage is already signalled by its own alert, so the outage no longer adds four NoData alerts.
+
 ### Added
 
 - GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run.

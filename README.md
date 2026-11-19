@@ -148,7 +148,7 @@ A varredura Trivy da release e os SBOMs SPDX das 11 imagens examinadas estão em
 
 `deploy/central` (Loki e Prometheus), `deploy/agent` (agente Alloy por servidor Nginx) e `scripts/install_grafana.py` (dashboards e alertas num Grafana existente). Passo a passo e checklist em [docs/implantacao-homologacao.md](docs/implantacao-homologacao.md). O perfil `lab2` executa o mesmo agente no laboratório.
 
-O instalador publica os dashboards em inglês, em português (`--lang pt-BR`) ou nos dois, com um botão de troca de idioma que mantém filtros e período (`--lang both`); com `--carousel`, cria uma página de Detalhe da aplicação por servidor e aplicação e uma playlist que gira entre elas numa tela de TV (modo quiosque). Limites de alerta por servidor e aplicação ficam só no servidor central, em `deploy/central/local-rules/`.
+O instalador publica os dashboards em inglês, em português (`--lang pt-BR`) ou nos dois, com um botão de troca de idioma que mantém filtros e período (`--lang both`); com `--carousel`, o dashboard de Detalhe da aplicação ganha o botão **Carrossel das aplicações**, que mostra cada aplicação em tela cheia, trocando sozinho (modo quiosque). Limites de alerta por servidor e aplicação ficam só no servidor central, em `deploy/central/local-rules/`.
 
 ## Encerrar
 

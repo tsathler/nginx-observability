@@ -7,7 +7,7 @@ All notable changes to Nginx Observability are documented here.
 ### Added
 
 - `install_grafana.py --lang pt-BR|both`: Brazilian Portuguese dashboards and alert texts from one catalog (`deploy/grafana/i18n/pt-BR.json`), so the English dashboards stay the single source. With `both`, each dashboard links to its other-language twin keeping variables and time range; alerts are installed once, in Portuguese by default when Portuguese is chosen.
-- `install_grafana.py --carousel`: one pinned Application Detail page per (server, app) with traffic, in a "Carousel" subfolder, and a Grafana playlist that rotates Overview and those pages for a TV / kiosk screen (`--carousel-interval`, `--carousel-apps`). Pages of pairs that stopped reporting are removed on the next run.
+- `install_grafana.py --carousel`: Application Detail gets an "Application carousel" button that shows each application full screen in turn (kiosk mode). Behind it, one pinned page per (server, app) with traffic in a "Carousel" subfolder and a playlist per language (`--carousel-interval`, `--carousel-apps`); pages of pairs that stopped reporting are removed on the next run.
 - Per-server alert limits on the central server: Prometheus also loads `deploy/central/local-rules/*.yml` (git-ignored; `thresholds-override.yml.example` shows the override records), so a slower application such as a ticketing system gets its own P95 or 5xx limits without changing the repository.
 - `tests/verify_grafana_install.py`: offline checks for translation coverage, language links, translated table columns, lab-only rule filtering and carousel pages.
 

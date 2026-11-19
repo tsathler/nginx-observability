@@ -5,3 +5,6 @@
 *.log.*
 __pycache__/
 *.py[cod]
+
+# Notes about the real (internal) environment; never published.
+docs/interno/

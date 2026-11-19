@@ -15,7 +15,8 @@ Levar a stack para um servidor Linux central que recebe logs e métricas de vár
 | Coleta | **Alloy** como agente em cada servidor Nginx, mais um **segundo access log em JSON sanitizado**. O log original de cada servidor permanece intacto. |
 | Implantação | O código chega aos servidores por **git** (`git clone` / `git pull`). A configuração específica de cada servidor — IPs, nomes, certificados, credenciais de agentes e do Grafana — é feita **no próprio servidor**, em arquivos fora do controle de versão (como o `.env`), e nunca é commitada. O repositório GitHub é público; o que está nele deve permanecer genérico. |
 | Sistema do servidor central | **Ubuntu** 24.04 LTS. |
-| Grafana | Usar um **Grafana já existente**, compartilhado com outros dashboards. Esta stack **não sobe Grafana próprio** no central: datasources, dashboards e regras de alerta são instalados nele. |
+| Ambientes | Servidor de **homologação** separado do de **produção**; a stack passa primeiro pela homologação. |
+| Grafana | Usar um **Grafana já existente**, compartilhado com outros dashboards. Esta stack **não sobe Grafana próprio** no central: datasources, dashboards e regras de alerta são instalados nele pela API. |
 | Forma de execução | Central com Docker Compose; **agente Alloy em container** em cada servidor monitorado (decisão de 2026-11-19). |
 | Métricas | **Só o Alloy**: o agente gera as métricas HTTP a partir do log JSON, com os mesmos nomes e rótulos do exporter, e envia por `remote_write`. Sem `nginxlog-exporter` nos servidores monitorados. |
 | Inventário | Servidores e aplicações monitorados **a mapear** pelo mantenedor (incluindo requisições/dia por servidor). |
@@ -28,8 +29,8 @@ O central pode ser compartilhado com outros sistemas. Por isso os dados da obser
 Pendências antes da implantação:
 
 1. ✅ Validar os dashboards e regras de alerta no **Grafana 13.x**. Feito em 2026-11-19 com um Grafana `13.2.2` temporário no laboratório, usando o mesmo provisionamento: datasources e 4 dashboards carregados sem erro, 15 regras de alerta com saúde `ok`, ponto de contato criado; `tests/verify_pipeline.py` passou contra ele (`GRAFANA_URL` apontando para o temporário) e a revisão visual no Chrome não mostrou diferença em relação ao 12.4.15. Observação: o provisionamento registra erro inofensivo se a pasta `provisioning/plugins` não existir.
-2. Verificar se os UIDs de datasource `prometheus` e `loki` já estão em uso no Grafana existente; se estiverem, adotar UIDs próprios (ex.: `nginx-obs-prometheus`) e ajustar os dashboards.
-3. Descobrir como o Grafana existente é implantado (Compose e pasta de provisionamento, ou só UI/API) para escolher entre provisionamento por arquivo e importação via API.
+2. ✅ UIDs de datasource: o instalador usa UIDs próprios (`nginx-obs-prometheus`, `nginx-obs-loki`) e recusa sobrescrever um datasource de mesmo nome, então não conflita com os já existentes.
+3. ✅ Instalação no Grafana existente pela API (`scripts/install_grafana.py`), sem mexer no provisionamento dele; o guia cobre Grafana em rede do host (Loki e Prometheus em `127.0.0.1`) e em rede Docker própria.
 4. Definir o tamanho do volume dedicado e quem o cria (requer root).
 
 ## Topologia

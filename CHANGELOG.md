@@ -21,6 +21,10 @@ All notable changes to Nginx Observability are documented here.
 - Security's 403/404/5xx rate stats show 0 while traffic is collected but none of those responses occurred, instead of "No samples".
 - HTTP 5xx and latency alerts treat missing data as OK: their per-app limits exist only while the exporter reports traffic, and an exporter outage is already signalled by its own alert, so the outage no longer adds four NoData alerts.
 
+- Application Detail's slowest-request table applied `ms` to every column (Status showed `200 ms`); the unit now applies only to the duration column, which is shown before the path.
+- Security's scanner-path and repeated-origin panels labelled bars only by application; they are now tables with App / Path / Events and App / Source IP / 4xx-5xx events, sorted by count.
+- Live Logs states its real 5 s refresh (Grafana's minimum) instead of 2 s.
+
 ### Added
 
 - GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run.

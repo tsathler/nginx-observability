@@ -1,0 +1,86 @@
+// Simulated second monitored server ("lab2"), started only with `docker compose --profile lab2`.
+// It rehearses the Marco 04 push model: this agent ships logs to the central Loki and metrics to
+// the central Prometheus (remote_write); the central side does not scrape lab2.
+
+local.file_match "nginx" {
+  path_targets = [
+    { __path__ = "/var/log/nginx/app-a.json", app = "app-a", job = "nginx", server = "lab2" },
+    { __path__ = "/var/log/nginx/app-b.json", app = "app-b", job = "nginx", server = "lab2" },
+    { __path__ = "/var/log/nginx/app-c.json", app = "app-c", job = "nginx", server = "lab2" },
+  ]
+}
+
+loki.source.file "nginx" {
+  targets    = local.file_match.nginx.targets
+  forward_to = [loki.process.nginx.receiver]
+}
+
+loki.process "nginx" {
+  stage.json {
+    expressions = {
+      time         = "time",
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+  stage.structured_metadata {
+    values = {
+      method       = "method",
+      path         = "path",
+      status       = "status",
+      request_time = "request_time",
+      remote_addr  = "remote_addr",
+    }
+  }
+  forward_to = [loki.write.central.receiver]
+}
+
+loki.write "central" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// Same job names as the central scrape config, so dashboards and alerts treat lab2 like any server.
+prometheus.scrape "nginx_access" {
+  job_name        = "nginx-access"
+  scrape_interval = "5s"
+  scrape_timeout  = "4s"
+  targets         = [{ __address__ = "lab2-exporter:4040" }]
+  forward_to      = [prometheus.remote_write.central.receiver]
+}
+
+prometheus.scrape "nginx_health" {
+  job_name        = "nginx-health"
+  scrape_interval = "5s"
+  scrape_timeout  = "4s"
+  metrics_path    = "/nginx-metrics"
+  targets         = [{ __address__ = "nginx:80" }]
+  forward_to      = [prometheus.remote_write.central.receiver]
+}
+
+prometheus.scrape "app_health" {
+  job_name        = "app-health"
+  scrape_interval = "5s"
+  scrape_timeout  = "4s"
+  targets         = [
+    { __address__ = "nginx:80", __metrics_path__ = "/app-a/metrics", app = "app-a" },
+    { __address__ = "nginx:80", __metrics_path__ = "/app-b/metrics", app = "app-b" },
+    { __address__ = "nginx:80", __metrics_path__ = "/app-c/metrics", app = "app-c" },
+  ]
+  forward_to      = [prometheus.remote_write.central.receiver]
+}
+
+prometheus.remote_write "central" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+  external_labels = { server = "lab2" }
+}

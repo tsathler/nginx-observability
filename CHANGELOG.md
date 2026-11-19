@@ -25,7 +25,12 @@ All notable changes to Nginx Observability are documented here.
 - Security's scanner-path and repeated-origin panels labelled bars only by application; they are now tables with App / Path / Events and App / Source IP / 4xx-5xx events, sorted by count.
 - Live Logs states its real 5 s refresh (Grafana's minimum) instead of 2 s.
 
+- Overview "P95 by application" and "5xx share by application" grouped only by app, merging the same app from different servers; they now group by server and app.
+- "Application unavailable" matched app and Nginx health only by `instance`; it now matches by `server` and `instance`.
+
 ### Added
+
+- Compose profile `lab2`: a simulated second server (Nginx, three apps, exporter, traffic generator and an Alloy agent that pushes logs and metrics with `server="lab2"`), off by default. Prometheus accepts remote writes for it.
 
 - GitHub Actions workflow that rebuilds Loki v3.7.10 with Go 1.26.11 and the upstream WAL fix (grafana/loki#25118), using Loki's own Dockerfile; it tests the fix, checks the Go version, scans with Trivy and publishes to GHCR only on a manual run.
 

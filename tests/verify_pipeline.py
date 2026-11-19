@@ -524,7 +524,7 @@ def verify_overview_health_and_limits(dashboard):
     alerts = open(os.path.join(root, "config", "grafana", "provisioning", "alerting", "alerts.yml"), encoding="utf-8").read()
     panel_ids = {str(panel["id"]) for panel in dashboard["panels"]}
     linked = re.findall(r"__dashboardUid__: (\S+)\s+__panelId__: '(\d+)'", alerts)
-    assert len(linked) == 9 and all(uid == "nginx-overview" and pid in panel_ids for uid, pid in linked), linked
+    assert len(linked) == 10 and all(uid == "nginx-overview" and pid in panel_ids for uid, pid in linked), linked
 
 
 def grafana_query_expression(expr):

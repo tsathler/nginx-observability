@@ -57,3 +57,13 @@ Grafana Explore com Loki oferece Live tail por WebSocket. Refresh de dashboard/p
 ## Resultado após implementação
 
 As cinco lacunas foram tratadas com quatro dashboards provisionados e seleção dinâmica por `$app`; filtros de método/status/path/IP foram implementados com variáveis Grafana, sem promover campos de alta cardinalidade a labels; o gerador passou a emitir GET e POST e cenários finitos; painéis de rotas/origens usam parsing LogQL em tempo de consulta; o indicador 429 permanece em painéis de detalhe e segurança como zero observado, sem ocupar o Overview. As APIs Prometheus e Loki aceitaram 31 e 7 consultas de painéis, respectivamente. Os detalhes da execução integrada e os incidentes corrigidos estão em [marco02-validation.md](marco02-validation.md). A correção posterior das categorias do Overview está em [dashboard-overview-fix.md](dashboard-overview-fix.md).
+
+## Revisão visual pelo Chrome — 2026-11-19
+
+Capturas feitas no Chrome em 1440×900, com `Server = lab`: [Overview](screenshots/overview.jpg), [Application Detail](screenshots/application-detail.jpg), [Live Logs](screenshots/live-logs.jpg) e [Security](screenshots/security.jpg). Confirmam a faixa de saúde, a lista de alertas, as cores por limite, a variável Server e os indicadores com consulta instantânea.
+
+Defeitos visuais encontrados (abertos):
+
+1. **Application Detail — "Slowest by app/method/status/path":** a unidade `ms` do campo de duração também é aplicada à coluna **Status** (`200 ms`, `404 ms`); a coluna de duração fica fora da área visível do painel.
+2. **Security — "Observed scanner-like paths" e "Origins with repeated 4xx / 5xx":** as barras mostram apenas a aplicação (`app-a` repetido), sem o path ou o IP de origem, o que impede saber qual caminho ou origem cada barra representa.
+3. **Live Logs — texto "Refresh and Live tail":** diz que o painel atualiza a cada 2 s; o intervalo efetivo é 5 s (mínimo do Grafana).

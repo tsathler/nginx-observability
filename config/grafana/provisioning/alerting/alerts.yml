@@ -295,15 +295,17 @@ groups:
           - refId: C
             datasourceUid: __expr__
             model: *condition
-        noDataState: NoData
+        # The counter only exists after the first malformed line (Alloy agents create it on
+        # demand), so missing data means "no parse errors", not a collection gap.
+        noDataState: OK
         execErrState: Error
         for: 30s
         labels: {severity: warning, component: exporter}
         annotations:
-          summary: 'Exporter parse errors detected for {{ $labels.app }} on {{ $labels.server }}'
-          description: 'The exporter has reported malformed access log entries during the last five minutes.'
-          cause: 'The Nginx access log format no longer matches the exporter configuration.'
-          action: 'Inspect exporter parse errors and compare the configured log format with the generated file.'
+          summary: 'Access log parse errors detected for {{ $labels.app }} on {{ $labels.server }}'
+          description: 'The log collector (exporter or Alloy agent) reported malformed access log entries during the last five minutes.'
+          cause: 'The Nginx access log format no longer matches the format the collector expects.'
+          action: 'Compare the Nginx log_format with the expected JSON fields and inspect the collector logs.'
 
       - uid: loki_ingestion_failures
         title: Loki ingestion or flush failures

@@ -206,7 +206,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means no traffic metrics arrived in the range."
     },
     {
       "id": 2,
@@ -271,7 +271,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means no traffic metrics arrived in the range."
     },
     {
       "id": 3,
@@ -401,7 +401,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means the exporter is not being scraped."
+      "description": "Current request rate; values below 1 remain legible with three decimal places. Shows 0 while traffic is collected but none of these responses occurred; No samples means no traffic metrics arrived in the range."
     },
     {
       "id": 5,
@@ -470,7 +470,7 @@
     },
     {
       "id": 6,
-      "title": "Exporter parse errors (period)",
+      "title": "Log parse errors (period)",
       "type": "stat",
       "gridPos": {
         "x": 20,
@@ -489,7 +489,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(nginx_parse_errors_total{server=~\"$server\",app=~\"$app\"}[$__range]))",
+          "expr": "sum(increase(nginx_parse_errors_total{server=~\"$server\",app=~\"$app\"}[$__range])) or (0 * sum(increase(nginx_http_response_count_total{server=~\"$server\",app=~\"$app\"}[$__range])))",
           "refId": "A",
           "instant": true
         }
@@ -533,7 +533,7 @@
         "showPercentChange": false,
         "textMode": "value"
       },
-      "description": "Exporter parse errors in the selected period, presented as collection health rather than an HTTP security event. No samples means the exporter is not being scraped."
+      "description": "Access log lines the collector (exporter or Alloy agent) could not parse in the selected period, presented as collection health rather than an HTTP security event. Alloy agents create the counter on the first error, so 0 is shown while traffic is collected without errors; No samples means no traffic metrics arrived in the range."
     },
     {
       "id": 7,

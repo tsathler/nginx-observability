@@ -705,7 +705,7 @@ def verify_security_dashboard(dashboard):
         expr = panels[title]["targets"][0]["expr"]
         assert "or (0 * sum(rate(nginx_http_response_count_total" in expr, f"{title} must show 0 while traffic exists"
         assert prom_query(grafana_query_expression(expr)), f"{title} returned no value although traffic is collected"
-    parse_panel = panels["Exporter parse errors (period)"]
+    parse_panel = panels["Log parse errors (period)"]
     assert "increase(" in parse_panel["targets"][0]["expr"] and "vector(0)" not in parse_panel["targets"][0]["expr"]
     metric_series = prom_query("nginx_http_response_count_total")
     assert metric_series and all("remote_addr" not in item["metric"] for item in metric_series), \

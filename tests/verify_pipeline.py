@@ -993,7 +993,10 @@ def verify_application_detail(dashboard):
                 'status=~".*"', 'status=~"2.."'), target["legendFormat"])
         selected_apps = {field.get("labels", {}).get("app") for frame in selected
                          for field in frame["schema"]["fields"] if field["name"] == "Value"}
-        assert selected_apps == {"app-a"} and len(selected) == 1, f"{title} single-app selection leaked or returned multiple series: {selected_apps}"
+        selected_servers = [field.get("labels", {}).get("server") for frame in selected
+                            for field in frame["schema"]["fields"] if field["name"] == "Value"]
+        # One series per server running app-a (lab2 adds a second one when its profile is up).
+        assert selected_apps == {"app-a"} and len(selected) == len(set(selected_servers)),             f"{title} single-app selection leaked or returned duplicate series: {selected_apps} {selected_servers}"
 
     selected_method = grafana_prom_frames(grafana_query_expression(method_target["expr"]).replace(
         'app=~".*"', 'app=~"app-a"').replace('method=~".*"', 'method=~"GET"').replace(

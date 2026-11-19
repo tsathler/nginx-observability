@@ -14,6 +14,22 @@ Levar a stack para um servidor Linux central que recebe logs e métricas de vár
 | Conectividade | Os servidores Nginx monitorados alcançam o central por **rede privada** (IPs internos). |
 | Coleta | **Alloy** como agente em cada servidor Nginx, mais um **segundo access log em JSON sanitizado**. O log original de cada servidor permanece intacto. |
 | Implantação | O código chega aos servidores por **git** (`git clone` / `git pull`). A configuração específica de cada servidor — IPs, nomes, certificados, credenciais de agentes e do Grafana — é feita **no próprio servidor**, em arquivos fora do controle de versão (como o `.env`), e nunca é commitada. O repositório GitHub é público; o que está nele deve permanecer genérico. |
+| Sistema do servidor central | **Ubuntu** 24.04 LTS. |
+| Grafana | Usar um **Grafana já existente**, compartilhado com outros dashboards. Esta stack **não sobe Grafana próprio** no central: datasources, dashboards e regras de alerta são instalados nele. |
+| Forma de execução | Central com Docker Compose; agentes Alloy nos servidores monitorados — modo (nativo via systemd ou container) **a confirmar**. |
+| Inventário | Servidores e aplicações monitorados **a mapear** pelo mantenedor (incluindo requisições/dia por servidor). |
+
+
+## Servidor central
+
+O central pode ser compartilhado com outros sistemas. Por isso os dados da observabilidade ficam num **volume lógico dedicado** (ex.: 40 GB em `/srv/observability`), para que o Loki nunca encha o disco do sistema, e o Nginx já existente no host serve de **porta de entrada** (TLS + credencial por agente) para Loki e Prometheus, sem expor as portas deles. Os dados do ambiente real (servidores, endereços, levantamentos) ficam fora deste repositório.
+
+Pendências antes da implantação:
+
+1. Validar os dashboards e regras de alerta no **Grafana 13.x** (foram feitos e testados no 12.4.15); dá para testar no laboratório com a imagem 13.x.
+2. Verificar se os UIDs de datasource `prometheus` e `loki` já estão em uso no Grafana existente; se estiverem, adotar UIDs próprios (ex.: `nginx-obs-prometheus`) e ajustar os dashboards.
+3. Descobrir como o Grafana existente é implantado (Compose e pasta de provisionamento, ou só UI/API) para escolher entre provisionamento por arquivo e importação via API.
+4. Definir o tamanho do volume dedicado e quem o cria (requer root).
 
 ## Topologia
 

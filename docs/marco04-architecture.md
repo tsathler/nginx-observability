@@ -1,6 +1,6 @@
 # Marco 04 — Arquitetura multi-servidor (planejamento)
 
-**Estado:** desenho aprovado pelo mantenedor em 2026-11-17. Pacotes de implantação prontos e testados no laboratório em 2026-11-19 (`deploy/`, `config/agent/`, `scripts/install_grafana.py`); passo a passo em [implantacao-homologacao.md](implantacao-homologacao.md). Ainda não implantado em homologação.
+**Estado:** desenho aprovado pelo mantenedor em 2026-11-17. Pacotes de implantação prontos e testados no laboratório em 2026-11-19 (`deploy/`, `config/agent/`, `scripts/install_grafana.py`); passo a passo em [implantacao-homologacao.md](implantacao-homologacao.md). Implantado e verificado em homologação em 2026-11-19 (servidor central e primeiro agente); produção ainda não.
 
 ## Objetivo
 
@@ -28,10 +28,10 @@ O central pode ser compartilhado com outros sistemas. Por isso os dados da obser
 
 Pendências antes da implantação:
 
-1. ✅ Validar os dashboards e regras de alerta no **Grafana 13.x**. Feito em 2026-11-19 com um Grafana `13.2.2` temporário no laboratório, usando o mesmo provisionamento: datasources e 4 dashboards carregados sem erro, 15 regras de alerta com saúde `ok`, ponto de contato criado; `tests/verify_pipeline.py` passou contra ele (`GRAFANA_URL` apontando para o temporário) e a revisão visual no Chrome não mostrou diferença em relação ao 12.4.15. Observação: o provisionamento registra erro inofensivo se a pasta `provisioning/plugins` não existir.
+1. ✅ Validar os dashboards e regras de alerta no **Grafana 13.x**. Feito em 2026-11-19 com um Grafana `13.2.2` temporário no laboratório, usando o mesmo provisionamento: datasources e 4 dashboards carregados sem erro, 15 regras de alerta com saúde `ok` (hoje são 16; o instalador põe 13 num Grafana existente, sem as 3 do laboratório), ponto de contato criado; `tests/verify_pipeline.py` passou contra ele (`GRAFANA_URL` apontando para o temporário) e a revisão visual no Chrome não mostrou diferença em relação ao 12.4.15. Observação: o provisionamento registra erro inofensivo se a pasta `provisioning/plugins` não existir.
 2. ✅ UIDs de datasource: o instalador usa UIDs próprios (`nginx-obs-prometheus`, `nginx-obs-loki`) e recusa sobrescrever um datasource de mesmo nome, então não conflita com os já existentes.
 3. ✅ Instalação no Grafana existente pela API (`scripts/install_grafana.py`), sem mexer no provisionamento dele; o guia cobre Grafana em rede do host (Loki e Prometheus em `127.0.0.1`) e em rede Docker própria.
-4. Definir o tamanho do volume dedicado e quem o cria (requer root).
+4. ✅ Volume dedicado: 40 GB, criado pelo administrador (root) a partir do LVM livre; o dimensionamento por requisições/dia está no guia de implantação.
 
 ## Topologia
 
@@ -80,15 +80,16 @@ Os logs das aplicações publicadas contêm IPs de usuários reais. A minimizaç
 - Variável **Server** nos quatro dashboards, aplicada a todas as consultas e aos links do Explore.
 - Limites de alerta como padrões aplicados a todo par (server, app) com tráfego, com override opcional por par; alertas HTTP agrupados por `server` e `app`.
 
-## Pontos em aberto para o início do Marco 04
+## Pontos em aberto
 
-- Sistema e versão do servidor central; forma de execução (Docker Compose no Linux ou serviços nativos).
-- Dimensionamento de disco e retenção para N servidores.
-- Inventário dos servidores e aplicações a monitorar.
+- Inventário dos servidores e aplicações a monitorar (com requisições por dia, que definem o disco do Loki).
+- Backup fora do host e aprovação da retenção pelo responsável pelos dados.
+- Rota de notificação dos alertas no Grafana existente.
+- Um agente comprometido pode enviar dados com o nome de outro servidor (ver "Limitações conhecidas" do guia); isolar por tenant no Loki se o inventário incluir servidores de outras equipes.
 
 ## Ensaio com segundo servidor simulado (`lab2`) — 2026-11-19
 
-O perfil Compose `lab2` (desligado por padrão; `docker compose --profile lab2 up -d`) sobe um segundo "servidor" com Nginx, três apps, gerador de tráfego, exporter e um **Alloy que envia** logs ao Loki e métricas ao Prometheus (`remote_write`, rótulo `server="lab2"`), ensaiando o modelo de push deste marco. O Prometheus passou a aceitar gravações remotas (`--web.enable-remote-write-receiver`); no Marco 04 isso fica atrás do proxy com TLS e autenticação.
+O perfil Compose `lab2` (desligado por padrão; `docker compose --profile lab2 up -d`) sobe um segundo "servidor" com Nginx, três apps, gerador de tráfego e um **Alloy que envia** (que também gera as métricas, como nos servidores reais) logs ao Loki e métricas ao Prometheus (`remote_write`, rótulo `server="lab2"`), ensaiando o modelo de push deste marco. O Prometheus passou a aceitar gravações remotas (`--web.enable-remote-write-receiver`); no Marco 04 isso fica atrás do proxy com TLS e autenticação.
 
 Resultado do ensaio:
 

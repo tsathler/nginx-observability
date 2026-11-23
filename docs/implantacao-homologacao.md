@@ -41,12 +41,14 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
 3. **Configuração:** `cd /opt/nginx-observability/deploy/central && cp .env.example .env` e ajuste retenção e portas no `.env`.
 4. **Subir:** `docker compose up -d`. Verificar: `curl -s http://127.0.0.1:13100/ready` e `curl -s http://127.0.0.1:19090/-/ready`.
 5. **Entrada para os agentes** no Nginx do host, a partir de `deploy/central/nginx-ingress.conf.example`:
+   - antes: `sudo apt install apache2-utils` (traz o `htpasswd`) e `sudo install -d -m 0750 /etc/nginx/observability/tls`;
    - certificado TLS em `/etc/nginx/observability/tls/` (CA interna ou certificado da organização);
+   - ativar o site: copiar o modelo para `/etc/nginx/sites-available/observability-ingress` e criar o link em `sites-enabled` (`sudo ln -s /etc/nginx/sites-available/observability-ingress /etc/nginx/sites-enabled/`); sem o link, o `nginx -t` passa mas a entrada não é carregada;
    - um usuário por agente: `sudo htpasswd -B -c /etc/nginx/observability/agents.htpasswd <nome-do-servidor>` (sem `-c` a partir do segundo);
    - `allow` com o IP privado de cada servidor monitorado; `listen` só no IP privado;
    - `sudo nginx -t && sudo systemctl reload nginx`.
 6. **Firewall:** liberar a porta da entrada apenas para os IPs dos agentes; Loki e Prometheus continuam só em `127.0.0.1`.
-7. **Limites de alerta por aplicação** (opcional): os padrões valem para todo par (servidor, aplicação) — 5xx 5% / 15%, P95 0,5 s / 1 s. Para uma aplicação naturalmente mais lenta, copie `deploy/central/local-rules/thresholds-override.yml.example` para `thresholds-override.yml` na mesma pasta (ignorado pelo git), ajuste `server`, `app` e os valores, e recarregue: `docker compose kill -s HUP prometheus`. As cores dos dashboards continuam nos padrões; os alertas usam o override.
+7. **Limites de alerta por aplicação** (opcional): os padrões valem para todo par (servidor, aplicação) — 5xx 5% / 15%, P95 0,5 s / 1 s. Para uma aplicação naturalmente mais lenta, em `/opt/nginx-observability/deploy/central` rode `cp local-rules/thresholds-override.yml.example local-rules/thresholds-override.yml` (a cópia fica fora do git), ajuste `server`, `app` e os valores (os dois rótulos são obrigatórios) e recarregue, da mesma pasta: `docker compose kill -s HUP prometheus`. As cores dos dashboards continuam nos padrões; os alertas usam o override.
 
 ## 2. Grafana existente
 
@@ -93,7 +95,7 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
    access_log /var/log/nginx/observability/portal.json observability_json;
    ```
    `sudo install -d -o www-data -g adm -m 0750 /var/log/nginx/observability`, depois `sudo nginx -t && sudo systemctl reload nginx`.
-   Em sites que encaminham tudo para um front controller (`try_files … /index.php`), `$uri` termina valendo `/index.php`; nesse caso use `map $request_uri $obs_path` com expressões ancoradas no início do caminho. A query string continua fora do log, porque o mapa só devolve os rótulos cadastrados.
+   Em sites que encaminham tudo para um front controller (`try_files … /index.php`), `$uri` termina valendo `/index.php`; nesse caso **troque** o `map $uri $obs_path` do arquivo por `map $request_uri $obs_path` (os dois não podem coexistir: definem a mesma variável), com expressões ancoradas no início e terminadas em `(\?|$)` em vez de `$`, porque `$request_uri` inclui a query string (ex.: `~^/\.env(\?|$)`). A query string continua fora do log porque o mapa só devolve os rótulos cadastrados; não use grupos de captura (`$1`) nos valores, ou partes da URL voltam ao log.
 2. **Rotação:** `deploy/agent/logrotate.example` → `/etc/logrotate.d/nginx-observability`.
 3. **Agente:** `git clone` do repositório, `cd deploy/agent && cp .env.example .env`, preencher `AGENT_SERVER_NAME`, `CENTRAL_URL`, `AGENT_PASSWORD` e `CENTRAL_CA_FILE`; `docker compose up -d`.
    - **Agente no próprio servidor central:** o container chega à entrada com o IP da rede Docker dele (`docker network inspect nginx-observability-agent_default`), não com o IP privado do host. Essa sub-rede precisa estar no `allow` da entrada e no firewall.
@@ -103,8 +105,8 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
 
 - Overview com **Server = <novo servidor>**: tráfego, P95 e 5xx coerentes com o access log original.
 - Live Logs mostra as requisições com a coluna Server.
-- Parar o agente (`docker compose stop alloy`) dispara **Monitored server agent stopped sending** para esse servidor em ~3 minutos; ao voltar, o alerta se resolve.
-- Uma requisição a `/.env` aparece em Security → "Observed scanner-like paths".
+- Parar o agente (`docker compose stop alloy`) dispara **Monitored server agent stopped sending** (em português: **Agente do servidor monitorado parou de enviar**) para esse servidor em ~3 minutos; ao voltar, o alerta se resolve. Dica: rode os comandos com `cd` para a pasta certa antes, já que o `docker compose` procura o `compose.yaml` na pasta atual.
+- Uma requisição a `/.env` aparece em Security → "Observed scanner-like paths" (Segurança → "Caminhos típicos de varredura observados").
 
 ## Checklist antes de receber tráfego real
 
@@ -121,7 +123,7 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
 
 ## Limitações conhecidas
 
-- **Rótulo `server` declarado pelo agente:** a senha identifica o agente na entrada, mas o rótulo `server` vem da configuração dele. Um agente comprometido poderia enviar dados com o nome de outro servidor. Mitigação: uma credencial por servidor, lista de IPs e log de acesso da entrada.
+- **Rótulo `server` declarado pelo agente:** a senha identifica o agente na entrada, mas o rótulo `server` vem da configuração dele. Um agente comprometido poderia enviar dados com o nome de outro servidor. Mitigação: uma credencial por servidor, lista de IPs, limite de requisições por origem na entrada (`limit_req` do modelo) e log de acesso da entrada. Isolamento completo exigiria um tenant do Loki por agente.
 - **Reinício do agente zera os contadores:** `rate()` e `increase()` tratam o reinício; o histórico já enviado não se perde.
 - **Saúde de Nginx e aplicações:** nos servidores reais não há os endpoints de saúde do laboratório; a disponibilidade é inferida pelo tráfego, 5xx e pelo alerta de agente parado. Um verificador externo (blackbox) fica para depois.
 - **Faixa de saúde:** com muitos servidores, filtre pela variável Server.
@@ -130,4 +132,4 @@ O agente é o mesmo do perfil `lab2` do laboratório: o Alloy lê o log JSON, en
 
 - Agente: `docker compose down` em `deploy/agent` (mantém o volume com as posições de leitura) e retirar as duas linhas `set`/`access_log` do site.
 - Central: `docker compose down` em `deploy/central`; os dados ficam em `DATA_DIR`.
-- Grafana: apagar a pasta **Nginx Observability** (dashboards e regras) e os dois datasources `Nginx Observability - *`.
+- Grafana: apagar a pasta **Nginx Observability** (dashboards, subpasta Carrossel e regras), as playlists `Nginx Observability - Application carousel` / `- Carrossel das aplicações` (Dashboards → Playlists, ficam fora das pastas) e os dois datasources `Nginx Observability - *`.

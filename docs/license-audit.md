@@ -34,7 +34,7 @@ Versions were read from the current compose file and Dockerfiles. Upstream licen
 
 Trivy 0.76.2 produced SPDX files for all 11 exact local image digests used by the Compose configuration; see [`docs/sbom/`](sbom/). The SBOMs include detected package license metadata for those digests. This improves package-level evidence but does not guarantee that every file was detected, resolve dual-license interpretation, or validate legal notice requirements. In particular, AGPL components and exceptions, NGINX BSD-like terms, vendored Go dependencies, Python distribution packages, and Debian/Alpine base packages still need review before redistribution of image contents. This project publishes Compose references rather than embedding container image tarballs, but users pull and execute those upstream artifacts separately.
 
-The root `LICENSE` still says `Copyright (c) 2026 Thiago Sathler`. This attribution derives from Git author data only. The maintainer/rightsholder has not explicitly confirmed ownership or authority to license all project-owned files under MIT. Keep this as a publication blocker until confirmed; do not infer rights from commit identity.
+The root `LICENSE` still says `Copyright (c) 2026 Thiago Sathler`. This attribution derives from Git author data only. The maintainer/rightsholder has not explicitly confirmed ownership or authority to license all project-owned files under MIT. Keep this as a publication blocker until confirmed; do not infer rights from commit identity. **Resolved 2026-11-17:** the maintainer confirmed ownership and authority (see [release v0.1.0](release-v0.1.0.md#maintainer-decisions--2026-11-17)).
 
 ## Current component version check — 2026-11-17
 

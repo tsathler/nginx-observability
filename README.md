@@ -70,7 +70,7 @@ Alert rules ficam em **Grafana → Alerting → Alert rules**, na pasta **Nginx 
 
 Toda métrica e todo stream de log carregam o rótulo `server` (no laboratório, `lab`). Os quatro dashboards têm a variável **Server**; a opção All também inclui dados gravados antes da existência do rótulo.
 
-Para ensaiar vários servidores, o perfil `lab2` sobe um segundo servidor simulado que envia logs e métricas com `server="lab2"`: `docker compose --profile lab2 up -d`; para encerrar, `docker compose --profile lab2 rm -sf lab2-app-a lab2-app-b lab2-app-c lab2-nginx lab2-exporter lab2-alloy lab2-traffic`. Detalhes em [docs/marco04-architecture.md](docs/marco04-architecture.md).
+Para ensaiar vários servidores, o perfil `lab2` sobe um segundo servidor simulado que envia logs e métricas com `server="lab2"`: `docker compose --profile lab2 up -d`; para encerrar, `docker compose --profile lab2 rm -sf lab2-app-a lab2-app-b lab2-app-c lab2-nginx lab2-alloy lab2-traffic`. Detalhes em [docs/marco04-architecture.md](docs/marco04-architecture.md).
 
 Os JSONs em `config/grafana/dashboards/` são a fonte oficial dos dashboards: edite-os diretamente (ou exporte do Grafana) e rode `python tests/verify_pipeline.py`. O gerador `scripts/build_dashboards.py` foi aposentado porque havia divergido dos arquivos provisionados; o histórico Git o preserva. O contact point provisionado entrega apenas ao receptor de teste da rede Docker interna; ele não é uma integração de produção.
 
@@ -100,6 +100,7 @@ python tests/verify_pipeline.py --verify-reliability
 python tests/verify_alerting.py
 python tests/verify_log_privacy.py
 python tests/audit_repository_history.py
+python tests/verify_grafana_install.py
 docker compose config --quiet
 git diff --check
 ```
@@ -128,7 +129,7 @@ Capturas anteriores (2026-11-17), incluindo o filtro de path e o Live tail no Ex
 
 ## Licença
 
-O arquivo [LICENSE](LICENSE) propõe MIT para o conteúdo próprio, mas a titularidade/autoridade de concessão ainda não foi confirmada pelo mantenedor; a publicação permanece bloqueada. As imagens e serviços externos mantêm licenças e avisos próprios, não substituídos pela MIT. Consulte a [auditoria de licenças](docs/license-audit.md) e os [SBOMs](docs/sbom/). Este laboratório não foi homologado para produção; confira o [preparo da release v0.1.0](docs/release-v0.1.0.md) e as [limitações técnicas](docs/final-audit.md).
+O conteúdo próprio do projeto está sob a licença MIT ([LICENSE](LICENSE)); o mantenedor confirmou a titularidade em 2026-11-17. As imagens e serviços externos mantêm licenças e avisos próprios, não substituídos pela MIT. Consulte a [auditoria de licenças](docs/license-audit.md) e os [SBOMs](docs/sbom/). Este laboratório não foi homologado para produção; confira o [preparo da release v0.1.0](docs/release-v0.1.0.md) e as [limitações técnicas](docs/final-audit.md).
 
 ## Mapa do repositório
 
@@ -136,8 +137,9 @@ O arquivo [LICENSE](LICENSE) propõe MIT para o conteúdo próprio, mas a titula
 - `LICENSE`, `CHANGELOG.md`: licença dos arquivos próprios e histórico da release preparada.
 - `config/`: Nginx, Prometheus, Loki, Alloy, dashboards e provisionamento Grafana.
 - `demo/`: aplicações, tráfego sintético e receptor local de alertas.
-- `tests/`: verificações de pipeline, confiabilidade e alertas.
-- `scripts/`: inicialização do ambiente, rotação de logs e resumo das varreduras Trivy.
+- `tests/`: verificações de pipeline, confiabilidade e alertas; `verify_grafana_install.py` testa o instalador sem precisar de Grafana; `audit_repository_history.py` varre o histórico atrás de segredos e, com uma lista local fora do git (`docs/interno/private-markers.txt` ou a variável `PRIVATE_MARKERS`), de termos do ambiente real.
+- `scripts/`: inicialização do ambiente, rotação de logs, resumo das varreduras Trivy, instalação num Grafana existente (`install_grafana.py`) e exportação das regras de alerta (`export_alert_rules.py`).
+- `deploy/`: pacotes do servidor central, do agente e do Grafana (regras e tradução pt-BR) para a implantação multi-servidor.
 - `docs/`: decisões, auditorias, procedimentos, resultados e limitações por marco.
 
 Auditorias técnicas e evidências: [arquitetura](docs/architecture-research.md), [segurança](docs/security-audit.md), [dashboards](docs/dashboard-audit.md), [alertas](docs/alerting-audit.md), [retenção e recuperação](docs/reliability-audit.md) e [auditoria final](docs/final-audit.md).

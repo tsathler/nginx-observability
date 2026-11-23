@@ -11,7 +11,7 @@
 
 Nginx Observability is a reproducible Docker Compose lab for multi-application Nginx telemetry. It demonstrates per-application HTTP metrics and logs, provisioned Grafana dashboards and alert rules, bounded synthetic traffic, retention and log rotation, plus recovery and integration tests.
 
-The prepared release includes Nginx, Prometheus, Loki, Grafana Alloy, Grafana, the nginxlog-exporter, three demo applications, and a local-only alert receiver. A root MIT license text is present for project-owned source, configuration, dashboard JSON, and documentation, but the rights holder has not confirmed authority to grant those rights; treat distribution as blocked until confirmed. Container components keep their individual upstream licenses; see [license audit](license-audit.md).
+The prepared release includes Nginx, Prometheus, Loki, Grafana Alloy, Grafana, the nginxlog-exporter, three demo applications, and a local-only alert receiver. A root MIT license text is present for project-owned source, configuration, dashboard JSON, and documentation, and the rights holder confirmed the authority to grant those rights on 2026-11-17 (see Maintainer decisions below). Container components keep their individual upstream licenses; see [license audit](license-audit.md).
 
 ## Verification status
 

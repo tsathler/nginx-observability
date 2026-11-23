@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -18,6 +19,24 @@ SECRET_PATTERNS = {
         rb"\s*[:=]\s*[\"']?([A-Za-z0-9+/=_-]{24,})"
     ),
 }
+# Markers of the maintainer's real environment (organization, hosts, internal apps) are never
+# written in this public file: they come from a git-ignored list, one regex per line, and/or the
+# PRIVATE_MARKERS environment variable (regexes separated by "|"). Findings name only the line
+# number of the marker, never its text.
+PRIVATE_MARKERS_FILE = ROOT / "docs" / "interno" / "private-markers.txt"
+
+
+def private_markers() -> dict[str, re.Pattern[bytes]]:
+    sources = []
+    if PRIVATE_MARKERS_FILE.exists():
+        sources += [line.strip() for line in PRIVATE_MARKERS_FILE.read_text(encoding="utf-8").splitlines()]
+    sources += os.environ.get("PRIVATE_MARKERS", "").split("|")
+    patterns = [line for line in sources if line and not line.startswith("#")]
+    return {f"private marker #{index}": re.compile(line.encode(), re.IGNORECASE)
+            for index, line in enumerate(patterns, 1)}
+
+
+PRIVATE_PATTERNS = private_markers()
 SENSITIVE_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".log", ".db", ".sqlite", ".sqlite3"}
 
 
@@ -46,15 +65,16 @@ def inspect_history() -> list[str]:
             name = Path(path).name.lower()
             if (name.startswith(".env") and name != ".env.example") or Path(name).suffix in SENSITIVE_SUFFIXES:
                 findings.add(f"{commit[:12]}:{path} (sensitive artifact path)")
-            # This audit tool contains detection regexes and sample credential terms.
-            if path.replace("\\", "/") == "tests/audit_repository_history.py":
-                continue
+            # This audit tool contains detection regexes and sample credential terms, so only the
+            # private markers are checked in its own history (an old version spelled one out).
+            own_file = path.replace("\\", "/") == "tests/audit_repository_history.py"
+            patterns = PRIVATE_PATTERNS if own_file else {**SECRET_PATTERNS, **PRIVATE_PATTERNS}
 
             blob_id = object_id.decode("ascii")
             if blob_id not in blob_cache:
                 blob_cache[blob_id] = git("cat-file", "blob", blob_id)
             blob = blob_cache[blob_id]
-            for category, pattern in SECRET_PATTERNS.items():
+            for category, pattern in patterns.items():
                 if pattern.search(blob):
                     findings.add(f"{commit[:12]}:{path} ({category})")
     return sorted(findings)

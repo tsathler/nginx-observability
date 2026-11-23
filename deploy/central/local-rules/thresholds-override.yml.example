@@ -1,12 +1,13 @@
-# Per-server limits for the HTTP alerts, kept only on this central server.
+# Alert limits for one (server, app) pair, kept only on this central server.
 #
-# Copy to thresholds-override.yml in this directory (that name is git-ignored), keep the
-# records you need, then reload Prometheus from deploy/central:
-#   cp thresholds-override.yml.example thresholds-override.yml
+# From deploy/central: copy this file (the copy is git-ignored), keep the records you need,
+# then reload Prometheus:
+#   cp local-rules/thresholds-override.yml.example local-rules/thresholds-override.yml
 #   docker compose kill -s HUP prometheus
 #
 # Each record overrides one default from config/prometheus/rules/alert-thresholds.yml for one
-# (server, app) pair; pairs without an override keep the defaults. Values are in seconds,
+# (server, app) pair. Both labels are required: a record with only "server" matches nothing
+# and the defaults stay. Pairs without an override keep the defaults. Values are in seconds,
 # ratios (0.05 = 5%) or requests per minute.
 groups:
   - name: nginx-observability-local-overrides

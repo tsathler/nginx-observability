@@ -8,10 +8,14 @@ name: nginx-observability-agent
 
 services:
   alloy:
-    image: grafana/alloy:v1.22.0
+    image: grafana/alloy:v1.22.0@sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    # Root in the image, but only with the two file capabilities it needs: reading the
+    # 0640 www-data:adm logs and writing its storage volume (owned by the image's alloy user).
+    cap_drop: [ALL]
+    cap_add: [DAC_READ_SEARCH, DAC_OVERRIDE]
     command:
       - run
       - /etc/alloy/config.alloy

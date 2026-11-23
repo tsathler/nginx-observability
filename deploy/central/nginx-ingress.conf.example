@@ -1,9 +1,21 @@
 # Ingress for the Alloy agents, served by the Nginx already running on the central server.
-# Copy to /etc/nginx/sites-available/observability-ingress (or conf.d/), replace every
-# <PLACEHOLDER>, then: sudo nginx -t && sudo systemctl reload nginx
+# Copy to /etc/nginx/sites-available/observability-ingress, replace every <PLACEHOLDER>,
+# enable it and reload:
+#   sudo ln -s /etc/nginx/sites-available/observability-ingress /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+# (A file in conf.d/ needs no link.) Prepare first: sudo apt install apache2-utils (htpasswd)
+# and sudo install -d -m 0750 /etc/nginx/observability/tls for the certificate and key.
+#
+# Trust limit: a password proves the caller is one of the agents, not which one. The server
+# label is set by the agent, so a compromised agent could send data as another server. Keep
+# one password per server, the IP list short, and watch this ingress's access log.
 #
 # Only two paths are exposed, both write-only: Loki push and Prometheus remote_write.
 # Query APIs, UIs and everything else stay on 127.0.0.1.
+
+# Caps what one agent can push: an agent sends about one Loki batch per second and one
+# remote_write every few seconds; a runaway or abused agent is held back with 429.
+limit_req_zone $binary_remote_addr zone=observability_agents:1m rate=20r/s;
 
 # Bind to the private interface only, on a dedicated port. Never to 0.0.0.0 on a host
 # with a public interface.
@@ -24,6 +36,9 @@ server {
     auth_basic           "observability ingress";
     auth_basic_user_file /etc/nginx/observability/agents.htpasswd;
 
+    server_tokens off;
+    limit_req zone=observability_agents burst=100 nodelay;
+    limit_req_status 429;
     client_max_body_size 10m;
     access_log /var/log/nginx/observability-ingress.access.log;
     error_log  /var/log/nginx/observability-ingress.error.log warn;

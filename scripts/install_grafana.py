@@ -11,15 +11,19 @@ What it creates or updates (idempotent; run again after a git pull):
     English, Brazilian Portuguese (--lang pt-BR) or both with a language switch (--lang both);
   * alert rule group(s) from deploy/grafana/alert-rules.json in that folder, without the
     lab-only rules that need the lab's health endpoints and exporter;
-  * optionally (--carousel) a "Carousel" button in Application Detail that rotates one pinned
-    page per (server, app) full screen (a Grafana playlist in kiosk mode).
+  * optionally (--carousel) an "Application carousel" / "Carrossel das aplicações" button in
+    Application Detail that rotates one pinned page per (server, app) full screen (a Grafana
+    playlist in kiosk mode).
+It only overwrites or deletes objects it created: dashboards in its own folder, carousel pages
+tagged nginx-carousel, and playlists whose pages are all carousel pages.
 It never changes contact points or notification policies: route the rules' labels
 (severity, component, server, app) in the existing policy tree.
 
 Authentication: a service account token with the Admin role in GRAFANA_TOKEN.
 
-Example (on the central server):
-  GRAFANA_TOKEN=... python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000 --lang both --carousel
+Example (on the central server; read -rs keeps the token out of the shell history):
+  read -rs GRAFANA_TOKEN && export GRAFANA_TOKEN
+  python3 scripts/install_grafana.py --grafana-url http://127.0.0.1:3000 --lang both --carousel --dry-run
 """
 import argparse
 import copy
@@ -27,7 +31,9 @@ import hashlib
 import json
 import os
 import pathlib
+import ipaddress
 import re
+import ssl
 import sys
 import urllib.error
 import urllib.parse
@@ -53,11 +59,20 @@ TEXT_KEYS = {"title", "description", "label", "noValue", "axisLabel", "tooltip",
 RAW_FIELDS = ("body_bytes_sent",)
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """urllib would follow a redirect and resend the Authorization header to the new host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise urllib.error.HTTPError(req.full_url, code, f"refusing redirect to {newurl}", headers, fp)
+
+
 class Grafana:
-    def __init__(self, url, token, dry_run):
+    def __init__(self, url, token, dry_run, ca_file=None):
         self.url = url.rstrip("/")
         self.token = token
         self.dry_run = dry_run
+        context = ssl.create_default_context(cafile=ca_file)
+        self.opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=context))
 
     def call(self, method, path, body=None, allow_404=False, headers=None):
         if self.dry_run and method != "GET":
@@ -70,18 +85,28 @@ class Grafana:
         for key, value in (headers or {}).items():
             request.add_header(key, value)
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with self.opener.open(request, timeout=30) as response:
                 payload = response.read()
                 return json.loads(payload) if payload else {}
         except urllib.error.HTTPError as error:
             if allow_404 and error.code == 404:
                 return None
-            detail = error.read().decode(errors="replace")[:500]
+            detail = (error.read() if error.fp else b"").decode(errors="replace")[:500]
             raise SystemExit(f"Grafana API {method} {path} failed: HTTP {error.code}: {detail}")
 
     def did(self, done, planned):
         """Past tense for real runs, "would ..." for --dry-run, so a rehearsal never reads as done."""
         return planned if self.dry_run else done
+
+
+def is_loopback(url):
+    host = urllib.parse.urlsplit(url).hostname or ""
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 # --- datasources -------------------------------------------------------------------------
@@ -113,6 +138,9 @@ def ensure_datasource(grafana, kind, uid, name, url):
         raise SystemExit(f"A datasource named {name!r} already exists with UID {by_name.get('uid')!r}; "
                          f"rename it or pass --datasource-prefix.")
     current = grafana.call("GET", f"/api/datasources/uid/{uid}", allow_404=True)
+    if current and current.get("type") != kind:
+        raise SystemExit(f"Datasource UID {uid!r} already exists as type {current.get('type')!r} "
+                         f"({current.get('name')!r}); pass another --datasource-prefix.")
     if current is None:
         grafana.call("POST", "/api/datasources", body)
         print(f"  {grafana.did('created', 'would create')} datasource {name} ({uid}) -> {url}")
@@ -265,8 +293,20 @@ def build_dashboards(lang, uids):
     return built
 
 
+def check_owned_dashboard(grafana, uid, folder_uids):
+    """Refuse to overwrite a dashboard with the same UID that lives outside this stack's folders."""
+    current = grafana.call("GET", f"/api/dashboards/uid/{uid}", allow_404=True)
+    if current is None:
+        return
+    folder = (current.get("meta") or {}).get("folderUid", "")
+    if folder not in folder_uids:
+        raise SystemExit(f"Dashboard UID {uid!r} already exists in another folder ({folder or 'General'!r}) "
+                         f"and was not created by this installer; move or rename it first.")
+
+
 def install_dashboards(grafana, folder_uid, dashboards):
     for dashboard in dashboards:
+        check_owned_dashboard(grafana, dashboard["uid"], {folder_uid})
         grafana.call("POST", "/api/dashboards/db", {
             "dashboard": dashboard, "folderUid": folder_uid, "overwrite": True,
             "message": "nginx-observability install_grafana.py",
@@ -277,12 +317,21 @@ def install_dashboards(grafana, folder_uid, dashboards):
 # --- alerts ------------------------------------------------------------------------------
 
 def seconds(duration):
-    units = {"s": 1, "m": 60, "h": 3600}
-    return int(duration[:-1]) * units[duration[-1]] if duration[-1] in units else int(duration)
+    """'30s', '1m', '1m30s', '2h' or a plain number of seconds."""
+    if re.fullmatch(r"\d+", duration):
+        return int(duration)
+    parts = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", duration)
+    if not duration or not parts or not any(parts.groups()):
+        raise SystemExit(f"Invalid duration {duration!r}; use e.g. 30s, 1m or 1m30s.")
+    hours, minutes, secs = (int(value or 0) for value in parts.groups())
+    return hours * 3600 + minutes * 60 + secs
 
 
-def build_alert_groups(uids, folder_uid, alert_lang, include_lab_rules):
+def build_alert_groups(uids, folder_uid, alert_lang, include_lab_rules, link_lang=None):
+    """alert_lang sets the texts; link_lang the dashboards the rules link to, which must be a
+    language whose dashboards are installed (defaults to alert_lang)."""
     catalog = load_catalog(alert_lang)
+    link_lang = link_lang or alert_lang
     bundle = json.loads(ALERT_BUNDLE.read_text(encoding="utf-8"))
     groups = []
     for group in bundle["groups"]:
@@ -290,7 +339,7 @@ def build_alert_groups(uids, folder_uid, alert_lang, include_lab_rules):
         for source in group["rules"]:
             if source["uid"] in LAB_ONLY_RULES and not include_lab_rules:
                 continue
-            rule = localize_uids(rewrite_datasources(copy.deepcopy(source), uids), alert_lang)
+            rule = localize_uids(rewrite_datasources(copy.deepcopy(source), uids), link_lang)
             # The export repeats the dashboard link (already in the __dashboardUid__/__panelId__
             # annotations) as fields the provisioning API rejects; unlinked rules carry "" and 0.
             rule.pop("dashboardUid", None)
@@ -319,21 +368,44 @@ def install_alerts(grafana, folder_uid, groups, interval_override, skipped):
 # inside one dashboard, so the copies carry the server and app values instead.
 
 def carousel_uid(server, app, lang="en"):
-    slug = re.sub(r"[^a-z0-9-]+", "-", f"{server}-{app}".lower()).strip("-")
-    suffix = LANG_SUFFIX[lang]
-    uid = f"nginx-carousel-{slug}{suffix}"
-    if len(uid) > 40:  # Grafana's UID limit
-        uid = f"nginx-carousel-{slug[:10]}-{hashlib.sha1(slug.encode()).hexdigest()[:8]}{suffix}"
-    return uid
+    """Readable prefix plus a hash of the exact (server, app), so 'web.01' and 'web-01', or
+    ('a', 'b-c') and ('a-b', 'c'), never share a page. Stays within Grafana's 40 characters."""
+    slug = re.sub(r"[^a-z0-9-]+", "-", f"{server}-{app}".lower()).strip("-")[:10].strip("-")
+    digest = hashlib.sha1(f"{server}\0{app}".encode()).hexdigest()[:8]
+    return f"nginx-carousel-{slug}-{digest}{LANG_SUFFIX[lang]}"
+
+
+def playlist_name(lang):
+    return "Nginx Observability - Carrossel das aplicações" if lang == "pt-BR" else "Nginx Observability - Application carousel"
+
+
+def owned_playlists(grafana, name):
+    """Playlists with this name whose pages are all carousel pages; any other is left alone."""
+    owned = []
+    for item in grafana.call("GET", f"/api/playlists?name={urllib.parse.quote(name)}") or []:
+        if item.get("name") != name:
+            continue
+        detail = grafana.call("GET", f"/api/playlists/{item['uid']}", allow_404=True) or {}
+        pages = detail.get("items") or []
+        if all(page.get("value", "").startswith("nginx-carousel-") for page in pages):
+            owned.append(item["uid"])
+        else:
+            print(f"  playlist {name!r} ({item['uid']}) has pages this installer did not create; left alone")
+    return owned
 
 
 def discover_pairs(grafana, prometheus_uid):
     """(server, app) pairs with HTTP traffic in the last day, read through the Grafana datasource."""
     query = urllib.parse.urlencode({"query": "group by (server, app) (max_over_time(nginx_http_response_count_total[1d]))"})
-    answer = grafana.call("GET", f"/api/datasources/proxy/uid/{prometheus_uid}/api/v1/query?{query}", allow_404=True)
-    if answer is None:  # a dry run against a Grafana that does not have the datasource yet
+    # A 404 is expected only in a dry run against a Grafana that does not have the datasource yet;
+    # in a real run any error stops here with Prometheus's own message.
+    answer = grafana.call("GET", f"/api/datasources/proxy/uid/{prometheus_uid}/api/v1/query?{query}",
+                          allow_404=grafana.dry_run)
+    if answer is None:
         print("  datasource not created yet; the real run discovers the (server, app) pairs")
         return []
+    if answer.get("status") != "success":
+        raise SystemExit(f"Prometheus query for the carousel failed: {json.dumps(answer)[:300]}")
     pairs = {(item["metric"].get("server", ""), item["metric"].get("app", "")) for item in answer.get("data", {}).get("result", [])}
     return sorted(pair for pair in pairs if all(pair))
 
@@ -364,15 +436,28 @@ def carousel_link(playlist_uid, lang):
     }
 
 
+def parse_carousel_apps(text):
+    pairs = set()
+    for item in (part.strip() for part in text.split(",")):
+        server, _, app = item.partition("/")
+        if not item:
+            continue
+        if not server.strip() or not app.strip():
+            raise SystemExit(f"--carousel-apps: {item!r} is not server/app")
+        pairs.add((server.strip(), app.strip()))
+    return sorted(pairs)
+
+
 def install_carousel(grafana, args, dashboards, uids, lang):
     languages = ["en", "pt-BR"] if lang == "both" else [lang]
     by_uid = {dashboard["uid"]: dashboard for dashboard in dashboards}
     if args.carousel_apps:
-        pairs = sorted(tuple(item.split("/", 1)) for item in args.carousel_apps.split(",") if "/" in item)
+        pairs = parse_carousel_apps(args.carousel_apps)
     else:
         pairs = discover_pairs(grafana, uids["prometheus"])
     if not pairs:
-        print("  no (server, app) with traffic yet; pass --carousel-apps server/app,... or run again later")
+        print("  no (server, app) with traffic in the last day; existing pages are kept. "
+              "Pass --carousel-apps server/app,... or run again later")
         return
     sub_uid = f"{args.folder_uid}-carousel"
     ensure_folder(grafana, sub_uid, "Carrossel" if "pt-BR" in languages else "Carousel", parent_uid=args.folder_uid)
@@ -383,17 +468,17 @@ def install_carousel(grafana, args, dashboards, uids, lang):
         for server, app in pairs:
             page = carousel_page(detail, server, app, language)
             wanted.add(page["uid"])
+            check_owned_dashboard(grafana, page["uid"], {sub_uid})
             grafana.call("POST", "/api/dashboards/db", {"dashboard": page, "folderUid": sub_uid, "overwrite": True,
                                                         "message": "nginx-observability carousel"})
             print(f"  page {page['title']} ({page['uid']})")
-        name = "Nginx Observability - Carrossel das aplicações" if pt else "Nginx Observability - Application carousel"
+        name = playlist_name(language)
         body = {"name": name, "interval": args.carousel_interval,
                 "items": [{"type": "dashboard_by_uid", "value": carousel_uid(server, app, language)} for server, app in pairs]}
-        existing = [item for item in grafana.call("GET", f"/api/playlists?name={urllib.parse.quote(name)}") or []
-                    if item.get("name") == name]
+        existing = owned_playlists(grafana, name)
         if existing:
-            grafana.call("PUT", f"/api/playlists/{existing[0]['uid']}", body)
-            playlist_uid = existing[0]["uid"]
+            grafana.call("PUT", f"/api/playlists/{existing[0]}", body)
+            playlist_uid = existing[0]
             print(f"  {grafana.did('updated', 'would update')} playlist {name}: {len(pairs)} application(s), every {args.carousel_interval}")
         else:
             playlist_uid = grafana.call("POST", "/api/playlists", body).get("uid")
@@ -402,20 +487,41 @@ def install_carousel(grafana, args, dashboards, uids, lang):
             print(f"  the carousel button of {detail['title']} is added once the playlist exists")
             continue
         # The only entry point is a button in Application Detail.
-        detail["links"] = [link for link in detail.get("links", []) if "/playlists/play/" not in link.get("url", "")]
-        detail["links"].append(carousel_link(playlist_uid, language))
-        grafana.call("POST", "/api/dashboards/db", {"dashboard": detail, "folderUid": args.folder_uid, "overwrite": True,
-                                                    "message": "nginx-observability carousel button"})
-        print(f"  {grafana.did('added', 'would add')} carousel button to {detail['title']}")
+        if add_carousel_button(detail, playlist_uid, language):
+            grafana.call("POST", "/api/dashboards/db", {"dashboard": detail, "folderUid": args.folder_uid, "overwrite": True,
+                                                        "message": "nginx-observability carousel button"})
+            print(f"  {grafana.did('added', 'would add')} carousel button to {detail['title']}")
     # Pages for pairs that no longer report traffic are removed, so the rotation stays current.
     for hit in grafana.call("GET", f"/api/search?tag={CAROUSEL_TAG}&type=dash-db") or []:
         if hit.get("uid") not in wanted and hit.get("folderUid") == sub_uid:
             grafana.call("DELETE", f"/api/dashboards/uid/{hit['uid']}")
             print(f"  {grafana.did('removed', 'would remove')} stale page {hit.get('title')} ({hit['uid']})")
-    for playlist in grafana.call("GET", "/api/playlists") or []:
-        if playlist.get("name") in ("Nginx Observability - Carousel", "Nginx Observability - Carrossel"):  # earlier names
-            grafana.call("DELETE", f"/api/playlists/{playlist['uid']}")
-            print(f"  {grafana.did('removed', 'would remove')} old playlist {playlist['name']}")
+    # Playlists of a language not installed in this run, and the names used before the button,
+    # would point at deleted pages: remove them (only ones made of carousel pages).
+    dropped = [playlist_name(other) for other in ("en", "pt-BR") if other not in languages]
+    for name in dropped + ["Nginx Observability - Carousel", "Nginx Observability - Carrossel"]:
+        for playlist_uid in owned_playlists(grafana, name):
+            grafana.call("DELETE", f"/api/playlists/{playlist_uid}")
+            print(f"  {grafana.did('removed', 'would remove')} playlist {name}")
+
+
+def add_carousel_button(detail, playlist_uid, lang):
+    """Put the carousel button on an Application Detail dashboard; False if it was already there."""
+    link = carousel_link(playlist_uid, lang)
+    links = [item for item in detail.get("links", []) if "/playlists/play/" not in item.get("url", "")]
+    changed = link not in detail.get("links", [])
+    detail["links"] = links + [link]
+    return changed
+
+
+def keep_carousel_buttons(grafana, dashboards, lang):
+    """A run without --carousel must not drop the button of a carousel installed earlier."""
+    languages = ["en", "pt-BR"] if lang == "both" else [lang]
+    by_uid = {dashboard["uid"]: dashboard for dashboard in dashboards}
+    for language in languages:
+        existing = owned_playlists(grafana, playlist_name(language))
+        if existing:
+            add_carousel_button(by_uid[APP_DETAIL_UID + LANG_SUFFIX[language]], existing[0], language)
 
 
 # --- main --------------------------------------------------------------------------------
@@ -443,15 +549,24 @@ def main():
                         help="add an 'Application carousel' button to Application Detail that rotates one page per (server, app)")
     parser.add_argument("--carousel-interval", default="30s", help="time on each page, e.g. 30s or 1m")
     parser.add_argument("--carousel-apps", help="server/app pairs, comma-separated (default: discovered from traffic)")
+    parser.add_argument("--ca-file", help="CA bundle to verify an https Grafana URL signed by an internal CA")
+    parser.add_argument("--allow-insecure-http", action="store_true",
+                        help="send the token over plain http to a host that is not loopback (not recommended)")
     parser.add_argument("--dry-run", action="store_true", help="read only; print the writes it would make")
     args = parser.parse_args()
+    if args.grafana_url.lower().startswith("http://") and not is_loopback(args.grafana_url) and not args.allow_insecure_http:
+        raise SystemExit("Refusing to send the token over plain http to a remote Grafana; use https "
+                         "(with --ca-file for an internal CA) or run on the Grafana host against 127.0.0.1.")
+    if args.alert_interval:
+        seconds(args.alert_interval)  # fail before any change
+    seconds(args.carousel_interval)
     if hasattr(sys.stdout, "reconfigure"):  # Portuguese titles on consoles that are not UTF-8
         sys.stdout.reconfigure(errors="replace")
 
     token = os.getenv("GRAFANA_TOKEN")
     if not token:
         raise SystemExit("Set GRAFANA_TOKEN to a service account token with the Admin role.")
-    grafana = Grafana(args.grafana_url, token, args.dry_run)
+    grafana = Grafana(args.grafana_url, token, args.dry_run, args.ca_file)
     health = grafana.call("GET", "/api/health")
     print(f"Grafana {health.get('version')} at {args.grafana_url}{' (dry run: nothing is written)' if args.dry_run else ''}")
 
@@ -463,11 +578,15 @@ def main():
     ensure_folder(grafana, args.folder_uid, args.folder_title)
     print(f"Dashboards ({args.lang})")
     dashboards = build_dashboards(args.lang, uids)
+    keep_carousel_buttons(grafana, dashboards, args.lang)
     install_dashboards(grafana, args.folder_uid, dashboards)
     if not args.skip_alerts:
         alert_lang = args.alert_lang or ("en" if args.lang == "en" else "pt-BR")
         print(f"Alert rules ({alert_lang})")
-        groups = build_alert_groups(uids, args.folder_uid, alert_lang, args.include_lab_rules)
+        # Rule links open dashboards that exist: the alert language when both are installed,
+        # otherwise the only language installed.
+        link_lang = alert_lang if args.lang == "both" else args.lang
+        groups = build_alert_groups(uids, args.folder_uid, alert_lang, args.include_lab_rules, link_lang)
         skipped = set() if args.include_lab_rules else LAB_ONLY_RULES
         install_alerts(grafana, args.folder_uid, groups, args.alert_interval, skipped)
     if args.carousel:

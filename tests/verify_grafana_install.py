@@ -9,6 +9,7 @@
 
 Run: python tests/verify_grafana_install.py
 """
+import copy
 import json
 import pathlib
 import re
@@ -80,7 +81,7 @@ def dashboards_both():
         text = json.dumps(pt)
         assert not re.search(r"/d/nginx-(overview|application-detail|live-logs|security)(?!-pt-br)[/\"?]", text.replace(f'"/d/{base}"', "")), \
             f"{pt['uid']} links an English dashboard"
-        assert "nginx-obs-prometheus" in text and '"uid": "prometheus"' not in text
+        assert "nginx-obs-prometheus" in text and '"uid": "prometheus"' not in text and '"uid": "loki"' not in text
         tables_consistent(en)
         tables_consistent(pt)
     overview = by_uid["nginx-overview-pt-br"]
@@ -99,17 +100,48 @@ def alerts():
     assert "agent_silent" in rules and rules["agent_silent"]["title"] == "Agente do servidor monitorado parou de enviar"
     assert rules["agent_silent"]["annotations"]["__dashboardUid__"] == "nginx-overview-pt-br"
     assert rules["http_p95_warning"]["data"][0]["datasourceUid"] == "nginx-obs-prometheus"
+    assert all("dashboardUid" not in rule and "panelId" not in rule for rule in rules.values()), \
+        "the provisioning API rejects the exported dashboardUid/panelId fields"
+    text = json.dumps(groups)
+    assert '"datasourceUid": "prometheus"' not in text and '"datasourceUid": "loki"' not in text
     with_lab = ig.build_alert_groups(UIDS, "nginx-observability", "en", include_lab_rules=True)
     lab_rules = {rule["uid"]: rule for group in with_lab for rule in group["rules"]}
     assert ig.LAB_ONLY_RULES <= set(lab_rules)
     assert lab_rules["agent_silent"]["annotations"]["__dashboardUid__"] == "nginx-overview"
+    # Portuguese texts linking English dashboards (only English installed) and the reverse.
+    mixed = ig.build_alert_groups(UIDS, "nginx-observability", "pt-BR", False, link_lang="en")
+    mixed_rules = {rule["uid"]: rule for group in mixed for rule in group["rules"]}
+    assert mixed_rules["agent_silent"]["annotations"]["__dashboardUid__"] == "nginx-overview"
+    assert mixed_rules["agent_silent"]["title"] == "Agente do servidor monitorado parou de enviar"
+    assert ig.seconds("1m30s") == 90 and ig.seconds("30s") == 30 and ig.seconds("2h") == 7200 and ig.seconds("45") == 45
+    for bad in ("", "1x", "m", "1.5m"):
+        try:
+            ig.seconds(bad)
+        except SystemExit:
+            continue
+        raise AssertionError(f"seconds({bad!r}) must be rejected")
 
 
 def carousel():
     template = next(d for d in ig.build_dashboards("both", UIDS) if d["uid"] == "nginx-application-detail-pt-br")
     page = ig.carousel_page(template, "web-01", "portal", "pt-BR")
-    assert page["uid"] == "nginx-carousel-web-01-portal-pt-br"
-    assert ig.carousel_uid("web-01", "portal") == "nginx-carousel-web-01-portal"
+    assert page["uid"] == ig.carousel_uid("web-01", "portal", "pt-BR") and page["uid"].endswith("-pt-br")
+    assert page["uid"].startswith("nginx-carousel-web-01-por")
+    assert ig.carousel_uid("web-01", "portal") == page["uid"][:-len("-pt-br")]
+    # Pairs that flatten to the same slug still get different pages.
+    assert ig.carousel_uid("a", "b-c") != ig.carousel_uid("a-b", "c")
+    assert ig.carousel_uid("web.01", "portal") != ig.carousel_uid("web-01", "portal")
+    assert ig.parse_carousel_apps(" web-01/portal , web-02/api,") == [("web-01", "portal"), ("web-02", "api")]
+    try:
+        ig.parse_carousel_apps("web-01")
+        raise AssertionError("an entry without server/app must be rejected")
+    except SystemExit:
+        pass
+    detail = copy.deepcopy(template)
+    assert ig.add_carousel_button(detail, "abc123", "pt-BR") and not ig.add_carousel_button(detail, "abc123", "pt-BR")
+    assert sum("/playlists/play/" in link["url"] for link in detail["links"]) == 1
+    assert ig.is_loopback("http://127.0.0.1:3000") and ig.is_loopback("http://localhost:3000")
+    assert not ig.is_loopback("http://192.0.2.10:3000")
     current = {v["name"]: v["current"]["value"] for v in page["templating"]["list"] if v["name"] in ("server", "app")}
     assert current == {"server": "web-01", "app": "portal"}, current
     assert ig.CAROUSEL_TAG in page["tags"] and page["title"].endswith("portal (web-01)")

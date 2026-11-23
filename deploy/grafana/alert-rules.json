@@ -444,7 +444,7 @@
                   "type": "prometheus",
                   "uid": "prometheus"
                 },
-                "expr": "sum by (server, app) (increase(nginx_parse_errors_total[5m])) > bool 0",
+                "expr": "sum by (server, app) ((increase(nginx_parse_errors_total[5m]) > 0) or (nginx_parse_errors_total unless nginx_parse_errors_total offset 5m)) > bool 0",
                 "instant": true,
                 "intervalMs": 1000,
                 "maxDataPoints": 43200,

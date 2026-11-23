@@ -285,7 +285,9 @@ groups:
             relativeTimeRange: {from: 300, to: 0}
             model:
               datasource: {type: prometheus, uid: prometheus}
-              expr: 'sum by (server, app) (increase(nginx_parse_errors_total[5m])) > bool 0'
+              # Alloy creates the counter on the first malformed line, already at its value, so increase()
+              # alone misses it; a series that did not exist 5 minutes ago counts in full.
+              expr: 'sum by (server, app) ((increase(nginx_parse_errors_total[5m]) > 0) or (nginx_parse_errors_total unless nginx_parse_errors_total offset 5m)) > bool 0'
               instant: true
               range: false
               refId: A
